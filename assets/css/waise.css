@@ -1243,3 +1243,172 @@ small.text-muted {
 *::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.28); }
 
 /* Fin waise.css v1.5.0 */
+
+
+/* =========================================================================
+   v1.5.1 - Cobertura extendida de grises Tailwind y componentes internos
+   ========================================================================= */
+
+/* --- Grises claros de Tailwind (bg-*-50 a bg-*-300 + bg-white) ----------- */
+/* Pterodactyl los usa en páginas de ajustes, cuenta, variables de entorno   */
+.bg-white,
+.bg-neutral-50, .bg-neutral-100, .bg-neutral-200, .bg-neutral-300,
+.bg-gray-50,    .bg-gray-100,    .bg-gray-200,    .bg-gray-300,
+.bg-zinc-50,    .bg-zinc-100,    .bg-zinc-200,    .bg-zinc-300,
+.bg-slate-50,   .bg-slate-100,   .bg-slate-200,   .bg-slate-300,
+.bg-stone-50,   .bg-stone-100,   .bg-stone-200 {
+  background-color: var(--waise-glass-2) !important;
+  backdrop-filter: blur(var(--waise-blur)) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(var(--waise-blur)) saturate(140%) !important;
+  border: 1px solid var(--waise-border) !important;
+  border-radius: var(--waise-radius) !important;
+  color: var(--waise-text) !important;
+}
+
+/* Grises medios que se usaban sin cubrir */
+.bg-neutral-400, .bg-neutral-500,
+.bg-gray-400,    .bg-gray-500,
+.bg-zinc-400,    .bg-zinc-500 {
+  background-color: var(--waise-glass-3) !important;
+  border: 1px solid var(--waise-border) !important;
+  border-radius: var(--waise-radius) !important;
+  color: var(--waise-text) !important;
+}
+
+/* Tonos oscuros adicionales */
+.bg-neutral-950, .bg-gray-950, .bg-zinc-950,
+.bg-slate-700, .bg-slate-800, .bg-slate-900, .bg-slate-950 {
+  background-color: var(--waise-glass-1) !important;
+  backdrop-filter: blur(var(--waise-blur)) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(var(--waise-blur)) saturate(140%) !important;
+  border: 1px solid var(--waise-border) !important;
+  border-radius: var(--waise-radius) !important;
+  color: var(--waise-text) !important;
+}
+
+/* --- Texto claro invertido ------------------------------------------------ */
+/* Tailwind pone texto oscuro sobre fondos claros; en modo dark se invierte  */
+.text-neutral-900, .text-neutral-800, .text-neutral-700,
+.text-gray-900,    .text-gray-800,    .text-gray-700,
+.text-zinc-900,    .text-zinc-800,    .text-zinc-700,
+.text-slate-900,   .text-slate-800,   .text-slate-700,
+.text-black { color: var(--waise-text) !important; }
+
+/* --- TitledGreyBox -------------------------------------------------------- */
+[class*="TitledGreyBox"],
+[class^="TitledGreyBox"] {
+  background-color: var(--waise-glass-2) !important;
+  backdrop-filter: blur(var(--waise-blur)) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(var(--waise-blur)) saturate(140%) !important;
+  border: 1px solid var(--waise-border) !important;
+  border-radius: var(--waise-radius) !important;
+  color: var(--waise-text) !important;
+  box-shadow: var(--waise-shadow-sm) !important;
+}
+[class*="TitledGreyBox"] > div:first-child,
+[class^="TitledGreyBox"] > div:first-child {
+  background-color: rgba(255,255,255,.025) !important;
+  border-bottom: 1px solid var(--waise-border) !important;
+  border-radius: var(--waise-radius) var(--waise-radius) 0 0 !important;
+}
+[class*="TitledGreyBox"] p { color: var(--waise-text-dim) !important; }
+
+/* --- GreyRowBox ----------------------------------------------------------- */
+[class*="GreyRowBox"],
+[class^="GreyRowBox"] {
+  background-color: var(--waise-glass-2) !important;
+  backdrop-filter: blur(var(--waise-blur)) saturate(140%) !important;
+  -webkit-backdrop-filter: blur(var(--waise-blur)) saturate(140%) !important;
+  border: 1px solid var(--waise-border) !important;
+  border-radius: var(--waise-radius) !important;
+  color: var(--waise-text) !important;
+  margin-bottom: 8px !important;
+}
+
+/* --- PageContentBlock ----------------------------------------------------- */
+[class*="PageContentBlock"] {
+  background: transparent !important;
+  color: var(--waise-text) !important;
+}
+
+/* --- Switch / toggle ------------------------------------------------------ */
+[class*="Switch"],
+[class^="Switch"] {
+  background-color: rgba(255,255,255,.1) !important;
+  border-color: rgba(255,255,255,.15) !important;
+}
+[class*="Switch"][aria-checked="true"],
+[class*="Switch"][class*="checked"],
+[class^="Switch"][class*="checked"] {
+  background-color: var(--waise-accent) !important;
+}
+
+/* --- File manager --------------------------------------------------------- */
+[class*="FileManager"], [class*="FileRow"],
+[class*="DirectoryRow"], [class*="FileObject"] {
+  background-color: var(--waise-glass-2) !important;
+  border-bottom: 1px solid var(--waise-border) !important;
+  color: var(--waise-text) !important;
+}
+[class*="FileRow"]:hover {
+  background-color: var(--waise-glass-3) !important;
+}
+
+/* --- InlineCode ----------------------------------------------------------- */
+[class*="InlineCode"],
+[class^="InlineCode"] {
+  background: rgba(0,0,0,.4) !important;
+  border: 1px solid var(--waise-border) !important;
+  border-radius: 4px !important;
+  color: #a5f3a5 !important;
+  padding: 1px 6px !important;
+  font-family: 'JetBrains Mono','Fira Code',monospace !important;
+  display: inline !important;
+}
+
+/* --- SpinnerOverlay ------------------------------------------------------- */
+[class*="SpinnerOverlay"],
+[class^="SpinnerOverlay"],
+[class*="InputSpinner"],
+[class^="InputSpinner"] {
+  background: rgba(0,0,0,.6) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+  border-radius: var(--waise-radius) !important;
+  color: var(--waise-text) !important;
+}
+
+/* --- Sub-navegacion del servidor ------------------------------------------ */
+[class*="SubNavigation"],
+[class*="ServerSubNav"],
+[class*="NavigationTab"] {
+  background-color: rgba(10,12,22,.9) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border-bottom: 1px solid var(--waise-border) !important;
+}
+[class*="SubNavigation"] a,
+[class*="NavigationTab"] a {
+  color: var(--waise-text-dim) !important;
+  text-decoration: none !important;
+}
+[class*="SubNavigation"] a:hover,
+[class*="SubNavigation"] a[class*="active"],
+[class*="SubNavigation"] a[aria-current],
+[class*="NavigationTab"] a:hover,
+[class*="NavigationTab"] a[class*="active"] {
+  color: var(--waise-text) !important;
+  border-bottom-color: var(--waise-accent) !important;
+}
+
+/* --- Bordes Tailwind adicionales ------------------------------------------ */
+.border-neutral-200, .border-gray-200, .border-zinc-200,
+.border-slate-200, .border-white {
+  border-color: var(--waise-border) !important;
+}
+
+/* --- Selección de texto --------------------------------------------------- */
+::selection {
+  background: rgba(111,92,255,.45) !important;
+  color: #fff !important;
+}
