@@ -29,8 +29,9 @@ ${WAISE_NAME} v${WAISE_VERSION}
 Uso: waise <comando> [opciones]
 
 Comandos:
-  install [--path DIR] [--accent #RRGGBB] [--accent2 #RRGGBB] [-y]
+  install [--path DIR] [--accent #RRGGBB] [--accent2 #RRGGBB] [--no-sidebar] [-y]
                        Instala o reinstala el tema.
+                       --no-sidebar deja solo el CSS, sin la columna lateral.
   update               Igual que install (reaplica el tema tras actualizar el panel).
   upgrade [--accent #RRGGBB] [--accent2 #RRGGBB]
                        Descarga la última versión del tema desde GitHub y la

@@ -1,6 +1,11 @@
 /* =========================================================================
-   Waise Theme v1.1.1 - Panel de cliente (Pterodactyl 1.14.x)
+   Waise Theme v1.2.0 - Panel de cliente (Pterodactyl 1.14.x)
    Estilo Arix-like: oscuro, semitransparente, bordes suaves y desenfoque.
+
+   NOTA v1.2.0: la sidebar lateral vuelve, pero ahora la activa
+   assets/js/waise.js añadiendo la clase `waise-sidebar-ready` a <html> SOLO
+   si localizó de verdad el menú del servidor. Sin esa clase, todo el bloque
+   de layout del final queda inerte y el panel conserva su diseño nativo.
 
    NOTA v1.1.1: se revierte el layout de sidebar lateral y los tiles cuadrados
    de la v1.1.0. Dependían de que existiera el id `#sub-navigation`; cuando el
@@ -393,6 +398,130 @@ progress::-webkit-progress-value,
     color: #fff;
 }
 
+/* -------------------------------------- Sidebar lateral (activada por JS) -- */
+/* Nada de esto se aplica sin la clase `waise-sidebar-ready` en <html>, que
+   añade assets/js/waise.js únicamente cuando ha encontrado el contenedor real
+   del menú del servidor. Si el JS falla, no carga o no encuentra nada, el
+   panel se queda exactamente como está arriba: barra superior nativa. */
+
+html.waise-sidebar-ready {
+    --waise-sidebar-w: 248px;
+}
+
+@media (min-width: 1024px) {
+    /* Desplaza TODO el contenido (incluida la barra superior) para dejar
+       hueco a la columna fija. */
+    html.waise-sidebar-ready body {
+        padding-inline-start: var(--waise-sidebar-w);
+    }
+
+    /* El contenedor original del menú se queda vacío al pasar sus hijos a
+       posición fija: se neutraliza para que no deje una franja con fondo. */
+    html.waise-sidebar-ready .waise-nav-host {
+        background: transparent !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        min-height: 0 !important;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+    }
+
+    html.waise-sidebar-ready .waise-server-nav {
+        position: fixed;
+        top: 0;
+        bottom: 0;
+        inset-inline-start: 0;
+        z-index: 40;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        justify-content: flex-start !important;
+        gap: 4px;
+        width: var(--waise-sidebar-w);
+        max-width: 80vw;
+        padding: 18px 12px 24px;
+        overflow-x: hidden;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        background-color: var(--waise-glass-solid) !important;
+        border: 0 !important;
+        border-inline-end: 1px solid var(--waise-border) !important;
+        border-radius: 0 !important;
+        -webkit-backdrop-filter: blur(18px) saturate(150%);
+        backdrop-filter: blur(18px) saturate(150%);
+        box-shadow: 8px 0 30px -22px rgba(0, 0, 0, 0.9);
+    }
+
+    html.waise-sidebar-ready .waise-server-nav::before {
+        content: "Servidor";
+        display: block;
+        padding: 0 14px 10px;
+        color: var(--waise-text-dim);
+        font-size: 0.68rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        opacity: 0.75;
+    }
+
+    /* Los hijos no deben estirarse ni encogerse en vertical. */
+    html.waise-sidebar-ready .waise-server-nav > * {
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 100%;
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        min-height: 42px;
+        margin: 0;
+        padding: 0 14px;
+        border: 0 !important;
+        border-radius: var(--waise-radius-sm);
+        color: var(--waise-text-dim);
+        font-size: 0.92rem;
+        line-height: 1.2;
+        text-align: start;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a:hover,
+    html.waise-sidebar-ready .waise-server-nav a:focus-visible {
+        color: #fff;
+        background-color: rgba(255, 255, 255, 0.06);
+    }
+
+    /* En vertical el subrayado inferior del tema base no aplica: se sustituye
+       por una pastilla con barra lateral de acento. */
+    html.waise-sidebar-ready .waise-server-nav a::after {
+        content: none !important;
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a.active,
+    html.waise-sidebar-ready .waise-server-nav a[class*="active"],
+    html.waise-sidebar-ready .waise-server-nav a[aria-current="page"] {
+        color: #fff;
+        background-image: linear-gradient(90deg, rgba(111, 92, 255, 0.32), rgba(23, 201, 201, 0.12));
+        box-shadow: inset 3px 0 0 0 var(--waise-accent);
+    }
+}
+
+/* Por debajo de 1024px no hay sidebar: el menú se queda en su fila original,
+   solo se garantiza que se pueda desplazar si no cabe. */
+@media (max-width: 1023px) {
+    html.waise-sidebar-ready .waise-server-nav {
+        overflow-x: auto;
+        overscroll-behavior-x: contain;
+    }
+}
+
 /* ------------------------------------------------------- Responsive ---- */
 
 @media (max-width: 640px) {
@@ -470,7 +599,12 @@ progress::-webkit-progress-value,
 
     body::before,
     #navigation,
-    #sub-navigation {
+    #sub-navigation,
+    .waise-server-nav {
         display: none !important;
+    }
+
+    html.waise-sidebar-ready body {
+        padding-inline-start: 0 !important;
     }
 }

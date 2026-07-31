@@ -13,6 +13,7 @@ PANEL_DIR_ARG=""
 ACCENT="#6f5cff"
 ACCENT_2="#17c9c9"
 ASSUME_YES=0
+SIDEBAR=1
 
 usage() {
     cat <<EOF
@@ -24,6 +25,7 @@ Opciones:
   --path DIR          Ruta de instalación del panel (autodetectada si se omite).
   --accent #RRGGBB    Color de acento principal (por defecto ${ACCENT}).
   --accent2 #RRGGBB   Color de acento secundario (por defecto ${ACCENT_2}).
+  --no-sidebar        No inyectar el JS de la sidebar lateral (solo CSS).
   -y, --yes           No pedir confirmación.
   -h, --help          Mostrar esta ayuda.
 EOF
@@ -34,6 +36,7 @@ while [[ $# -gt 0 ]]; do
         --path)    PANEL_DIR_ARG="${2:-}"; shift 2 ;;
         --accent)  ACCENT="${2:-}";        shift 2 ;;
         --accent2) ACCENT_2="${2:-}";      shift 2 ;;
+        --no-sidebar) SIDEBAR=0;           shift ;;
         -y|--yes)  ASSUME_YES=1;           shift ;;
         -h|--help) usage; exit 0 ;;
         *) waise_die "Opción desconocida: $1 (usa --help)" ;;
@@ -70,6 +73,11 @@ if [[ $ASSUME_YES -eq 0 ]]; then
     if [[ -f "$ADMIN_VIEW" ]]; then
         printf '                -> %s\n' "$WAISE_ADMIN_VIEW"
     fi
+    if [[ $SIDEBAR -eq 1 ]]; then
+        printf '  - Sidebar     -> sí (js/waise.js)\n'
+    else
+        printf '  - Sidebar     -> no (--no-sidebar)\n'
+    fi
     printf '  - Backup      -> %s/<fecha>\n\n' "$WAISE_BACKUP_ROOT"
     waise_confirm "¿Continuar?" || waise_die "Instalación cancelada por el usuario."
 fi
@@ -86,10 +94,11 @@ waise_ok "Backup creado en ${BACKUP_DIR}"
 
 # --- 2. Assets -------------------------------------------------------------
 waise_log "Copiando assets del tema..."
-mkdir -p "${PUBLIC_DIR}/css" "${PUBLIC_DIR}/img"
+mkdir -p "${PUBLIC_DIR}/css" "${PUBLIC_DIR}/img" "${PUBLIC_DIR}/js"
 cp -f "${SCRIPT_DIR}/assets/css/waise.css"       "${PUBLIC_DIR}/css/waise.css"
 cp -f "${SCRIPT_DIR}/assets/css/waise-admin.css" "${PUBLIC_DIR}/css/waise-admin.css"
 cp -f "${SCRIPT_DIR}/assets/img/waise-bg.svg"    "${PUBLIC_DIR}/img/waise-bg.svg"
+cp -f "${SCRIPT_DIR}/assets/js/waise.js"         "${PUBLIC_DIR}/js/waise.js"
 
 cat > "${PUBLIC_DIR}/css/waise-overrides.css" <<EOF
 /* -------------------------------------------------------------------------
@@ -106,12 +115,23 @@ waise_ok "Assets instalados en public/${WAISE_PUBLIC_SUBDIR}"
 # --- 3. Inyección en las vistas -------------------------------------------
 ASSET_VER="${WAISE_VERSION}-${STAMP}"
 
+# build_block <archivo_css> [archivo_js]
+# El <script> va DENTRO de los marcadores para que uninstall.sh lo elimine con
+# el mismo sed de rango que ya usa; nada queda huérfano en la vista Blade.
 build_block() {
     local css="$1"
+    local js="${2:-}"
     cat <<EOF
         {{-- ${WAISE_MARKER_START} v${WAISE_VERSION} :: bloque gestionado automáticamente, no editar --}}
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/${css}?v=${ASSET_VER}">
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-overrides.css?v=${ASSET_VER}">
+EOF
+    if [[ -n "$js" ]]; then
+        cat <<EOF
+        <script src="/${WAISE_PUBLIC_SUBDIR}/js/${js}?v=${ASSET_VER}" defer></script>
+EOF
+    fi
+    cat <<EOF
         {{-- ${WAISE_MARKER_END} --}}
 EOF
 }
@@ -119,7 +139,12 @@ EOF
 BLOCK_TMP="$(mktemp)"
 trap 'rm -f "$BLOCK_TMP"' EXIT
 
-build_block "waise.css" > "$BLOCK_TMP"
+CLIENT_JS=""
+if [[ $SIDEBAR -eq 1 ]]; then
+    CLIENT_JS="waise.js"
+fi
+
+build_block "waise.css" "$CLIENT_JS" > "$BLOCK_TMP"
 if waise_inject_block "$CLIENT_VIEW" "$BLOCK_TMP"; then
     waise_ok "Tema inyectado en ${WAISE_CLIENT_VIEW}"
 else
@@ -171,6 +196,7 @@ STATE_BACKUP_DIR="${BACKUP_DIR}"
 STATE_INSTALLED_AT="$(date -u '+%Y-%m-%d %H:%M:%S UTC')"
 STATE_ACCENT="${ACCENT}"
 STATE_ACCENT_2="${ACCENT_2}"
+STATE_SIDEBAR="${SIDEBAR}"
 STATE_ASSET_VERSION="${ASSET_VER}"
 EOF
 chmod 600 "$WAISE_STATE_FILE"
@@ -180,4 +206,5 @@ printf 'Siguiente paso: recarga el panel con Ctrl+F5 (o vacía la caché del nav
 printf '  Ver estado    : %ssudo waise status%s\n' "$C_DIM" "$C_RESET"
 printf '  Actualizar    : %ssudo waise upgrade%s\n' "$C_DIM" "$C_RESET"
 printf '  Desinstalar   : %ssudo waise uninstall%s\n' "$C_DIM" "$C_RESET"
+printf '  Sin sidebar   : %ssudo waise install --no-sidebar%s\n' "$C_DIM" "$C_RESET"
 printf '  Personalizar  : %s%s/css/waise-overrides.css%s\n\n' "$C_DIM" "$PUBLIC_DIR" "$C_RESET"
