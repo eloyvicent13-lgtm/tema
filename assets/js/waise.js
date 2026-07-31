@@ -1,11 +1,16 @@
 /* =========================================================================
-   Waise Theme v1.3.3 - Sidebar lateral del panel de cliente (Pterodactyl)
+   Waise Theme v1.4.0 - Layout del panel de cliente (Pterodactyl)
 
    Qué hace:
    - Dentro de un servidor: el menú del servidor (Consola, Archivos, Bases de
      datos...) pasa a la columna lateral fija.
    - En las páginas normales (dashboard, cuenta, API, admin): la barra de
      navegación principal pasa a esa misma columna.
+   - En el listado de servidores: marca el contenedor y cada fila para que el
+     CSS las convierta en tarjetas en rejilla (v1.4.0). El listado se distingue
+     del menú de un servidor por el recuento de enlaces: en el listado hay UN
+     enlace por servidor (total === unique), en el menú hay varios al MISMO
+     servidor (total > unique).
    Nunca las dos a la vez: si existe menú de servidor, él ocupa la columna y la
    barra principal se queda arriba, para que no se peleen por el mismo hueco.
 
@@ -43,6 +48,17 @@
     var HOST_CLASS  = 'waise-nav-host';
     var CLEAR_CLASS = 'waise-nav-clear';
     var STORAGE_KEY = 'waise-sidebar';
+
+    /* Rejilla de tarjetas del listado de servidores. */
+    var HTML_CARDS     = 'waise-cards-ready';
+    var GRID_CLASS     = 'waise-server-grid';
+    var CARD_CLASS     = 'waise-server-card';
+    var SPAN_CLASS     = 'waise-grid-full';
+    var HOSTCARD_CLASS = 'waise-card-host';
+
+    /* Un contenedor con demasiados hijos no es un listado de servidores, es un
+       envoltorio de página: convertirlo en rejilla rompería el layout. */
+    var MAX_GRID_CHILDREN = 40;
 
     /* Mínimo de enlaces del mismo servidor para considerarlo un menú y no un
        enlace suelto (Consola, Archivos, Bases de datos... siempre son >= 3). */
@@ -284,6 +300,136 @@
         });
     }
 
+    /* Recuento global de enlaces a servidores de la página. */
+    function serverLinkStats() {
+        var anchors = document.querySelectorAll('a[href]');
+        var ids = Object.create(null);
+        var stats = { total: 0, unique: 0 };
+        var i;
+
+        for (i = 0; i < anchors.length; i++) {
+            var key = serverKeyOf(anchors[i]);
+            if (!key) {
+                continue;
+            }
+            stats.total += 1;
+            if (!ids[key]) {
+                ids[key] = true;
+                stats.unique += 1;
+            }
+        }
+
+        return stats;
+    }
+
+    /**
+     * Contenedor del listado de servidores. Solo se acepta si agrupa TODOS los
+     * enlaces a servidores de la página y ninguno se repite. Así el menú de un
+     * servidor (varios enlaces al mismo id) o un enlace suelto dentro de una
+     * página de servidor nunca se confunden con el listado.
+     */
+    function findServerGrid() {
+        var stats = serverLinkStats();
+
+        if (stats.total === 0 || stats.total !== stats.unique) {
+            return null;
+        }
+
+        return pick(collect(serverKeyOf), function (group, node) {
+            return group.count === stats.total &&
+                group.unique === stats.unique &&
+                node.children.length <= MAX_GRID_CHILDREN;
+        });
+    }
+
+    function isServerAnchor(node) {
+        return isElement(node) && node.tagName === 'A' && !!serverKeyOf(node);
+    }
+
+    /* Enlace de servidor de una tarjeta: el propio nodo o el ÚNICO que
+       contenga. Con dos o más no es una tarjeta y se descarta. */
+    function cardAnchorIn(node) {
+        if (isServerAnchor(node)) {
+            return node;
+        }
+        if (!isElement(node)) {
+            return null;
+        }
+
+        var anchors = node.querySelectorAll('a[href]');
+        var found = null;
+        var i;
+
+        for (i = 0; i < anchors.length; i++) {
+            if (!isServerAnchor(anchors[i])) {
+                continue;
+            }
+            if (found) {
+                return null;
+            }
+            found = anchors[i];
+        }
+
+        return found;
+    }
+
+    function clearCards(keep) {
+        var nodes = document.querySelectorAll(
+            '.' + CARD_CLASS + ', .' + SPAN_CLASS + ', .' + HOSTCARD_CLASS
+        );
+        var i;
+
+        for (i = 0; i < nodes.length; i++) {
+            if (keep && keep !== nodes[i] && keep.contains(nodes[i])) {
+                continue;
+            }
+            nodes[i].classList.remove(CARD_CLASS);
+            nodes[i].classList.remove(SPAN_CLASS);
+            nodes[i].classList.remove(HOSTCARD_CLASS);
+        }
+    }
+
+    /**
+     * Marca cada hijo del listado: tarjeta, envoltorio de tarjeta, o elemento a
+     * fila completa (título, buscador, paginación). Devuelve cuántas tarjetas
+     * ha encontrado; con 0 la rejilla no se activa y el listado se queda nativo.
+     */
+    function markGrid(grid) {
+        var children = grid.children;
+        var cards = 0;
+        var i;
+
+        for (i = 0; i < children.length; i++) {
+            var child = children[i];
+            var anchor = cardAnchorIn(child);
+
+            if (!anchor) {
+                child.classList.remove(CARD_CLASS);
+                child.classList.remove(HOSTCARD_CLASS);
+                child.classList.add(SPAN_CLASS);
+                continue;
+            }
+
+            child.classList.remove(SPAN_CLASS);
+
+            if (anchor === child) {
+                child.classList.remove(HOSTCARD_CLASS);
+                child.classList.add(CARD_CLASS);
+            } else {
+                /* El envoltorio se disuelve con `display: contents` (CSS) para
+                   que la tarjeta sea el item de la rejilla y no arrastre el
+                   margen vertical de la lista original. */
+                child.classList.remove(CARD_CLASS);
+                child.classList.add(HOSTCARD_CLASS);
+                anchor.classList.add(CARD_CLASS);
+            }
+
+            cards += 1;
+        }
+
+        return cards;
+    }
+
     /* Se pone a true si la columna no consigue colocarse: entonces se deja el
        layout nativo y no se vuelve a intentar hasta navegar o redimensionar. */
     var giveUp = false;
@@ -387,20 +533,25 @@
         removeClassFrom('.' + MAIN_CLASS, MAIN_CLASS, null);
         removeClassFrom('.' + HOST_CLASS, HOST_CLASS, null);
         removeClassFrom('.' + CLEAR_CLASS, CLEAR_CLASS, null);
+        removeClassFrom('.' + GRID_CLASS, GRID_CLASS, null);
+        root.classList.remove(HTML_CARDS);
+        clearCards(null);
         clearLabels(null);
     }
 
     function apply() {
-        if (isDisabled() || giveUp) {
+        if (isDisabled()) {
             clear();
             return;
         }
 
         var root = document.documentElement;
-        var serverNav = findServerNav();
+        /* `giveUp` solo desactiva la columna lateral, que es la que depende de
+           `position: fixed`. La rejilla de tarjetas no, así que sigue activa. */
+        var serverNav = giveUp ? null : findServerNav();
         /* Dentro de un servidor la columna es del menú del servidor; la barra
            principal se queda donde está. */
-        var mainNav = serverNav ? null : findMainNav();
+        var mainNav = (giveUp || serverNav) ? null : findMainNav();
         var host = null;
 
         if (serverNav) {
@@ -432,6 +583,30 @@
 
         if (host) {
             host.classList.add(HOST_CLASS);
+        }
+
+        /* Rejilla de tarjetas: solo donde se lista más de un servidor distinto
+           (dashboard). Dentro de un servidor no se busca siquiera. */
+        var grid = serverNav ? null : findServerGrid();
+        var cards = 0;
+
+        removeClassFrom('.' + GRID_CLASS, GRID_CLASS, grid);
+
+        if (grid) {
+            clearCards(grid);
+            cards = markGrid(grid);
+        } else {
+            clearCards(null);
+        }
+
+        if (grid && cards > 0) {
+            grid.classList.add(GRID_CLASS);
+            root.classList.add(HTML_CARDS);
+        } else {
+            if (grid) {
+                grid.classList.remove(GRID_CLASS);
+            }
+            root.classList.remove(HTML_CARDS);
         }
 
         var target = serverNav || mainNav;
@@ -523,6 +698,7 @@
     window.WaiseTheme.inspect = function () {
         var serverNav = findServerNav();
         var mainNav = serverNav ? null : findMainNav();
+        var grid = serverNav ? null : findServerGrid();
         var target = serverNav || mainNav;
         var blockers = [];
         var node = target ? target.parentElement : null;
@@ -537,6 +713,9 @@
         return {
             serverNav: serverNav,
             mainNav: mainNav,
+            grid: grid,
+            cards: document.querySelectorAll('.' + CARD_CLASS).length,
+            serverLinks: serverLinkStats(),
             rect: target ? target.getBoundingClientRect() : null,
             cleared: document.querySelectorAll('.' + CLEAR_CLASS).length,
             blockers: blockers,

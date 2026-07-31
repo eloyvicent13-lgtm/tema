@@ -1,6 +1,14 @@
 /* =========================================================================
-   Waise Theme v1.3.3 - Panel de cliente (Pterodactyl 1.14.x)
+   Waise Theme v1.4.0 - Panel de cliente (Pterodactyl 1.14.x)
    Estilo Arix-like: oscuro, semitransparente, bordes suaves y desenfoque.
+
+   NOTA v1.4.0: el listado de servidores pasa de filas estiradas a una rejilla
+   de tarjetas rectangulares con superficie liquid glass. Igual que la sidebar,
+   depende de un gate que pone el JS (`waise-cards-ready`) tras localizar el
+   contenedor real del listado; sin ese gate, la lista nativa se queda intacta.
+   Las tarjetas son items de rejilla y los hermanos que no lo son (título,
+   buscador, paginación) se marcan con `waise-grid-full` para ocupar la fila
+   completa y no acabar metidos en una columna.
 
    NOTA v1.3.1: la clase `waise-nav-clear` (la pone el JS solo en los ancestros
    afectados) anula transform/filter/backdrop-filter. Sin eso, esos ancestros
@@ -319,18 +327,219 @@ table tbody td {
 }
 
 /* ------------------------------------------------- Tarjetas de servidor -- */
+/* Sin `waise-cards-ready` (listado no detectado) se conserva el realce
+   discreto sobre la fila nativa del panel. */
 
-a[href^="/server/"] .bg-neutral-700,
-a[href^="/server/"] .bg-neutral-800 {
+html:not(.waise-cards-ready) a[href^="/server/"] .bg-neutral-700,
+html:not(.waise-cards-ready) a[href^="/server/"] .bg-neutral-800 {
     transition: transform var(--waise-transition), border-color var(--waise-transition),
                 box-shadow var(--waise-transition);
 }
 
-a[href^="/server/"]:hover .bg-neutral-700,
-a[href^="/server/"]:hover .bg-neutral-800 {
+html:not(.waise-cards-ready) a[href^="/server/"]:hover .bg-neutral-700,
+html:not(.waise-cards-ready) a[href^="/server/"]:hover .bg-neutral-800 {
     transform: translateY(-2px);
     border-color: var(--waise-border-strong);
     box-shadow: 0 18px 40px -20px rgba(111, 92, 255, 0.55);
+}
+
+/* ------------------------ Rejilla de tarjetas (activada por JS) --------- */
+
+/* auto-fill (no auto-fit): con pocos servidores las tarjetas mantienen su
+   ancho en lugar de estirarse a lo ancho de la pantalla, que es justo el
+   aspecto que se quería eliminar. El min() da 1 columna en móvil sin necesidad
+   de media queries. */
+html.waise-cards-ready .waise-server-grid {
+    display: grid !important;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 288px), 1fr));
+    gap: 18px;
+    align-items: stretch;
+}
+
+/* Hermanos que no son tarjetas: título, buscador, paginación, avisos. */
+html.waise-cards-ready .waise-grid-full {
+    grid-column: 1 / -1;
+}
+
+/* Envoltorio intermedio: se disuelve para que la tarjeta sea el item de la
+   rejilla y no arrastre el margen vertical de la lista original (mt-2). */
+html.waise-cards-ready .waise-card-host {
+    display: contents !important;
+}
+
+html.waise-cards-ready .waise-server-card {
+    position: relative;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    justify-content: flex-start !important;
+    gap: 14px;
+    min-height: 164px;
+    margin: 0 !important;
+    padding: 18px !important;
+    overflow: hidden;
+    isolation: isolate;
+    border: 1px solid var(--waise-border) !important;
+    border-radius: var(--waise-radius) !important;
+    background-color: var(--waise-glass-2) !important;
+    background-image: linear-gradient(155deg,
+        rgba(255, 255, 255, 0.09) 0%,
+        rgba(255, 255, 255, 0.03) 38%,
+        rgba(255, 255, 255, 0) 72%) !important;
+    -webkit-backdrop-filter: blur(calc(var(--waise-blur) * 1.5)) saturate(160%);
+    backdrop-filter: blur(calc(var(--waise-blur) * 1.5)) saturate(160%);
+    box-shadow: var(--waise-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    color: var(--waise-text) !important;
+    text-decoration: none !important;
+    transition: transform var(--waise-transition), border-color var(--waise-transition),
+                box-shadow var(--waise-transition);
+}
+
+/* Reflejo de color en la esquina superior. z-index negativo dentro del
+   contexto de apilamiento de la tarjeta: se pinta sobre su fondo pero debajo
+   del contenido, y no intercepta clics. */
+html.waise-cards-ready .waise-server-card::before {
+    content: "";
+    position: absolute;
+    inset: -45% 35% auto -20%;
+    height: 78%;
+    z-index: -1;
+    background-image: radial-gradient(60% 60% at 32% 30%, rgba(111, 92, 255, 0.32), transparent 70%);
+    opacity: 0.85;
+    pointer-events: none;
+    transition: opacity var(--waise-transition);
+}
+
+html.waise-cards-ready .waise-server-card:hover,
+html.waise-cards-ready .waise-server-card:focus-visible {
+    transform: translateY(-3px);
+    border-color: var(--waise-border-strong) !important;
+    box-shadow: 0 22px 46px -22px rgba(111, 92, 255, 0.55),
+                inset 0 1px 0 rgba(255, 255, 255, 0.16);
+}
+
+html.waise-cards-ready .waise-server-card:hover::before,
+html.waise-cards-ready .waise-server-card:focus-visible::before {
+    opacity: 1;
+}
+
+/* Las superficies internas del panel se aplanan: la tarjeta debe leerse como
+   UN solo cristal, no como cajas grises apiladas dentro de otro cristal. */
+html.waise-cards-ready .waise-server-card :where(.bg-neutral-500, .bg-neutral-600,
+        .bg-neutral-700, .bg-neutral-800, .bg-neutral-900) {
+    background-color: transparent !important;
+    background-image: none !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    transform: none !important;
+}
+
+html.waise-cards-ready .waise-server-card > * {
+    flex: 0 0 auto;
+    width: auto !important;
+    max-width: 100%;
+    min-width: 0;
+    margin-inline: 0 !important;
+}
+
+/* Columnas que el panel oculta en pantallas estrechas (`hidden`): en la
+   tarjeta hay sitio de sobra, así que se muestran. */
+html.waise-cards-ready .waise-server-card > .hidden {
+    display: flex !important;
+}
+
+/* Cabecera: icono + nombre + descripción. */
+html.waise-cards-ready .waise-server-card > *:first-child {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 12px;
+}
+
+html.waise-cards-ready .waise-server-card .icon {
+    display: flex;
+    flex: 0 0 auto;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 1px solid var(--waise-border-strong) !important;
+    border-radius: 12px;
+    background-image: linear-gradient(135deg, rgba(111, 92, 255, 0.4), rgba(23, 201, 201, 0.24)) !important;
+    color: #fff;
+}
+
+html.waise-cards-ready .waise-server-card .text-lg {
+    font-size: 1.02rem !important;
+    font-weight: 600;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+}
+
+/* Fila inferior de métricas (CPU / RAM / disco). El :not(:first-child) evita
+   que una tarjeta con un único bloque se lleve el separador. */
+html.waise-cards-ready .waise-server-card > *:last-child:not(:first-child) {
+    display: flex !important;
+    flex-wrap: wrap;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    gap: 8px 18px;
+    margin-top: auto !important;
+    padding-top: 12px;
+    border-top: 1px solid var(--waise-border);
+    font-variant-numeric: tabular-nums;
+}
+
+html.waise-cards-ready .waise-server-card > *:last-child:not(:first-child) > * {
+    display: flex !important;
+    flex: 0 1 auto;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    margin: 0 !important;
+}
+
+/* Indicador de estado: el panel lo pinta como pastilla flotante; en la tarjeta
+   queda mejor como franja fina en el borde. `inset-inline` es lógico, así que
+   con dir="rtl" salta al otro lado sola. */
+html.waise-cards-ready .waise-server-card .status-bar {
+    inset-block: 0 !important;
+    inset-inline: auto 0 !important;
+    width: 4px !important;
+    height: auto !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    opacity: 0.95 !important;
+}
+
+@media (max-width: 640px) {
+    html.waise-cards-ready .waise-server-grid {
+        gap: 14px;
+    }
+
+    html.waise-cards-ready .waise-server-card {
+        min-height: 0;
+        padding: 16px !important;
+    }
+}
+
+/* Sin desenfoque disponible, color opaco: el texto sigue legible sobre el
+   fondo con degradados. */
+@supports not ((-webkit-backdrop-filter: blur(2px)) or (backdrop-filter: blur(2px))) {
+    html.waise-cards-ready .waise-server-card {
+        background-color: rgba(22, 25, 40, 0.96) !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.waise-cards-ready .waise-server-card:hover,
+    html.waise-cards-ready .waise-server-card:focus-visible {
+        transform: none;
+    }
 }
 
 /* ----------------------------------------------------- Consola / xterm -- */

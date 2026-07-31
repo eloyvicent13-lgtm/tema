@@ -5,7 +5,28 @@
 # Este archivo se carga con `source`, no se ejecuta directamente.
 
 WAISE_NAME="Waise Theme"
-WAISE_VERSION="1.3.5"
+
+# La versión vive en el archivo VERSION: es la única fuente de verdad (la lee
+# `waise upgrade` del repositorio descargado para comparar). Se toma de la copia
+# que acompaña a este lib/, que existe tanto en el repositorio como en
+# /usr/local/share/waise-theme, porque install.sh copia VERSION junto a lib/.
+# El valor de abajo es solo la reserva por si el archivo falta o está corrupto:
+# así el banner y `waise status` nunca quedan sin versión.
+WAISE_VERSION="1.4.0"
+
+# Sin `|| ...` de reserva, un fallo de la sustitución abortaría el script que
+# hace `source` de este archivo (install.sh usa `set -e`).
+_waise_lib_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || _waise_lib_dir=""
+if [[ -n "$_waise_lib_dir" && -r "${_waise_lib_dir}/../VERSION" ]]; then
+    _waise_version_file="$(tr -d ' \t\r\n' < "${_waise_lib_dir}/../VERSION")" || _waise_version_file=""
+    # Se exige el formato x.y.z para no publicar como versión un archivo con
+    # basura (un merge a medias, por ejemplo).
+    if [[ "$_waise_version_file" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.]+)?$ ]]; then
+        WAISE_VERSION="$_waise_version_file"
+    fi
+    unset _waise_version_file
+fi
+unset _waise_lib_dir
 
 # Repositorio usado por `waise upgrade`. Se puede sobrescribir exportando
 # WAISE_REPO_URL / WAISE_REPO_BRANCH antes de ejecutar el comando.
