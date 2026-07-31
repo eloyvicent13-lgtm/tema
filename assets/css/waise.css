@@ -1,4 +1,4 @@
-/* =========================================================================
+﻿/* =========================================================================
    Waise Theme v1.4.0 - Panel de cliente (Pterodactyl 1.14.x)
    Estilo Arix-like: oscuro, semitransparente, bordes suaves y desenfoque.
 
@@ -71,6 +71,14 @@
     --waise-shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.75);
     --waise-shadow-sm: 0 6px 18px -10px rgba(0, 0, 0, 0.6);
     --waise-transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Variables usadas por el parche v1.5.0 */
+    --waise-glass-bg:     rgba(255, 255, 255, 0.05);
+    --waise-glass-border: rgba(255, 255, 255, 0.10);
+    --waise-glass-blur:   14px;
+    --waise-accent-dim:   rgba(111, 92, 255, 0.28);
+    --waise-text-muted:   rgba(164, 170, 198, 0.65);
+    --waise-border-hover: rgba(255, 255, 255, 0.22);
 }
 
 /* ---------------------------------------------------------------- Fondo -- */
@@ -1241,6 +1249,114 @@ small.text-muted {
 *::-webkit-scrollbar-track { background: transparent; }
 *::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 99px; }
 *::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.28); }
+
+/* =====================================================================
+   v1.5.0 EXTRA — TitledGreyBox, GreyRowBox, grises claros de Tailwind
+   ===================================================================== */
+
+/* TitledGreyBox */
+[class*="TitledGreyBox"],
+[class^="TitledGreyBox"] {
+    background: var(--waise-glass-bg) !important;
+    backdrop-filter: blur(var(--waise-glass-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--waise-glass-blur)) !important;
+    border: 1px solid var(--waise-glass-border) !important;
+    border-radius: var(--waise-radius) !important;
+    color: var(--waise-text) !important;
+}
+[class*="TitledGreyBox"] p,
+[class^="TitledGreyBox"] p { color: var(--waise-text-dim) !important; }
+[class*="TitledGreyBox"] > div:first-child,
+[class^="TitledGreyBox"] > div:first-child {
+    background: rgba(255,255,255,0.03) !important;
+    border-bottom: 1px solid var(--waise-glass-border) !important;
+    border-radius: var(--waise-radius) var(--waise-radius) 0 0 !important;
+}
+
+/* GreyRowBox */
+[class*="GreyRowBox"],
+[class^="GreyRowBox"] {
+    background: var(--waise-glass-bg) !important;
+    backdrop-filter: blur(var(--waise-glass-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--waise-glass-blur)) !important;
+    border: 1px solid var(--waise-glass-border) !important;
+    border-radius: var(--waise-radius) !important;
+    color: var(--waise-text) !important;
+    margin-bottom: 8px !important;
+}
+
+/* PageContentBlock */
+[class*="PageContentBlock"] { background: transparent !important; }
+
+/* Switch / toggle */
+[class*="Switch"], [class^="Switch"] {
+    background: rgba(255,255,255,0.1) !important;
+    border-color: rgba(255,255,255,0.15) !important;
+}
+[class*="Switch"][aria-checked="true"],
+[class*="Switch"][class*="checked"] {
+    background: var(--waise-accent) !important;
+}
+
+/* SpinnerOverlay / InputSpinner */
+[class*="SpinnerOverlay"], [class^="SpinnerOverlay"],
+[class*="InputSpinner"],   [class^="InputSpinner"] {
+    background: rgba(0,0,0,0.6) !important;
+    backdrop-filter: blur(4px) !important;
+    border-radius: var(--waise-radius) !important;
+    color: var(--waise-text) !important;
+}
+
+/* InlineCode */
+[class*="InlineCode"], [class^="InlineCode"] {
+    background: rgba(0,0,0,0.4) !important;
+    border: 1px solid var(--waise-glass-border) !important;
+    border-radius: 4px !important;
+    color: #a78bfa !important;
+    padding: 1px 6px !important;
+}
+
+/* Grises CLAROS de Tailwind (los que quedaban sin cubrir) */
+.bg-neutral-50,  .bg-neutral-100, .bg-neutral-200, .bg-neutral-300,
+.bg-gray-50,     .bg-gray-100,    .bg-gray-200,    .bg-gray-300,
+.bg-zinc-50,     .bg-zinc-100,    .bg-zinc-200,    .bg-zinc-300,
+.bg-slate-50,    .bg-slate-100,   .bg-slate-200,   .bg-slate-300,
+.bg-stone-50,    .bg-stone-100,   .bg-stone-200,
+.bg-white {
+    background: var(--waise-glass-bg) !important;
+    backdrop-filter: blur(var(--waise-glass-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--waise-glass-blur)) !important;
+    border: 1px solid var(--waise-glass-border) !important;
+    border-radius: var(--waise-radius) !important;
+    color: var(--waise-text) !important;
+}
+
+/* Texto oscuro de Tailwind invertido */
+.text-neutral-900, .text-neutral-800, .text-neutral-700,
+.text-gray-900,    .text-gray-800,    .text-gray-700,
+.text-zinc-900,    .text-zinc-800,    .text-zinc-700,
+.text-black, .text-white { color: var(--waise-text) !important; }
+h1,h2,h3,h4,h5,h6 { color: var(--waise-text) !important; }
+td,th,span,label,li { color: var(--waise-text) !important; }
+
+/* Bordes claros de Tailwind */
+.border-neutral-200, .border-gray-200, .border-zinc-200,
+.border-neutral-700, .border-gray-700, .border-zinc-700 {
+    border-color: var(--waise-glass-border) !important;
+}
+
+/* File manager */
+[class*="FileRow"], [class*="DirectoryRow"], [class*="FileObject"] {
+    background: var(--waise-glass-bg) !important;
+    border-bottom: 1px solid var(--waise-glass-border) !important;
+    color: var(--waise-text) !important;
+}
+[class*="FileRow"]:hover, [class*="DirectoryRow"]:hover {
+    background: rgba(255,255,255,0.07) !important;
+}
+
+/* Selección de texto */
+::selection { background: rgba(111,92,255,0.4) !important; color: #fff !important; }
 
 /* Fin waise.css v1.5.0 */
 
