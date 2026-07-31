@@ -1,6 +1,12 @@
 /* =========================================================================
-   Waise Theme v1.2.0 - Panel de cliente (Pterodactyl 1.14.x)
+   Waise Theme v1.3.0 - Panel de cliente (Pterodactyl 1.14.x)
    Estilo Arix-like: oscuro, semitransparente, bordes suaves y desenfoque.
+
+   NOTA v1.3.0: la columna lateral también se usa en las páginas normales
+   (dashboard, cuenta, API), donde la ocupa la barra de navegación principal
+   con el gate `waise-mainnav-ready`. Dentro de un servidor sigue siendo el
+   menú del servidor (`waise-sidebar-ready`) el que ocupa la columna: nunca
+   las dos a la vez.
 
    NOTA v1.2.0: la sidebar lateral vuelve, pero ahora la activa
    assets/js/waise.js añadiendo la clase `waise-sidebar-ready` a <html> SOLO
@@ -399,19 +405,24 @@ progress::-webkit-progress-value,
 }
 
 /* -------------------------------------- Sidebar lateral (activada por JS) -- */
-/* Nada de esto se aplica sin la clase `waise-sidebar-ready` en <html>, que
-   añade assets/js/waise.js únicamente cuando ha encontrado el contenedor real
-   del menú del servidor. Si el JS falla, no carga o no encuentra nada, el
-   panel se queda exactamente como está arriba: barra superior nativa. */
+/* Nada de esto se aplica sin uno de los dos gates que añade a <html>
+   assets/js/waise.js, y solo cuando ha encontrado el contenedor real:
+     - `waise-sidebar-ready` -> la columna la ocupa el menú del servidor.
+     - `waise-mainnav-ready` -> la columna la ocupa la barra principal
+       (dashboard, cuenta, API, admin).
+   Si el JS falla, no carga o no encuentra nada, el panel se queda exactamente
+   como está arriba: barra superior nativa. */
 
-html.waise-sidebar-ready {
+html.waise-sidebar-ready,
+html.waise-mainnav-ready {
     --waise-sidebar-w: 248px;
 }
 
 @media (min-width: 1024px) {
     /* Desplaza TODO el contenido (incluida la barra superior) para dejar
        hueco a la columna fija. */
-    html.waise-sidebar-ready body {
+    html.waise-sidebar-ready body,
+    html.waise-mainnav-ready body {
         padding-inline-start: var(--waise-sidebar-w);
     }
 
@@ -428,7 +439,8 @@ html.waise-sidebar-ready {
         backdrop-filter: none !important;
     }
 
-    html.waise-sidebar-ready .waise-server-nav {
+    html.waise-sidebar-ready .waise-server-nav,
+    html.waise-mainnav-ready .waise-main-nav {
         position: fixed;
         top: 0;
         bottom: 0;
@@ -454,7 +466,8 @@ html.waise-sidebar-ready {
         box-shadow: 8px 0 30px -22px rgba(0, 0, 0, 0.9);
     }
 
-    html.waise-sidebar-ready .waise-server-nav::before {
+    html.waise-sidebar-ready .waise-server-nav::before,
+    html.waise-mainnav-ready .waise-main-nav::before {
         content: "Servidor";
         display: block;
         padding: 0 14px 10px;
@@ -466,16 +479,26 @@ html.waise-sidebar-ready {
         opacity: 0.75;
     }
 
+    /* Misma cabecera, distinta etiqueta: en las páginas normales la columna no
+       pertenece a un servidor, es la navegación del panel. */
+    html.waise-mainnav-ready .waise-main-nav::before {
+        content: "Panel";
+    }
+
     /* Los hijos no deben estirarse ni encogerse en vertical. */
-    html.waise-sidebar-ready .waise-server-nav > * {
+    html.waise-sidebar-ready .waise-server-nav > *,
+    html.waise-mainnav-ready .waise-main-nav > * {
         flex: 0 0 auto;
         width: 100%;
         max-width: 100%;
     }
 
-    html.waise-sidebar-ready .waise-server-nav a {
+    html.waise-sidebar-ready .waise-server-nav a,
+    html.waise-mainnav-ready .waise-main-nav a,
+    html.waise-mainnav-ready .waise-main-nav button {
         display: flex;
         align-items: center;
+        justify-content: flex-start;
         gap: 10px;
         width: 100%;
         min-height: 42px;
@@ -492,21 +515,47 @@ html.waise-sidebar-ready {
         text-overflow: ellipsis;
     }
 
+    /* La barra principal mezcla enlaces con botones (buscar, cerrar sesión):
+       se igualan visualmente sin ocultarlos ni quitarles el foco. */
+    html.waise-mainnav-ready .waise-main-nav button {
+        background-color: transparent !important;
+        background-image: none !important;
+        box-shadow: none !important;
+        transform: none;
+        cursor: pointer;
+    }
+
+    /* Los iconos SVG no deben estirarse al pasar a filas de ancho completo. */
+    html.waise-mainnav-ready .waise-main-nav a svg,
+    html.waise-mainnav-ready .waise-main-nav button svg {
+        flex: 0 0 auto;
+        width: 18px;
+        height: 18px;
+    }
+
     html.waise-sidebar-ready .waise-server-nav a:hover,
-    html.waise-sidebar-ready .waise-server-nav a:focus-visible {
+    html.waise-sidebar-ready .waise-server-nav a:focus-visible,
+    html.waise-mainnav-ready .waise-main-nav a:hover,
+    html.waise-mainnav-ready .waise-main-nav a:focus-visible,
+    html.waise-mainnav-ready .waise-main-nav button:hover,
+    html.waise-mainnav-ready .waise-main-nav button:focus-visible {
         color: #fff;
-        background-color: rgba(255, 255, 255, 0.06);
+        background-color: rgba(255, 255, 255, 0.06) !important;
     }
 
     /* En vertical el subrayado inferior del tema base no aplica: se sustituye
        por una pastilla con barra lateral de acento. */
-    html.waise-sidebar-ready .waise-server-nav a::after {
+    html.waise-sidebar-ready .waise-server-nav a::after,
+    html.waise-mainnav-ready .waise-main-nav a::after {
         content: none !important;
     }
 
     html.waise-sidebar-ready .waise-server-nav a.active,
     html.waise-sidebar-ready .waise-server-nav a[class*="active"],
-    html.waise-sidebar-ready .waise-server-nav a[aria-current="page"] {
+    html.waise-sidebar-ready .waise-server-nav a[aria-current="page"],
+    html.waise-mainnav-ready .waise-main-nav a.active,
+    html.waise-mainnav-ready .waise-main-nav a[class*="active"],
+    html.waise-mainnav-ready .waise-main-nav a[aria-current="page"] {
         color: #fff;
         background-image: linear-gradient(90deg, rgba(111, 92, 255, 0.32), rgba(23, 201, 201, 0.12));
         box-shadow: inset 3px 0 0 0 var(--waise-accent);
@@ -516,7 +565,8 @@ html.waise-sidebar-ready {
 /* Por debajo de 1024px no hay sidebar: el menú se queda en su fila original,
    solo se garantiza que se pueda desplazar si no cabe. */
 @media (max-width: 1023px) {
-    html.waise-sidebar-ready .waise-server-nav {
+    html.waise-sidebar-ready .waise-server-nav,
+    html.waise-mainnav-ready .waise-main-nav {
         overflow-x: auto;
         overscroll-behavior-x: contain;
     }
@@ -600,11 +650,13 @@ html.waise-sidebar-ready {
     body::before,
     #navigation,
     #sub-navigation,
-    .waise-server-nav {
+    .waise-server-nav,
+    .waise-main-nav {
         display: none !important;
     }
 
-    html.waise-sidebar-ready body {
+    html.waise-sidebar-ready body,
+    html.waise-mainnav-ready body {
         padding-inline-start: 0 !important;
     }
 }

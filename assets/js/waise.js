@@ -1,19 +1,34 @@
 /* =========================================================================
-   Waise Theme v1.2.0 - Sidebar lateral del panel de cliente (Pterodactyl)
+   Waise Theme v1.3.0 - Sidebar lateral del panel de cliente (Pterodactyl)
 
-   Por qué existe este archivo:
-   El panel es una SPA con styled-components; la sub-navegación del servidor
-   NO tiene un id estable como `#sub-navigation`, así que cualquier CSS que
-   dependa de ese id falla en silencio y deja el layout a medias. Aquí se
-   localiza el contenedor real por los enlaces que contiene y solo entonces
-   se activa el layout de sidebar.
+   Qué hace:
+   - Dentro de un servidor: el menú del servidor (Consola, Archivos, Bases de
+     datos...) pasa a la columna lateral fija.
+   - En las páginas normales (dashboard, cuenta, API, admin): la barra de
+     navegación principal pasa a esa misma columna.
+   Nunca las dos a la vez: si existe menú de servidor, él ocupa la columna y la
+   barra principal se queda arriba, para que no se peleen por el mismo hueco.
+
+   Por qué se detecta por enlaces y no por ids:
+   El panel es una SPA con styled-components. `#sub-navigation` no existe en
+   todas las versiones y `#navigation` tampoco es fiable, así que cualquier CSS
+   que dependa de esos ids falla en silencio y deja el layout a medias (eso
+   rompió la v1.1.0). Aquí se localiza el contenedor real por los enlaces que
+   contiene y solo entonces se activa el layout.
+
+   Discriminantes:
+   - Menú de servidor: 3+ enlaces que apuntan AL MISMO servidor (unique === 1).
+     La lista del dashboard apunta a servidores distintos, así que no cuela.
+   - Barra principal: 2+ rutas DISTINTAS fuera de /server/... y con un enlace a
+     "/" presente. Las sub-pestañas de /account no enlazan a "/", así que no se
+     confunden con la barra.
 
    Reglas de seguridad que sigue este script:
    - NO mueve nodos del DOM. React destruye nodos con parent.removeChild();
      reparentar el menú provocaría NotFoundError (pantalla en blanco) al
      navegar. Aquí solo se añaden/quitan clases.
-   - Si no encuentra el contenedor, quita la clase de <html> y el panel se
-     queda en su diseño nativo: nunca en un estado intermedio roto.
+   - Si no encuentra nada, quita las clases de <html> y el panel se queda en su
+     diseño nativo: nunca en un estado intermedio roto.
    - Cualquier excepción desactiva el layout en lugar de dejarlo a medias.
    - Interruptor manual: localStorage['waise-sidebar'] = 'off'
      (o WaiseTheme.disable() desde la consola del navegador).
@@ -21,17 +36,31 @@
 (function () {
     'use strict';
 
-    var HTML_READY  = 'waise-sidebar-ready';
+    var HTML_SERVER = 'waise-sidebar-ready';
+    var HTML_MAIN   = 'waise-mainnav-ready';
     var NAV_CLASS   = 'waise-server-nav';
+    var MAIN_CLASS  = 'waise-main-nav';
     var HOST_CLASS  = 'waise-nav-host';
     var STORAGE_KEY = 'waise-sidebar';
 
     /* Mínimo de enlaces del mismo servidor para considerarlo un menú y no un
        enlace suelto (Consola, Archivos, Bases de datos... siempre son >= 3). */
-    var MIN_LINKS = 3;
+    var MIN_SERVER_LINKS = 3;
+
+    /* La barra principal puede tener muy pocos enlaces (inicio + cuenta). */
+    var MIN_MAIN_LINKS = 2;
+
+    /* Cotas de seguridad: un contenedor con demasiados hijos no es una barra de
+       navegación, es un envoltorio de página; convertirlo en columna rompería
+       el layout. Lo mismo para el host que se neutraliza. */
+    var MAX_MAIN_CHILDREN = 12;
+    var MAX_HOST_CHILDREN = 3;
 
     /* /server/<id> o /server/<id>/<subpagina> */
     var SERVER_PATH = /^\/server\/([^/?#]+)(?:\/|$)/;
+
+    /* Rutas de primer nivel del área de cliente. */
+    var MAIN_PATH = /^\/(?:$|account(?:\/|$)|admin(?:\/|$)|auth\/logout\/?$)/;
 
     function isDisabled() {
         try {
@@ -54,22 +83,45 @@
             node.id !== 'app';
     }
 
-    function serverIdOf(anchor) {
+    /* El host es el elemento que envuelve la barra y que hay que neutralizar
+       (queda vacío al pasar su contenido a posición fija). Debe ser pequeño: si
+       tiene muchos hijos es contenido de la página, no la franja de la barra. */
+    function isEligibleHost(node) {
+        return isEligibleContainer(node) && node.children.length <= MAX_HOST_CHILDREN;
+    }
+
+    function pathnameOf(anchor) {
         var href = anchor.getAttribute('href');
         if (!href) {
             return null;
         }
-        var pathname;
         try {
-            pathname = new URL(href, window.location.origin).pathname;
+            return new URL(href, window.location.origin).pathname;
         } catch (err) {
+            return null;
+        }
+    }
+
+    /* Clave de agrupación del menú de servidor: el id del servidor. */
+    function serverKeyOf(anchor) {
+        var pathname = pathnameOf(anchor);
+        if (!pathname) {
             return null;
         }
         var match = SERVER_PATH.exec(pathname);
         return match ? match[1] : null;
     }
 
-    function register(groups, node, serverId, depth) {
+    /* Clave de agrupación de la barra principal: la propia ruta. */
+    function mainKeyOf(anchor) {
+        var pathname = pathnameOf(anchor);
+        if (!pathname || SERVER_PATH.test(pathname)) {
+            return null;
+        }
+        return MAIN_PATH.test(pathname) ? pathname : null;
+    }
+
+    function register(groups, node, key, depth) {
         if (!isEligibleContainer(node)) {
             return;
         }
@@ -82,39 +134,40 @@
         if (depth < group.depth) {
             group.depth = depth;
         }
-        if (!group.ids[serverId]) {
-            group.ids[serverId] = true;
+        if (!group.ids[key]) {
+            group.ids[key] = true;
             group.unique += 1;
         }
     }
 
-    /**
-     * Devuelve el contenedor de la sub-navegación del servidor, o null.
-     *
-     * Discriminante clave: el menú del servidor apunta MUCHAS veces al MISMO
-     * servidor (distintas subpáginas), mientras que la lista del dashboard
-     * apunta a servidores DISTINTOS. Por eso se exige unique === 1.
-     */
-    function findServerNav() {
-        var anchors = document.querySelectorAll('a[href*="/server/"]');
+    /* Agrupa los enlaces por contenedor.
+       depth 0: enlaces hermanos directos.
+       depth 1: cada enlace envuelto en su propio <div>. */
+    function collect(keyOf) {
+        var anchors = document.querySelectorAll('a[href]');
         var groups = new Map();
         var i;
 
         for (i = 0; i < anchors.length; i++) {
-            var serverId = serverIdOf(anchors[i]);
-            if (!serverId) {
+            var key = keyOf(anchors[i]);
+            if (!key) {
                 continue;
             }
             var parent = anchors[i].parentElement;
-            /* depth 0: enlaces hermanos directos.
-               depth 1: cada enlace envuelto en su propio <div>. */
-            register(groups, parent, serverId, 0);
-            register(groups, parent ? parent.parentElement : null, serverId, 1);
+            register(groups, parent, key, 0);
+            register(groups, parent ? parent.parentElement : null, key, 1);
         }
 
+        return groups;
+    }
+
+    /* Gana el candidato más cercano a los enlaces (depth menor) y, a igualdad,
+       el que más enlaces agrupa. */
+    function pick(groups, accept) {
         var best = null;
+
         groups.forEach(function (group, node) {
-            if (group.count < MIN_LINKS || group.unique !== 1) {
+            if (!accept(group, node)) {
                 return;
             }
             if (best) {
@@ -131,6 +184,21 @@
         return best ? best.node : null;
     }
 
+    function findServerNav() {
+        return pick(collect(serverKeyOf), function (group) {
+            return group.count >= MIN_SERVER_LINKS && group.unique === 1;
+        });
+    }
+
+    function findMainNav() {
+        return pick(collect(mainKeyOf), function (group, node) {
+            return group.count >= MIN_MAIN_LINKS &&
+                group.unique >= 2 &&
+                group.ids['/'] === true &&
+                node.children.length <= MAX_MAIN_CHILDREN;
+        });
+    }
+
     function removeClassFrom(selector, className, keep) {
         var nodes = document.querySelectorAll(selector);
         for (var i = 0; i < nodes.length; i++) {
@@ -141,8 +209,11 @@
     }
 
     function clear() {
-        document.documentElement.classList.remove(HTML_READY);
+        var root = document.documentElement;
+        root.classList.remove(HTML_SERVER);
+        root.classList.remove(HTML_MAIN);
         removeClassFrom('.' + NAV_CLASS, NAV_CLASS, null);
+        removeClassFrom('.' + MAIN_CLASS, MAIN_CLASS, null);
         removeClassFrom('.' + HOST_CLASS, HOST_CLASS, null);
     }
 
@@ -152,23 +223,40 @@
             return;
         }
 
-        var nav = findServerNav();
-        var host = nav && isEligibleContainer(nav.parentElement) ? nav.parentElement : null;
+        var root = document.documentElement;
+        var serverNav = findServerNav();
+        /* Dentro de un servidor la columna es del menú del servidor; la barra
+           principal se queda donde está. */
+        var mainNav = serverNav ? null : findMainNav();
+        var host = null;
 
-        removeClassFrom('.' + NAV_CLASS, NAV_CLASS, nav);
-        removeClassFrom('.' + HOST_CLASS, HOST_CLASS, host);
-
-        if (!nav) {
-            /* Página sin menú de servidor (dashboard, cuenta...): layout nativo. */
-            document.documentElement.classList.remove(HTML_READY);
-            return;
+        if (serverNav) {
+            host = isEligibleContainer(serverNav.parentElement) ? serverNav.parentElement : null;
+        } else if (mainNav) {
+            host = isEligibleHost(mainNav.parentElement) ? mainNav.parentElement : null;
         }
 
-        nav.classList.add(NAV_CLASS);
+        removeClassFrom('.' + NAV_CLASS, NAV_CLASS, serverNav);
+        removeClassFrom('.' + MAIN_CLASS, MAIN_CLASS, mainNav);
+        removeClassFrom('.' + HOST_CLASS, HOST_CLASS, host);
+
+        if (serverNav) {
+            serverNav.classList.add(NAV_CLASS);
+            root.classList.add(HTML_SERVER);
+        } else {
+            root.classList.remove(HTML_SERVER);
+        }
+
+        if (mainNav) {
+            mainNav.classList.add(MAIN_CLASS);
+            root.classList.add(HTML_MAIN);
+        } else {
+            root.classList.remove(HTML_MAIN);
+        }
+
         if (host) {
             host.classList.add(HOST_CLASS);
         }
-        document.documentElement.classList.add(HTML_READY);
     }
 
     var scheduled = false;
@@ -229,6 +317,15 @@
             window.localStorage.removeItem(STORAGE_KEY);
         } catch (err) { /* idem */ }
         schedule();
+    };
+    /* Diagnóstico rápido desde la consola si algo no se detecta. */
+    window.WaiseTheme.inspect = function () {
+        var serverNav = findServerNav();
+        return {
+            serverNav: serverNav,
+            mainNav: serverNav ? null : findMainNav(),
+            disabled: isDisabled()
+        };
     };
 
     if (document.readyState === 'loading') {
