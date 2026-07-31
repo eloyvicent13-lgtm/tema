@@ -5,7 +5,7 @@
 # Este archivo se carga con `source`, no se ejecuta directamente.
 
 WAISE_NAME="Waise Theme"
-WAISE_VERSION="1.3.4"
+WAISE_VERSION="1.3.5"
 
 # Repositorio usado por `waise upgrade`. Se puede sobrescribir exportando
 # WAISE_REPO_URL / WAISE_REPO_BRANCH antes de ejecutar el comando.

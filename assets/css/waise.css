@@ -602,7 +602,9 @@ html.waise-mainnav-ready {
        no aplica: nunca hay rótulo duplicado. */
     html.waise-mainnav-ready .waise-main-nav a[data-waise-label]::after,
     html.waise-mainnav-ready .waise-main-nav button[data-waise-label]::after {
-        content: attr(data-waise-label);
+        /* !important obligatorio: más abajo se anula el ::after decorativo del
+           tema base con content: none !important y sin esto lo borraría también. */
+        content: attr(data-waise-label) !important;
         flex: 0 1 auto;
         min-width: 0;
         overflow: hidden;
@@ -632,9 +634,11 @@ html.waise-mainnav-ready {
     }
 
     /* En vertical el subrayado inferior del tema base no aplica: se sustituye
-       por una pastilla con barra lateral de acento. */
+       por una pastilla con barra lateral de acento. Se excluyen los elementos
+       rotulados por el JS, cuyo ::after es el nombre del enlace, no adorno. */
     html.waise-sidebar-ready .waise-server-nav a::after,
-    html.waise-mainnav-ready .waise-main-nav a::after {
+    html.waise-mainnav-ready .waise-main-nav a:not([data-waise-label])::after,
+    html.waise-mainnav-ready .waise-main-nav button:not([data-waise-label])::after {
         content: none !important;
     }
 
