@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # ---------------------------------------------------------------------------
 # Waise Theme - funciones comunes compartidas por install.sh / uninstall.sh
 # ---------------------------------------------------------------------------
@@ -6,20 +6,20 @@
 
 WAISE_NAME="Waise Theme"
 
-# La versi├│n vive en el archivo VERSION: es la ├║nica fuente de verdad (la lee
+# La versiâ”œâ”‚n vive en el archivo VERSION: es la â”œâ•‘nica fuente de verdad (la lee
 # `waise upgrade` del repositorio descargado para comparar). Se toma de la copia
-# que acompa├▒a a este lib/, que existe tanto en el repositorio como en
+# que acompaâ”œâ–’a a este lib/, que existe tanto en el repositorio como en
 # /usr/local/share/waise-theme, porque install.sh copia VERSION junto a lib/.
-# El valor de abajo es solo la reserva por si el archivo falta o est├í corrupto:
-# as├¡ el banner y `waise status` nunca quedan sin versi├│n.
-WAISE_VERSION="1.5.0"
+# El valor de abajo es solo la reserva por si el archivo falta o estâ”œÃ­ corrupto:
+# asâ”œÂ¡ el banner y `waise status` nunca quedan sin versiâ”œâ”‚n.
+WAISE_VERSION="1.5.2"
 
-# Sin `|| ...` de reserva, un fallo de la sustituci├│n abortar├¡a el script que
+# Sin `|| ...` de reserva, un fallo de la sustituciâ”œâ”‚n abortarâ”œÂ¡a el script que
 # hace `source` de este archivo (install.sh usa `set -e`).
 _waise_lib_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" 2>/dev/null && pwd)" || _waise_lib_dir=""
 if [[ -n "$_waise_lib_dir" && -r "${_waise_lib_dir}/../VERSION" ]]; then
     _waise_version_file="$(tr -d ' \t\r\n' < "${_waise_lib_dir}/../VERSION")" || _waise_version_file=""
-    # Se exige el formato x.y.z para no publicar como versi├│n un archivo con
+    # Se exige el formato x.y.z para no publicar como versiâ”œâ”‚n un archivo con
     # basura (un merge a medias, por ejemplo).
     if [[ "$_waise_version_file" =~ ^[0-9]+\.[0-9]+\.[0-9]+([-+][0-9A-Za-z.]+)?$ ]]; then
         WAISE_VERSION="$_waise_version_file"
@@ -39,15 +39,15 @@ WAISE_MARKER_END="WAISE-THEME:END"
 WAISE_STATE_DIR="/var/lib/waise-theme"
 WAISE_STATE_FILE="${WAISE_STATE_DIR}/state.env"
 WAISE_BACKUP_ROOT="${WAISE_STATE_DIR}/backups"
-# Cach├® del repositorio gestionada por el propio tema (la usa `waise upgrade`).
+# Cachâ”œÂ® del repositorio gestionada por el propio tema (la usa `waise upgrade`).
 WAISE_SRC_DIR="${WAISE_STATE_DIR}/src"
 WAISE_SHARE_DIR="/usr/local/share/waise-theme"
 WAISE_BIN_PATH="/usr/local/bin/waise"
 
-# Carpeta p├║blica (dentro de <panel>/public) donde viven los assets del tema.
+# Carpeta pâ”œâ•‘blica (dentro de <panel>/public) donde viven los assets del tema.
 WAISE_PUBLIC_SUBDIR="waise"
 
-# Vistas Blade en las que se inyecta el tema (relativas a la ra├¡z del panel).
+# Vistas Blade en las que se inyecta el tema (relativas a la raâ”œÂ¡z del panel).
 WAISE_CLIENT_VIEW="resources/views/templates/wrapper.blade.php"
 WAISE_ADMIN_VIEW="resources/views/layouts/admin.blade.php"
 
@@ -161,23 +161,23 @@ waise_artisan() {
     local dir="$1"; shift
     local user="$1"; shift
     if ! command -v php >/dev/null 2>&1; then
-        waise_warn "No se encontr├│ PHP en el PATH; omitiendo 'artisan $*'."
+        waise_warn "No se encontrâ”œâ”‚ PHP en el PATH; omitiendo 'artisan $*'."
         return 0
     fi
     if [[ -n "$user" && "$user" != "root" ]] && command -v sudo >/dev/null 2>&1; then
         ( cd "$dir" && sudo -u "$user" php artisan "$@" >/dev/null 2>&1 ) && return 0
     fi
     ( cd "$dir" && php artisan "$@" >/dev/null 2>&1 ) && return 0
-    waise_warn "No se pudo ejecutar 'php artisan $*'. Ejec├║talo manualmente en ${dir}."
+    waise_warn "No se pudo ejecutar 'php artisan $*'. Ejecâ”œâ•‘talo manualmente en ${dir}."
     return 0
 }
 
 waise_clear_caches() {
     local dir="$1" user="$2"
-    waise_log "Limpiando cach├®s del panel..."
+    waise_log "Limpiando cachâ”œÂ®s del panel..."
     waise_artisan "$dir" "$user" view:clear
     waise_artisan "$dir" "$user" cache:clear
-    waise_ok "Cach├®s limpiadas."
+    waise_ok "Cachâ”œÂ®s limpiadas."
 }
 
 # waise_backup_file <panel_dir> <ruta_relativa> <backup_dir>
@@ -237,7 +237,7 @@ waise_inject_block() {
             }
         ' "$file" > "$tmp"
     else
-        # Sin </head> (vista at├¡pica o modificada por un addon): se a├▒ade al final.
+        # Sin </head> (vista atâ”œÂ¡pica o modificada por un addon): se aâ”œâ–’ade al final.
         cat "$file" "$block_file" > "$tmp"
     fi
     cat "$tmp" > "$file"
@@ -247,7 +247,7 @@ waise_inject_block() {
 }
 
 # waise_upgrade_from_git [args extra para install.sh]
-# Descarga la ├║ltima versi├│n del repositorio en WAISE_SRC_DIR y reinstala el
+# Descarga la â”œâ•‘ltima versiâ”œâ”‚n del repositorio en WAISE_SRC_DIR y reinstala el
 # tema conservando la ruta del panel y los colores guardados en el estado.
 waise_upgrade_from_git() {
     waise_require_cmds git bash
@@ -266,9 +266,9 @@ waise_upgrade_from_git() {
         waise_log "Descargando cambios de ${WAISE_REPO_URL} (${WAISE_REPO_BRANCH})..."
         git -C "$WAISE_SRC_DIR" remote set-url origin "$WAISE_REPO_URL" >/dev/null 2>&1 || true
         if ! git -C "$WAISE_SRC_DIR" fetch --depth 1 origin "$WAISE_REPO_BRANCH"; then
-            waise_die "No se pudo contactar con ${WAISE_REPO_URL}. Revisa la conexi├│n o la URL."
+            waise_die "No se pudo contactar con ${WAISE_REPO_URL}. Revisa la conexiâ”œâ”‚n o la URL."
         fi
-        # WAISE_SRC_DIR es una cach├® interna del tema, nunca un repo del usuario.
+        # WAISE_SRC_DIR es una cachâ”œÂ® interna del tema, nunca un repo del usuario.
         git -C "$WAISE_SRC_DIR" reset --hard "origin/${WAISE_REPO_BRANCH}" >/dev/null
         git -C "$WAISE_SRC_DIR" clean -qfd
     else
@@ -322,7 +322,7 @@ waise_status() {
         # shellcheck disable=SC1090
         source "$WAISE_STATE_FILE"
         printf '  Estado          : %sinstalado%s\n' "$C_GREEN" "$C_RESET"
-        printf '  Versi├│n activa  : %s\n' "${STATE_VERSION:-desconocida}"
+        printf '  Versiâ”œâ”‚n activa  : %s\n' "${STATE_VERSION:-desconocida}"
         printf '  Instalado el    : %s\n' "${STATE_INSTALLED_AT:-desconocido}"
         printf '  Acento          : %s / %s\n' "${STATE_ACCENT:-?}" "${STATE_ACCENT_2:-?}"
         printf '  Backup          : %s\n' "${STATE_BACKUP_DIR:-ninguno}"
@@ -346,9 +346,9 @@ waise_status() {
     local view
     for view in "$WAISE_CLIENT_VIEW" "$WAISE_ADMIN_VIEW"; do
         if waise_has_block "${panel}/${view}"; then
-            printf '  Inyecci├│n       : %sOK%s  %s\n' "$C_GREEN" "$C_RESET" "$view"
+            printf '  Inyecciâ”œâ”‚n       : %sOK%s  %s\n' "$C_GREEN" "$C_RESET" "$view"
         else
-            printf '  Inyecci├│n       : %sausente%s  %s\n' "$C_YELLOW" "$C_RESET" "$view"
+            printf '  Inyecciâ”œâ”‚n       : %sausente%s  %s\n' "$C_YELLOW" "$C_RESET" "$view"
         fi
     done
 
