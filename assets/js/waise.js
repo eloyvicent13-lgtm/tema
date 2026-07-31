@@ -1,5 +1,5 @@
 /* =========================================================================
-   Waise Theme v1.3.0 - Sidebar lateral del panel de cliente (Pterodactyl)
+   Waise Theme v1.3.1 - Sidebar lateral del panel de cliente (Pterodactyl)
 
    Qué hace:
    - Dentro de un servidor: el menú del servidor (Consola, Archivos, Bases de
@@ -41,6 +41,7 @@
     var NAV_CLASS   = 'waise-server-nav';
     var MAIN_CLASS  = 'waise-main-nav';
     var HOST_CLASS  = 'waise-nav-host';
+    var CLEAR_CLASS = 'waise-nav-clear';
     var STORAGE_KEY = 'waise-sidebar';
 
     /* Mínimo de enlaces del mismo servidor para considerarlo un menú y no un
@@ -199,6 +200,92 @@
         });
     }
 
+    /* Se pone a true si la columna no consigue colocarse: entonces se deja el
+       layout nativo y no se vuelve a intentar hasta navegar o redimensionar. */
+    var giveUp = false;
+
+    function getStyle(node) {
+        try {
+            return window.getComputedStyle(node) || {};
+        } catch (err) {
+            return {};
+        }
+    }
+
+    function cssValue(style, prop) {
+        if (style && typeof style.getPropertyValue === 'function') {
+            return style.getPropertyValue(prop) || '';
+        }
+        return '';
+    }
+
+    /* Propiedades que convierten a un ancestro en bloque contenedor de los
+       elementos `position: fixed`. Si una está activa, la columna se posiciona
+       respecto a ese ancestro (queda pequeña y arriba) en vez de a la ventana. */
+    var CB_PROPS = [
+        'transform',
+        'filter',
+        'backdrop-filter',
+        '-webkit-backdrop-filter',
+        'perspective'
+    ];
+
+    function createsContainingBlock(style) {
+        for (var i = 0; i < CB_PROPS.length; i++) {
+            var value = cssValue(style, CB_PROPS[i]);
+            if (value && value !== 'none') {
+                return true;
+            }
+        }
+        if (/paint|layout|strict|content/.test(cssValue(style, 'contain'))) {
+            return true;
+        }
+        return /transform|filter|perspective/.test(cssValue(style, 'will-change'));
+    }
+
+    /**
+     * Marca con CLEAR_CLASS los ancestros de la columna que romperían el
+     * `position: fixed`, y desmarca los que ya no lo son. Devuelve la lista.
+     */
+    function unclipAncestors(nav) {
+        var kept = [];
+        var node = nav ? nav.parentElement : null;
+
+        while (isElement(node) && node !== document.body) {
+            /* Si ya está marcado, su estilo actual está neutralizado por
+               nuestra propia regla: se mantiene la marca en lugar de volver a
+               medirlo, o entraría en un ciclo de poner y quitar la clase. */
+            if (node.classList.contains(CLEAR_CLASS) || createsContainingBlock(getStyle(node))) {
+                kept.push(node);
+            }
+            node = node.parentElement;
+        }
+
+        var marked = document.querySelectorAll('.' + CLEAR_CLASS);
+        for (var i = 0; i < marked.length; i++) {
+            if (kept.indexOf(marked[i]) === -1) {
+                marked[i].classList.remove(CLEAR_CLASS);
+            }
+        }
+        for (var j = 0; j < kept.length; j++) {
+            kept[j].classList.add(CLEAR_CLASS);
+        }
+
+        return kept;
+    }
+
+    /* Comprueba que la columna ha quedado de verdad en la lateral y a alto
+       completo. Por debajo de 1024px no hay columna, así que siempre pasa. */
+    function verify(nav) {
+        if (!nav || window.innerWidth < 1024) {
+            return true;
+        }
+        var rect = nav.getBoundingClientRect();
+        return rect.top <= 2 &&
+            rect.width >= 160 &&
+            rect.height >= window.innerHeight * 0.6;
+    }
+
     function removeClassFrom(selector, className, keep) {
         var nodes = document.querySelectorAll(selector);
         for (var i = 0; i < nodes.length; i++) {
@@ -215,10 +302,11 @@
         removeClassFrom('.' + NAV_CLASS, NAV_CLASS, null);
         removeClassFrom('.' + MAIN_CLASS, MAIN_CLASS, null);
         removeClassFrom('.' + HOST_CLASS, HOST_CLASS, null);
+        removeClassFrom('.' + CLEAR_CLASS, CLEAR_CLASS, null);
     }
 
     function apply() {
-        if (isDisabled()) {
+        if (isDisabled() || giveUp) {
             clear();
             return;
         }
@@ -256,6 +344,20 @@
 
         if (host) {
             host.classList.add(HOST_CLASS);
+        }
+
+        var target = serverNav || mainNav;
+        unclipAncestors(target);
+
+        /* Última red de seguridad: si tras neutralizar los ancestros la columna
+           sigue sin ocupar la lateral, se vuelve al layout nativo en lugar de
+           dejar un recuadro pequeño arriba. */
+        if (target && !verify(target)) {
+            giveUp = true;
+            clear();
+            if (window.console && typeof console.warn === 'function') {
+                console.warn('[waise] no se pudo colocar la columna lateral; layout nativo restaurado. Contenedor:', target);
+            }
         }
     }
 
@@ -297,11 +399,19 @@
         });
     }
 
+    /* Al navegar o cambiar el tamaño de la ventana se vuelve a intentar: el
+       DOM y el ancho disponible son distintos. */
+    function retry() {
+        giveUp = false;
+        schedule();
+    }
+
     function start() {
         observe();
         schedule();
-        window.addEventListener('popstate', schedule);
-        window.addEventListener('hashchange', schedule);
+        window.addEventListener('popstate', retry);
+        window.addEventListener('hashchange', retry);
+        window.addEventListener('resize', retry);
     }
 
     window.WaiseTheme = window.WaiseTheme || {};
@@ -316,14 +426,33 @@
         try {
             window.localStorage.removeItem(STORAGE_KEY);
         } catch (err) { /* idem */ }
+        giveUp = false;
         schedule();
     };
-    /* Diagnóstico rápido desde la consola si algo no se detecta. */
+    /* Diagnóstico rápido desde la consola si algo no se detecta o se coloca mal.
+       `blockers` son los ancestros que romperían el `position: fixed`; si ya
+       están neutralizados por CLEAR_CLASS, la lista sale vacía. */
     window.WaiseTheme.inspect = function () {
         var serverNav = findServerNav();
+        var mainNav = serverNav ? null : findMainNav();
+        var target = serverNav || mainNav;
+        var blockers = [];
+        var node = target ? target.parentElement : null;
+
+        while (isElement(node) && node !== document.body) {
+            if (createsContainingBlock(getStyle(node))) {
+                blockers.push(node);
+            }
+            node = node.parentElement;
+        }
+
         return {
             serverNav: serverNav,
-            mainNav: serverNav ? null : findMainNav(),
+            mainNav: mainNav,
+            rect: target ? target.getBoundingClientRect() : null,
+            cleared: document.querySelectorAll('.' + CLEAR_CLASS).length,
+            blockers: blockers,
+            gaveUp: giveUp,
             disabled: isDisabled()
         };
     };

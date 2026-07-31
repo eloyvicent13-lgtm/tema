@@ -1,6 +1,12 @@
 /* =========================================================================
-   Waise Theme v1.3.0 - Panel de cliente (Pterodactyl 1.14.x)
+   Waise Theme v1.3.1 - Panel de cliente (Pterodactyl 1.14.x)
    Estilo Arix-like: oscuro, semitransparente, bordes suaves y desenfoque.
+
+   NOTA v1.3.1: la clase `waise-nav-clear` (la pone el JS solo en los ancestros
+   afectados) anula transform/filter/backdrop-filter. Sin eso, esos ancestros
+   crean un bloque contenedor y `position: fixed` deja la columna pequeña
+   dentro de la barra superior en lugar de ocupar la lateral. El JS verifica la
+   posición final y, si no cuadra, restaura el layout nativo.
 
    NOTA v1.3.0: la columna lateral también se usa en las páginas normales
    (dashboard, cuenta, API), donde la ocupa la barra de navegación principal
@@ -437,6 +443,21 @@ html.waise-mainnav-ready {
         min-height: 0 !important;
         -webkit-backdrop-filter: none !important;
         backdrop-filter: none !important;
+    }
+
+    /* Ancestros neutralizados para que `position: fixed` se refiera a la
+       ventana. Solo los marca el JS, así que el resto del desenfoque del tema
+       se mantiene intacto. */
+    html.waise-sidebar-ready .waise-nav-clear,
+    html.waise-mainnav-ready .waise-nav-clear {
+        transform: none !important;
+        filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        backdrop-filter: none !important;
+        perspective: none !important;
+        contain: none !important;
+        will-change: auto !important;
+        overflow: visible !important;
     }
 
     html.waise-sidebar-ready .waise-server-nav,
