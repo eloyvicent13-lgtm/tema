@@ -1,5 +1,5 @@
 /* =========================================================================
-   Waise Theme v1.3.1 - Panel de cliente (Pterodactyl 1.14.x)
+   Waise Theme v1.3.2 - Panel de cliente (Pterodactyl 1.14.x)
    Estilo Arix-like: oscuro, semitransparente, bordes suaves y desenfoque.
 
    NOTA v1.3.1: la clase `waise-nav-clear` (la pone el JS solo en los ancestros
@@ -433,8 +433,11 @@ html.waise-mainnav-ready {
     }
 
     /* El contenedor original del menú se queda vacío al pasar sus hijos a
-       posición fija: se neutraliza para que no deje una franja con fondo. */
-    html.waise-sidebar-ready .waise-nav-host {
+       posición fija: se neutraliza para que no deje una franja con fondo.
+       v1.3.2: faltaba la variante de la barra principal, así que en el
+       dashboard el hueco seguía pintando su fondo. */
+    html.waise-sidebar-ready .waise-nav-host,
+    html.waise-mainnav-ready .waise-nav-host {
         background: transparent !important;
         border: 0 !important;
         box-shadow: none !important;
