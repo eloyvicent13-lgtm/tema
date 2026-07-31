@@ -1,0 +1,468 @@
+/* =========================================================================
+   Waise Theme v1.0.0 - Panel de cliente (Pterodactyl 1.11.x)
+   Estilo Arix-like: oscuro, semitransparente, bordes suaves y desenfoque.
+
+   Diseño de la hoja:
+   - Solo aditiva: no elimina clases ni reglas del panel, por lo que los
+     addons/plugins que inyecten su propio markup siguen funcionando.
+   - Se apoya en las utilidades Tailwind que Pterodactyl aplica en el JSX
+     (bg-neutral-*, bg-primary-*, text-neutral-*). Si una versión del panel
+     cambia esas clases, el tema degrada sin romper la interfaz.
+   - `!important` se usa exclusivamente en superficies y colores porque
+     styled-components inserta su <style> en tiempo de ejecución DESPUÉS de
+     este archivo, con la misma especificidad; es la única manera de ganar la
+     cascada sin modificar el código fuente del panel.
+   ========================================================================= */
+
+:root {
+    --waise-accent: #6f5cff;
+    --waise-accent-2: #17c9c9;
+
+    --waise-bg-0: #08090f;
+    --waise-bg-1: #0d0f1c;
+
+    --waise-glass-1: rgba(20, 23, 38, 0.62);
+    --waise-glass-2: rgba(28, 32, 52, 0.52);
+    --waise-glass-3: rgba(40, 45, 70, 0.44);
+    --waise-glass-solid: rgba(14, 16, 28, 0.9);
+
+    --waise-border: rgba(255, 255, 255, 0.08);
+    --waise-border-strong: rgba(255, 255, 255, 0.16);
+
+    --waise-text: #e8eaf6;
+    --waise-text-dim: #a4aac6;
+
+    --waise-radius: 14px;
+    --waise-radius-sm: 10px;
+    --waise-blur: 14px;
+    --waise-shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.75);
+    --waise-shadow-sm: 0 6px 18px -10px rgba(0, 0, 0, 0.6);
+    --waise-transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------------------------------------------------------------- Fondo -- */
+
+html {
+    scrollbar-color: var(--waise-accent) transparent;
+    scrollbar-width: thin;
+}
+
+body {
+    min-height: 100vh;
+    color: var(--waise-text);
+    background-color: var(--waise-bg-0);
+    background-image:
+        radial-gradient(1100px 620px at 12% -12%, rgba(111, 92, 255, 0.26), transparent 62%),
+        radial-gradient(900px 520px at 108% 4%, rgba(23, 201, 201, 0.16), transparent 58%),
+        linear-gradient(180deg, #0a0b15 0%, #0d0f1c 46%, #07080e 100%);
+    background-attachment: fixed;
+    background-size: cover;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+/* Capa decorativa: no intercepta clics ni afecta al layout. */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: url("../img/waise-bg.svg") center / cover no-repeat;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+#app {
+    background: transparent !important;
+    position: relative;
+    z-index: 0;
+}
+
+/* ---------------------------------------------------- Superficies base -- */
+
+.bg-neutral-900,
+.bg-neutral-800 {
+    background-color: var(--waise-glass-1) !important;
+    border-radius: var(--waise-radius);
+    border: 1px solid var(--waise-border);
+    -webkit-backdrop-filter: blur(var(--waise-blur)) saturate(140%);
+    backdrop-filter: blur(var(--waise-blur)) saturate(140%);
+    box-shadow: var(--waise-shadow);
+}
+
+.bg-neutral-700 {
+    background-color: var(--waise-glass-2) !important;
+    border-radius: var(--waise-radius-sm);
+    border: 1px solid var(--waise-border);
+    -webkit-backdrop-filter: blur(calc(var(--waise-blur) * 0.7));
+    backdrop-filter: blur(calc(var(--waise-blur) * 0.7));
+    box-shadow: var(--waise-shadow-sm);
+}
+
+.bg-neutral-600,
+.bg-neutral-500 {
+    background-color: var(--waise-glass-3) !important;
+    border-radius: var(--waise-radius-sm);
+}
+
+/* Divisores y bordes existentes, en versión sutil. */
+.border-neutral-500,
+.border-neutral-600,
+.border-neutral-700,
+.border-neutral-800,
+.border-neutral-900 {
+    border-color: var(--waise-border) !important;
+}
+
+/* Tipografía */
+.text-neutral-100,
+.text-neutral-200 { color: var(--waise-text) !important; }
+.text-neutral-300,
+.text-neutral-400 { color: #c3c8de !important; }
+.text-neutral-500 { color: var(--waise-text-dim) !important; }
+
+h1, h2, h3, h4 {
+    letter-spacing: -0.01em;
+}
+
+a {
+    transition: color var(--waise-transition), opacity var(--waise-transition);
+}
+
+/* --------------------------------------------------------- Navegación -- */
+
+#navigation,
+#sub-navigation {
+    background-color: var(--waise-glass-solid) !important;
+    border-bottom: 1px solid var(--waise-border);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    backdrop-filter: blur(18px) saturate(150%);
+    box-shadow: 0 8px 28px -18px rgba(0, 0, 0, 0.9);
+    border-radius: 0;
+}
+
+#navigation a,
+#sub-navigation a {
+    position: relative;
+    color: var(--waise-text-dim);
+    border-radius: var(--waise-radius-sm);
+}
+
+#navigation a:hover,
+#sub-navigation a:hover,
+#navigation a:focus-visible,
+#sub-navigation a:focus-visible {
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+#sub-navigation a[class*="active"]::after,
+#sub-navigation a.active::after {
+    content: "";
+    position: absolute;
+    inset-inline: 12%;
+    bottom: 0;
+    height: 2px;
+    border-radius: 2px;
+    background-image: linear-gradient(90deg, var(--waise-accent), var(--waise-accent-2));
+}
+
+/* -------------------------------------------------------------- Botones -- */
+
+button,
+.btn,
+input[type="submit"],
+input[type="button"] {
+    border-radius: var(--waise-radius-sm) !important;
+    transition: transform var(--waise-transition), box-shadow var(--waise-transition),
+                background-color var(--waise-transition), filter var(--waise-transition);
+}
+
+button:not(:disabled):hover,
+.btn:not(:disabled):hover {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+}
+
+button:not(:disabled):active,
+.btn:not(:disabled):active {
+    transform: translateY(0);
+    filter: brightness(0.96);
+}
+
+button:disabled,
+.btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.bg-primary-400,
+.bg-primary-500,
+.bg-primary-600,
+.bg-primary-700,
+.btn-primary {
+    background-image: linear-gradient(135deg, var(--waise-accent), var(--waise-accent-2)) !important;
+    background-color: var(--waise-accent) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    color: #fff !important;
+    box-shadow: 0 10px 26px -14px var(--waise-accent);
+}
+
+.text-primary-100,
+.text-primary-200,
+.text-primary-300,
+.text-primary-400,
+.text-primary-500 {
+    color: var(--waise-accent-2) !important;
+}
+
+/* Estados destructivos: se mantiene el rojo, solo se suaviza la forma. */
+.bg-red-500,
+.bg-red-600,
+.bg-red-700,
+.btn-red {
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    box-shadow: 0 10px 26px -14px rgba(239, 68, 68, 0.8);
+}
+
+/* ------------------------------------------------------ Formularios ---- */
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]),
+select,
+textarea {
+    background-color: rgba(9, 11, 20, 0.66) !important;
+    color: var(--waise-text) !important;
+    border: 1px solid var(--waise-border-strong) !important;
+    border-radius: var(--waise-radius-sm) !important;
+    box-shadow: none !important;
+    transition: border-color var(--waise-transition), box-shadow var(--waise-transition),
+                background-color var(--waise-transition);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: rgba(164, 170, 198, 0.7);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+    border-color: var(--waise-accent) !important;
+    box-shadow: 0 0 0 3px rgba(111, 92, 255, 0.28) !important;
+    outline: none;
+}
+
+/* Accesibilidad: foco visible por teclado en cualquier elemento interactivo. */
+a:focus-visible,
+button:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:not([tabindex="-1"]):focus-visible {
+    outline: 2px solid var(--waise-accent-2);
+    outline-offset: 2px;
+    border-radius: var(--waise-radius-sm);
+}
+
+/* ---------------------------------------------------------- Tablas ----- */
+
+table {
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+table thead th {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    color: var(--waise-text-dim) !important;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 0.72rem;
+    border-bottom: 1px solid var(--waise-border) !important;
+}
+
+table tbody tr {
+    transition: background-color var(--waise-transition);
+}
+
+table tbody tr:hover {
+    background-color: rgba(255, 255, 255, 0.045) !important;
+}
+
+table tbody td {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    /* Contenido largo (IPs, hashes, rutas) sin romper el layout. */
+    overflow-wrap: anywhere;
+}
+
+/* ------------------------------------------------- Tarjetas de servidor -- */
+
+a[href^="/server/"] .bg-neutral-700,
+a[href^="/server/"] .bg-neutral-800 {
+    transition: transform var(--waise-transition), border-color var(--waise-transition),
+                box-shadow var(--waise-transition);
+}
+
+a[href^="/server/"]:hover .bg-neutral-700,
+a[href^="/server/"]:hover .bg-neutral-800 {
+    transform: translateY(-2px);
+    border-color: var(--waise-border-strong);
+    box-shadow: 0 18px 40px -20px rgba(111, 92, 255, 0.55);
+}
+
+/* ----------------------------------------------------- Consola / xterm -- */
+
+.terminal,
+.xterm,
+.xterm-viewport,
+.xterm-screen {
+    background-color: transparent !important;
+}
+
+.xterm-viewport {
+    scrollbar-width: thin;
+}
+
+.terminal {
+    border-radius: var(--waise-radius);
+    padding: 4px 2px;
+}
+
+/* Barras de progreso / uso de recursos */
+progress,
+.progress {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-radius: 999px;
+    overflow: hidden;
+}
+
+progress::-webkit-progress-value,
+.progress > * {
+    background-image: linear-gradient(90deg, var(--waise-accent), var(--waise-accent-2)) !important;
+}
+
+/* ------------------------------------------------ Modales y tooltips ---- */
+
+[role="dialog"] > div,
+.modal-content {
+    background-color: var(--waise-glass-solid) !important;
+    border: 1px solid var(--waise-border-strong) !important;
+    border-radius: var(--waise-radius) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    backdrop-filter: blur(20px) saturate(150%);
+    box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.95);
+}
+
+.fixed.inset-0.bg-black,
+.bg-black.opacity-50,
+.bg-black\/50 {
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+
+/* ------------------------------------------------------- Scrollbars ---- */
+
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--waise-accent), var(--waise-accent-2));
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    filter: brightness(1.15);
+}
+
+::selection {
+    background: rgba(111, 92, 255, 0.45);
+    color: #fff;
+}
+
+/* ------------------------------------------------------- Responsive ---- */
+
+@media (max-width: 640px) {
+    :root {
+        --waise-blur: 8px;
+        --waise-radius: 12px;
+        --waise-radius-sm: 9px;
+    }
+
+    body::before {
+        opacity: 0.35;
+    }
+
+    /* Evita desbordes horizontales con nombres o rutas largas en móvil. */
+    #app :where(h1, h2, h3, p, span, code) {
+        overflow-wrap: anywhere;
+    }
+}
+
+@media (max-width: 1024px) {
+    #navigation,
+    #sub-navigation {
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+    }
+}
+
+/* --------------------------------------------- Fallbacks / preferencias -- */
+
+@supports not ((-webkit-backdrop-filter: blur(2px)) or (backdrop-filter: blur(2px))) {
+    .bg-neutral-900,
+    .bg-neutral-800 { background-color: rgba(16, 18, 31, 0.94) !important; }
+    .bg-neutral-700 { background-color: rgba(26, 29, 46, 0.94) !important; }
+    #navigation,
+    #sub-navigation { background-color: rgba(10, 12, 22, 0.97) !important; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+
+    button:hover,
+    .btn:hover,
+    a[href^="/server/"]:hover .bg-neutral-700 {
+        transform: none;
+    }
+}
+
+@media (prefers-contrast: more) {
+    :root {
+        --waise-glass-1: rgba(10, 12, 22, 0.96);
+        --waise-glass-2: rgba(18, 21, 34, 0.96);
+        --waise-border: rgba(255, 255, 255, 0.28);
+        --waise-text-dim: #cdd2e6;
+    }
+}
+
+/* RTL: los estilos usan propiedades lógicas (inset-inline, margin-inline),
+   por lo que el layout se refleja correctamente con dir="rtl". */
+[dir="rtl"] #sub-navigation a[class*="active"]::after {
+    inset-inline: 12%;
+}
+
+@media print {
+    body {
+        background: #fff !important;
+        color: #000 !important;
+    }
+
+    body::before,
+    #navigation,
+    #sub-navigation {
+        display: none !important;
+    }
+}

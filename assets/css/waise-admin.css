@@ -1,0 +1,602 @@
+/* =========================================================================
+   Waise Theme v1.0.0 - Panel de administración (AdminLTE / Blade)
+   Mismo lenguaje visual que el panel de cliente: cristal oscuro y acentos.
+   Solo aditiva: no se elimina ninguna clase ni regla de AdminLTE.
+   ========================================================================= */
+
+:root {
+    --waise-accent: #6f5cff;
+    --waise-accent-2: #17c9c9;
+
+    --waise-glass-1: rgba(20, 23, 38, 0.66);
+    --waise-glass-2: rgba(28, 32, 52, 0.55);
+    --waise-glass-solid: rgba(13, 15, 26, 0.92);
+
+    --waise-border: rgba(255, 255, 255, 0.09);
+    --waise-border-strong: rgba(255, 255, 255, 0.17);
+
+    --waise-text: #e8eaf6;
+    --waise-text-dim: #a4aac6;
+
+    --waise-radius: 14px;
+    --waise-radius-sm: 10px;
+    --waise-blur: 14px;
+    --waise-shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.75);
+    --waise-transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ---------------------------------------------------------------- Base -- */
+
+body,
+body.skin-blue,
+.wrapper,
+.content-wrapper,
+.right-side {
+    background-color: transparent;
+    color: var(--waise-text);
+}
+
+body {
+    background-color: #08090f;
+    background-image:
+        radial-gradient(1100px 620px at 10% -14%, rgba(111, 92, 255, 0.24), transparent 62%),
+        radial-gradient(900px 520px at 106% 2%, rgba(23, 201, 201, 0.15), transparent 58%),
+        linear-gradient(180deg, #0a0b15 0%, #0d0f1c 48%, #07080e 100%);
+    background-attachment: fixed;
+    background-size: cover;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    background: url("../img/waise-bg.svg") center / cover no-repeat;
+    opacity: 0.45;
+    pointer-events: none;
+}
+
+a { color: var(--waise-accent-2); }
+a:hover, a:focus { color: #fff; }
+
+/* -------------------------------------------------------------- Header -- */
+
+.skin-blue .main-header .navbar,
+.main-header .navbar {
+    background-color: var(--waise-glass-solid);
+    -webkit-backdrop-filter: blur(18px) saturate(150%);
+    backdrop-filter: blur(18px) saturate(150%);
+    border-bottom: 1px solid var(--waise-border);
+    box-shadow: 0 8px 28px -20px rgba(0, 0, 0, 0.95);
+}
+
+.skin-blue .main-header .logo,
+.main-header .logo {
+    background-color: transparent;
+    border-bottom: 1px solid var(--waise-border);
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+}
+
+.skin-blue .main-header .logo:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.skin-blue .main-header .navbar .nav > li > a,
+.main-header .navbar .nav > li > a {
+    color: var(--waise-text-dim);
+    transition: background-color var(--waise-transition), color var(--waise-transition);
+}
+
+.skin-blue .main-header .navbar .nav > li > a:hover,
+.skin-blue .main-header .navbar .nav > li > a:focus,
+.skin-blue .main-header .navbar .nav .open > a {
+    background-color: rgba(255, 255, 255, 0.07);
+    color: #fff;
+}
+
+.skin-blue .main-header .navbar .sidebar-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+/* ------------------------------------------------------------- Sidebar -- */
+
+.skin-blue .wrapper,
+.skin-blue .main-sidebar,
+.skin-blue .left-side,
+.main-sidebar {
+    background-color: var(--waise-glass-solid);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    backdrop-filter: blur(16px) saturate(140%);
+    border-inline-end: 1px solid var(--waise-border);
+}
+
+.sidebar-menu > li.header {
+    background: transparent;
+    color: var(--waise-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+}
+
+.skin-blue .sidebar-menu > li > a,
+.sidebar-menu > li > a {
+    color: var(--waise-text-dim);
+    border-inline-start: 3px solid transparent;
+    transition: background-color var(--waise-transition), color var(--waise-transition),
+                border-color var(--waise-transition);
+}
+
+.skin-blue .sidebar-menu > li:hover > a,
+.skin-blue .sidebar-menu > li.active > a,
+.skin-blue .sidebar-menu > li.menu-open > a,
+.sidebar-menu > li:hover > a,
+.sidebar-menu > li.active > a {
+    background-color: rgba(111, 92, 255, 0.16);
+    border-inline-start-color: var(--waise-accent);
+    color: #fff;
+}
+
+.skin-blue .sidebar-menu > li > .treeview-menu,
+.sidebar-menu .treeview-menu {
+    background-color: rgba(0, 0, 0, 0.28);
+}
+
+.skin-blue .treeview-menu > li > a,
+.treeview-menu > li > a {
+    color: var(--waise-text-dim);
+}
+
+.skin-blue .treeview-menu > li.active > a,
+.skin-blue .treeview-menu > li > a:hover {
+    color: #fff;
+}
+
+/* --------------------------------------------------------- Contenido --- */
+
+.content-header > h1 {
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+.content-header > h1 > small {
+    color: var(--waise-text-dim);
+}
+
+.breadcrumb {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--waise-border);
+    border-radius: 999px;
+}
+
+.breadcrumb > li > a { color: var(--waise-accent-2); }
+.breadcrumb > .active { color: var(--waise-text-dim); }
+
+/* ------------------------------------------------------------- Cajas --- */
+
+.box {
+    background-color: var(--waise-glass-1);
+    border: 1px solid var(--waise-border);
+    border-top: 2px solid var(--waise-accent);
+    border-radius: var(--waise-radius);
+    -webkit-backdrop-filter: blur(var(--waise-blur)) saturate(140%);
+    backdrop-filter: blur(var(--waise-blur)) saturate(140%);
+    box-shadow: var(--waise-shadow);
+    color: var(--waise-text);
+}
+
+.box.box-primary { border-top-color: var(--waise-accent); }
+.box.box-info    { border-top-color: var(--waise-accent-2); }
+
+.box-header {
+    border-bottom: 1px solid var(--waise-border);
+    color: var(--waise-text);
+}
+
+.box-header .box-title {
+    color: #fff;
+    font-weight: 600;
+}
+
+.box-footer {
+    background-color: rgba(255, 255, 255, 0.03);
+    border-top: 1px solid var(--waise-border);
+    border-radius: 0 0 var(--waise-radius) var(--waise-radius);
+    color: var(--waise-text-dim);
+}
+
+.nav-tabs-custom {
+    background-color: var(--waise-glass-1);
+    border: 1px solid var(--waise-border);
+    border-radius: var(--waise-radius);
+    -webkit-backdrop-filter: blur(var(--waise-blur));
+    backdrop-filter: blur(var(--waise-blur));
+    box-shadow: var(--waise-shadow);
+}
+
+.nav-tabs-custom > .nav-tabs {
+    border-bottom-color: var(--waise-border);
+}
+
+.nav-tabs-custom > .nav-tabs > li > a {
+    color: var(--waise-text-dim);
+    background: transparent;
+}
+
+.nav-tabs-custom > .nav-tabs > li.active > a,
+.nav-tabs-custom > .nav-tabs > li > a:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+    color: #fff;
+}
+
+.nav-tabs-custom > .nav-tabs > li.active {
+    border-top-color: var(--waise-accent);
+}
+
+/* ------------------------------------------------------------ Tablas --- */
+
+.table,
+.table > thead > tr > th,
+.table > tbody > tr > td,
+.table > tbody > tr > th,
+.table > tfoot > tr > td {
+    color: var(--waise-text);
+    border-color: rgba(255, 255, 255, 0.07);
+}
+
+.table > thead > tr > th {
+    background-color: rgba(255, 255, 255, 0.04);
+    color: var(--waise-text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-size: 11px;
+    border-bottom: 1px solid var(--waise-border);
+}
+
+.table-hover > tbody > tr:hover,
+.table-striped > tbody > tr:nth-of-type(odd) {
+    background-color: rgba(255, 255, 255, 0.035);
+}
+
+.table > tbody > tr > td {
+    overflow-wrap: anywhere;
+}
+
+.table-responsive {
+    border: 0;
+}
+
+/* --------------------------------------------------------- Formularios -- */
+
+.form-control,
+.input-group .form-control,
+select.form-control,
+textarea.form-control {
+    background-color: rgba(9, 11, 20, 0.68);
+    color: var(--waise-text);
+    border: 1px solid var(--waise-border-strong);
+    border-radius: var(--waise-radius-sm);
+    box-shadow: none;
+    transition: border-color var(--waise-transition), box-shadow var(--waise-transition);
+}
+
+.form-control:focus {
+    border-color: var(--waise-accent);
+    box-shadow: 0 0 0 3px rgba(111, 92, 255, 0.28);
+}
+
+.form-control::placeholder { color: rgba(164, 170, 198, 0.7); }
+.form-control[disabled],
+.form-control[readonly] {
+    background-color: rgba(255, 255, 255, 0.05);
+    color: var(--waise-text-dim);
+}
+
+label,
+.control-label { color: var(--waise-text); }
+.help-block,
+.text-muted { color: var(--waise-text-dim); }
+
+.input-group-addon {
+    background-color: rgba(255, 255, 255, 0.06);
+    border: 1px solid var(--waise-border-strong);
+    color: var(--waise-text-dim);
+}
+
+/* select2, usado por el panel admin en varios formularios */
+.select2-container--default .select2-selection--single,
+.select2-container--default .select2-selection--multiple {
+    background-color: rgba(9, 11, 20, 0.68);
+    border: 1px solid var(--waise-border-strong);
+    border-radius: var(--waise-radius-sm);
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    color: var(--waise-text);
+}
+
+.select2-dropdown {
+    background-color: rgba(13, 15, 26, 0.98);
+    border: 1px solid var(--waise-border-strong);
+    color: var(--waise-text);
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: var(--waise-accent);
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: rgba(111, 92, 255, 0.25);
+    border: 1px solid var(--waise-border-strong);
+    color: var(--waise-text);
+}
+
+/* ------------------------------------------------------------ Botones -- */
+
+.btn {
+    border-radius: var(--waise-radius-sm);
+    transition: transform var(--waise-transition), filter var(--waise-transition),
+                box-shadow var(--waise-transition);
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+    filter: brightness(1.08);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--waise-accent-2);
+    outline-offset: 2px;
+}
+
+.btn-primary,
+.btn-info {
+    background-image: linear-gradient(135deg, var(--waise-accent), var(--waise-accent-2));
+    background-color: var(--waise-accent);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    color: #fff;
+    box-shadow: 0 10px 26px -14px var(--waise-accent);
+}
+
+.btn-default {
+    background-color: rgba(255, 255, 255, 0.07);
+    border: 1px solid var(--waise-border-strong);
+    color: var(--waise-text);
+}
+
+.btn-default:hover,
+.btn-default:focus {
+    background-color: rgba(255, 255, 255, 0.12);
+    color: #fff;
+}
+
+.btn-danger  { box-shadow: 0 10px 26px -14px rgba(239, 68, 68, 0.75); }
+.btn-success { box-shadow: 0 10px 26px -14px rgba(34, 197, 94, 0.7); }
+.btn-warning { box-shadow: 0 10px 26px -14px rgba(234, 179, 8, 0.7); }
+
+/* ----------------------------------------------- Alertas / callouts ---- */
+
+.alert,
+.callout {
+    border: 1px solid var(--waise-border-strong);
+    border-radius: var(--waise-radius-sm);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+    box-shadow: var(--waise-shadow);
+}
+
+.alert-info,    .callout-info    { background-color: rgba(23, 201, 201, 0.16); color: var(--waise-text); }
+.alert-success, .callout-success { background-color: rgba(34, 197, 94, 0.16);  color: var(--waise-text); }
+.alert-warning, .callout-warning { background-color: rgba(234, 179, 8, 0.16);  color: var(--waise-text); }
+.alert-danger,  .callout-danger  { background-color: rgba(239, 68, 68, 0.16);  color: var(--waise-text); }
+
+.label,
+.badge {
+    border-radius: 999px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+/* --------------------------------------------------- Widgets / stats --- */
+
+.small-box {
+    background-color: var(--waise-glass-2) !important;
+    border: 1px solid var(--waise-border);
+    border-radius: var(--waise-radius);
+    -webkit-backdrop-filter: blur(var(--waise-blur));
+    backdrop-filter: blur(var(--waise-blur));
+    box-shadow: var(--waise-shadow);
+    color: var(--waise-text) !important;
+}
+
+.small-box > .inner h3,
+.small-box > .inner p { color: var(--waise-text); }
+
+.small-box .icon { color: rgba(255, 255, 255, 0.18); }
+
+.small-box > .small-box-footer {
+    background: rgba(0, 0, 0, 0.25);
+    color: var(--waise-text-dim);
+    border-radius: 0 0 var(--waise-radius) var(--waise-radius);
+}
+
+.progress,
+.progress-bar {
+    border-radius: 999px;
+}
+
+.progress {
+    background-color: rgba(255, 255, 255, 0.08);
+    box-shadow: none;
+}
+
+.progress-bar {
+    background-image: linear-gradient(90deg, var(--waise-accent), var(--waise-accent-2));
+}
+
+/* --------------------------------------------- Modales / dropdowns ----- */
+
+.modal-content {
+    background-color: rgba(13, 15, 26, 0.96);
+    border: 1px solid var(--waise-border-strong);
+    border-radius: var(--waise-radius);
+    -webkit-backdrop-filter: blur(20px) saturate(150%);
+    backdrop-filter: blur(20px) saturate(150%);
+    box-shadow: 0 30px 70px -30px rgba(0, 0, 0, 0.95);
+    color: var(--waise-text);
+}
+
+.modal-header,
+.modal-footer {
+    border-color: var(--waise-border);
+}
+
+.modal-backdrop.in {
+    opacity: 0.6;
+}
+
+.dropdown-menu {
+    background-color: rgba(13, 15, 26, 0.97);
+    border: 1px solid var(--waise-border-strong);
+    border-radius: var(--waise-radius-sm);
+    -webkit-backdrop-filter: blur(16px);
+    backdrop-filter: blur(16px);
+    box-shadow: var(--waise-shadow);
+    padding: 6px;
+}
+
+.dropdown-menu > li > a {
+    color: var(--waise-text);
+    border-radius: 8px;
+}
+
+.dropdown-menu > li > a:hover,
+.dropdown-menu > li > a:focus {
+    background-color: rgba(111, 92, 255, 0.22);
+    color: #fff;
+}
+
+.dropdown-menu .divider {
+    background-color: var(--waise-border);
+}
+
+.tooltip-inner {
+    background-color: rgba(13, 15, 26, 0.96);
+    border: 1px solid var(--waise-border-strong);
+    border-radius: 8px;
+    color: var(--waise-text);
+}
+
+/* -------------------------------------------------------- Paginación --- */
+
+.pagination > li > a,
+.pagination > li > span {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--waise-border);
+    color: var(--waise-text);
+}
+
+.pagination > li > a:hover {
+    background-color: rgba(255, 255, 255, 0.11);
+    color: #fff;
+}
+
+.pagination > .active > a,
+.pagination > .active > span,
+.pagination > .active > a:hover {
+    background-image: linear-gradient(135deg, var(--waise-accent), var(--waise-accent-2));
+    border-color: var(--waise-border-strong);
+    color: #fff;
+}
+
+/* Código, pre y consola de logs */
+pre,
+code,
+kbd {
+    background-color: rgba(0, 0, 0, 0.42);
+    border: 1px solid var(--waise-border);
+    border-radius: var(--waise-radius-sm);
+    color: #dfe4ff;
+    overflow-wrap: anywhere;
+}
+
+.main-footer {
+    background-color: rgba(13, 15, 26, 0.85);
+    border-top: 1px solid var(--waise-border);
+    color: var(--waise-text-dim);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+}
+
+/* ------------------------------------------------------- Scrollbars ---- */
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: rgba(255, 255, 255, 0.03); }
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--waise-accent), var(--waise-accent-2));
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+::selection { background: rgba(111, 92, 255, 0.45); color: #fff; }
+
+/* ------------------------------------------------------- Responsive ---- */
+
+@media (max-width: 767px) {
+    :root {
+        --waise-blur: 8px;
+        --waise-radius: 12px;
+    }
+
+    body::before { opacity: 0.3; }
+
+    .content-header > h1 { font-size: 22px; }
+
+    .skin-blue .main-header .navbar .dropdown-menu li a {
+        color: var(--waise-text);
+    }
+}
+
+@supports not ((-webkit-backdrop-filter: blur(2px)) or (backdrop-filter: blur(2px))) {
+    .box,
+    .nav-tabs-custom,
+    .small-box { background-color: rgba(16, 18, 31, 0.96) !important; }
+
+    .main-header .navbar,
+    .main-sidebar { background-color: rgba(10, 12, 22, 0.98); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.001ms !important;
+        transition-duration: 0.001ms !important;
+    }
+
+    .btn:hover:not(:disabled) { transform: none; }
+}
+
+@media (prefers-contrast: more) {
+    :root {
+        --waise-glass-1: rgba(10, 12, 22, 0.97);
+        --waise-glass-2: rgba(18, 21, 34, 0.97);
+        --waise-border: rgba(255, 255, 255, 0.3);
+        --waise-text-dim: #cdd2e6;
+    }
+}
+
+@media print {
+    body { background: #fff !important; color: #000 !important; }
+    body::before,
+    .main-sidebar,
+    .main-header { display: none !important; }
+    .content-wrapper { margin: 0 !important; }
+}

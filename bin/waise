@@ -1,0 +1,72 @@
+#!/usr/bin/env bash
+# ---------------------------------------------------------------------------
+# Waise Theme - CLI
+#   waise install [opciones]    instala o reinstala el tema
+#   waise update  [opciones]    alias de install (idempotente)
+#   waise uninstall [opciones]  desinstala el tema
+#   waise status                muestra el estado actual
+#   waise version               muestra la versión
+# ---------------------------------------------------------------------------
+set -euo pipefail
+
+WAISE_SHARE_DIR_DEFAULT="/usr/local/share/waise-theme"
+SHARE="${WAISE_SHARE_DIR:-$WAISE_SHARE_DIR_DEFAULT}"
+
+if [[ ! -f "${SHARE}/lib/common.sh" ]]; then
+    printf 'No se encontraron los archivos de Waise Theme en %s\n' "$SHARE" >&2
+    printf 'Reinstala con: sudo bash install.sh desde el repositorio.\n' >&2
+    exit 1
+fi
+
+# shellcheck source=../lib/common.sh
+source "${SHARE}/lib/common.sh"
+
+usage() {
+    cat <<EOF
+${WAISE_NAME} v${WAISE_VERSION}
+
+Uso: waise <comando> [opciones]
+
+Comandos:
+  install [--path DIR] [--accent #RRGGBB] [--accent2 #RRGGBB] [-y]
+                       Instala o reinstala el tema.
+  update               Igual que install (reaplica el tema tras actualizar el panel).
+  uninstall [--restore-backup] [--purge] [-y]
+                       Elimina el tema y devuelve el panel a su estado original.
+  status               Muestra si el tema está activo y dónde.
+  version              Muestra la versión instalada.
+  help                 Muestra esta ayuda.
+
+Ejemplos:
+  sudo waise install --accent "#ff5c8a"
+  sudo waise uninstall --purge
+EOF
+}
+
+cmd="${1:-help}"
+if [[ $# -gt 0 ]]; then
+    shift
+fi
+
+case "$cmd" in
+    install|update|reinstall)
+        exec bash "${SHARE}/install.sh" "$@"
+        ;;
+    uninstall|remove|delete)
+        exec bash "${SHARE}/uninstall.sh" "$@"
+        ;;
+    status)
+        waise_status "${1:-}"
+        ;;
+    version|--version|-v)
+        printf '%s v%s\n' "$WAISE_NAME" "$WAISE_VERSION"
+        ;;
+    help|--help|-h)
+        usage
+        ;;
+    *)
+        printf 'Comando desconocido: %s\n\n' "$cmd" >&2
+        usage >&2
+        exit 1
+        ;;
+esac

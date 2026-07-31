@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Fondo decorativo de Waise Theme">
+  <defs>
+    <linearGradient id="waiseBase" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b0d18"/>
+      <stop offset="0.55" stop-color="#0e1020"/>
+      <stop offset="1" stop-color="#07080e"/>
+    </linearGradient>
+    <radialGradient id="waiseGlow1" cx="0.18" cy="0.08" r="0.75">
+      <stop offset="0" stop-color="#6f5cff" stop-opacity="0.55"/>
+      <stop offset="1" stop-color="#6f5cff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="waiseGlow2" cx="0.88" cy="0.12" r="0.7">
+      <stop offset="0" stop-color="#17c9c9" stop-opacity="0.38"/>
+      <stop offset="1" stop-color="#17c9c9" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="waiseGlow3" cx="0.62" cy="1.02" r="0.8">
+      <stop offset="0" stop-color="#3b2fa8" stop-opacity="0.4"/>
+      <stop offset="1" stop-color="#3b2fa8" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="waiseGrid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#ffffff" stroke-opacity="0.035" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="waiseGridFade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <mask id="waiseGridMask">
+      <rect width="1600" height="900" fill="url(#waiseGridFade)"/>
+    </mask>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#waiseBase)"/>
+  <rect width="1600" height="900" fill="url(#waiseGrid)" mask="url(#waiseGridMask)"/>
+  <rect width="1600" height="900" fill="url(#waiseGlow1)"/>
+  <rect width="1600" height="900" fill="url(#waiseGlow2)"/>
+  <rect width="1600" height="900" fill="url(#waiseGlow3)"/>
+
+  <g fill="none" stroke="#ffffff" stroke-opacity="0.05" stroke-width="1.5">
+    <path d="M-120 620 C 240 480, 520 700, 860 540 S 1360 380, 1760 470"/>
+    <path d="M-120 720 C 260 600, 560 800, 900 650 S 1400 500, 1760 590"/>
+  </g>
+
+  <g opacity="0.5">
+    <circle cx="1320" cy="180" r="2.5" fill="#17c9c9"/>
+    <circle cx="1180" cy="300" r="1.8" fill="#6f5cff"/>
+    <circle cx="420" cy="220" r="2.2" fill="#6f5cff"/>
+    <circle cx="260" cy="380" r="1.6" fill="#17c9c9"/>
+    <circle cx="880" cy="140" r="1.6" fill="#ffffff"/>
+  </g>
+</svg>
