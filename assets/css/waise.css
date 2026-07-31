@@ -961,3 +961,285 @@ html.waise-mainnav-ready {
         padding-inline-start: 0 !important;
     }
 }
+/* =====================================================================
+   v1.5.0 — LIQUID GLASS EN ELEMENTOS GRISES RESIDUALES DE PTERODACTYL
+   ===================================================================== */
+
+/* --- Inputs, selects, textareas --- */
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+select,
+textarea {
+    background: var(--waise-glass-bg) !important;
+    border: 1px solid var(--waise-glass-border) !important;
+    border-radius: 10px !important;
+    color: var(--waise-text) !important;
+    backdrop-filter: blur(var(--waise-glass-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--waise-glass-blur)) !important;
+    transition: border-color 0.2s ease, background 0.2s ease !important;
+    box-shadow: none !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):focus,
+select:focus,
+textarea:focus {
+    background: rgba(255,255,255,0.09) !important;
+    border-color: var(--waise-accent) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 3px var(--waise-accent-dim) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--waise-text-muted) !important;
+}
+
+/* --- Labels y form-text --- */
+label,
+.form-text,
+small.text-muted {
+    color: var(--waise-text-muted) !important;
+}
+
+/* --- Badges de estado --- */
+.badge {
+    border-radius: 20px !important;
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.03em !important;
+    padding: 3px 10px !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+
+.badge-success, .badge-green {
+    background: rgba(52,199,89,0.18) !important;
+    color: #4ade80 !important;
+    border: 1px solid rgba(52,199,89,0.30) !important;
+}
+
+.badge-danger, .badge-red {
+    background: rgba(255,59,48,0.18) !important;
+    color: #f87171 !important;
+    border: 1px solid rgba(255,59,48,0.30) !important;
+}
+
+.badge-warning, .badge-yellow {
+    background: rgba(255,204,0,0.18) !important;
+    color: #facc15 !important;
+    border: 1px solid rgba(255,204,0,0.30) !important;
+}
+
+.badge-secondary, .badge-grey, .badge-gray {
+    background: rgba(255,255,255,0.08) !important;
+    color: var(--waise-text-muted) !important;
+    border: 1px solid var(--waise-glass-border) !important;
+}
+
+/* --- Alerts --- */
+.alert {
+    background: var(--waise-glass-bg) !important;
+    border: 1px solid var(--waise-glass-border) !important;
+    border-radius: 12px !important;
+    color: var(--waise-text) !important;
+    backdrop-filter: blur(var(--waise-glass-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--waise-glass-blur)) !important;
+    box-shadow: var(--waise-shadow-sm) !important;
+}
+
+.alert-success { border-color: rgba(52,199,89,0.35) !important; background: rgba(52,199,89,0.08) !important; }
+.alert-danger, .alert-error { border-color: rgba(255,59,48,0.35) !important; background: rgba(255,59,48,0.08) !important; }
+.alert-warning { border-color: rgba(255,204,0,0.35) !important; background: rgba(255,204,0,0.08) !important; }
+.alert-info { border-color: rgba(10,132,255,0.35) !important; background: rgba(10,132,255,0.08) !important; }
+
+/* --- Breadcrumb --- */
+.breadcrumb {
+    background: transparent !important;
+    padding: 0 !important;
+    margin-bottom: 1rem !important;
+}
+
+.breadcrumb-item,
+.breadcrumb-item a {
+    color: var(--waise-text-muted) !important;
+    font-size: 0.85rem !important;
+    text-decoration: none !important;
+}
+
+.breadcrumb-item a:hover { color: var(--waise-text) !important; }
+.breadcrumb-item.active { color: var(--waise-text) !important; }
+.breadcrumb-item + .breadcrumb-item::before { color: var(--waise-text-muted) !important; }
+
+/* --- Paginacion --- */
+.pagination .page-item .page-link {
+    background: var(--waise-glass-bg) !important;
+    border: 1px solid var(--waise-glass-border) !important;
+    color: var(--waise-text) !important;
+    border-radius: 8px !important;
+    margin: 0 2px !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    transition: background 0.2s ease, border-color 0.2s ease !important;
+}
+
+.pagination .page-item .page-link:hover {
+    background: rgba(255,255,255,0.12) !important;
+    border-color: var(--waise-border-hover) !important;
+}
+
+.pagination .page-item.active .page-link {
+    background: var(--waise-accent-dim) !important;
+    border-color: var(--waise-accent) !important;
+    color: #fff !important;
+}
+
+.pagination .page-item.disabled .page-link {
+    background: transparent !important;
+    color: var(--waise-text-muted) !important;
+    border-color: var(--waise-glass-border) !important;
+}
+
+/* --- Progress bars --- */
+.progress {
+    background: rgba(255,255,255,0.08) !important;
+    border-radius: 99px !important;
+    height: 6px !important;
+    overflow: hidden !important;
+    border: none !important;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, var(--waise-accent), rgba(124,106,247,0.6)) !important;
+    border-radius: 99px !important;
+    transition: width 0.4s ease !important;
+}
+
+.progress-bar-success { background: linear-gradient(90deg, #4ade80, #22c55e) !important; }
+.progress-bar-warning { background: linear-gradient(90deg, #facc15, #f59e0b) !important; }
+.progress-bar-danger  { background: linear-gradient(90deg, #f87171, #ef4444) !important; }
+
+/* --- Tooltips --- */
+.tooltip-inner {
+    background: rgba(20,20,30,0.92) !important;
+    color: var(--waise-text) !important;
+    border: 1px solid var(--waise-glass-border) !important;
+    border-radius: 8px !important;
+    font-size: 0.8rem !important;
+    padding: 5px 10px !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+}
+
+/* --- Modales --- */
+.modal-content {
+    background: rgba(18,18,24,0.88) !important;
+    border: 1px solid var(--waise-glass-border) !important;
+    border-radius: 18px !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    box-shadow: 0 8px 48px rgba(0,0,0,0.6) !important;
+    color: var(--waise-text) !important;
+}
+
+.modal-header {
+    border-bottom: 1px solid var(--waise-glass-border) !important;
+    padding: 20px 24px 16px !important;
+}
+
+.modal-footer {
+    border-top: 1px solid var(--waise-glass-border) !important;
+    padding: 16px 24px 20px !important;
+}
+
+.modal-title {
+    font-weight: 700 !important;
+    font-size: 1.1rem !important;
+    color: #fff !important;
+}
+
+.modal-backdrop { background: rgba(0,0,0,0.7) !important; }
+.modal-backdrop.show { opacity: 1 !important; }
+
+/* --- Dropdowns nativos --- */
+.dropdown-menu {
+    background: rgba(18,18,24,0.92) !important;
+    border: 1px solid var(--waise-glass-border) !important;
+    border-radius: 12px !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    box-shadow: var(--waise-shadow) !important;
+    padding: 6px !important;
+    min-width: 180px !important;
+}
+
+.dropdown-item {
+    color: var(--waise-text) !important;
+    border-radius: 8px !important;
+    padding: 8px 12px !important;
+    font-size: 0.9rem !important;
+    transition: background 0.15s ease !important;
+}
+
+.dropdown-item:hover,
+.dropdown-item:focus {
+    background: rgba(255,255,255,0.08) !important;
+    color: #fff !important;
+}
+
+.dropdown-divider {
+    border-color: var(--waise-glass-border) !important;
+    margin: 4px 0 !important;
+}
+
+/* --- Tablas --- */
+.table {
+    color: var(--waise-text) !important;
+    border-color: var(--waise-glass-border) !important;
+}
+
+.table thead th {
+    background: rgba(255,255,255,0.04) !important;
+    border-bottom: 1px solid var(--waise-glass-border) !important;
+    color: var(--waise-text-muted) !important;
+    font-size: 0.78rem !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.06em !important;
+    font-weight: 600 !important;
+    padding: 12px 16px !important;
+}
+
+.table tbody td {
+    border-color: var(--waise-glass-border) !important;
+    padding: 12px 16px !important;
+    vertical-align: middle !important;
+}
+
+.table tbody tr { transition: background 0.15s ease !important; }
+.table tbody tr:hover { background: rgba(255,255,255,0.04) !important; }
+.table-striped tbody tr:nth-of-type(odd) { background: rgba(255,255,255,0.02) !important; }
+
+/* --- Contenedores grises genericos --- */
+.box,
+.box-body,
+.panel,
+.panel-body,
+.well {
+    background: var(--waise-glass-bg) !important;
+    border: 1px solid var(--waise-glass-border) !important;
+    border-radius: 14px !important;
+    color: var(--waise-text) !important;
+    backdrop-filter: blur(var(--waise-glass-blur)) !important;
+    -webkit-backdrop-filter: blur(var(--waise-glass-blur)) !important;
+}
+
+/* --- Scrollbars --- */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255,255,255,0.15) transparent;
+}
+
+*::-webkit-scrollbar { width: 6px; height: 6px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 99px; }
+*::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.28); }
+
+/* Fin waise.css v1.5.0 */
