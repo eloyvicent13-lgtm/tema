@@ -3,6 +3,7 @@
 # Waise Theme - CLI
 #   waise install [opciones]    instala o reinstala el tema
 #   waise update  [opciones]    alias de install (idempotente)
+#   waise upgrade [opciones]    descarga la última versión de GitHub y reinstala
 #   waise uninstall [opciones]  desinstala el tema
 #   waise status                muestra el estado actual
 #   waise version               muestra la versión
@@ -31,6 +32,10 @@ Comandos:
   install [--path DIR] [--accent #RRGGBB] [--accent2 #RRGGBB] [-y]
                        Instala o reinstala el tema.
   update               Igual que install (reaplica el tema tras actualizar el panel).
+  upgrade [--accent #RRGGBB] [--accent2 #RRGGBB]
+                       Descarga la última versión del tema desde GitHub y la
+                       reinstala conservando la ruta del panel y los colores.
+                       Rama alternativa: WAISE_REPO_BRANCH=dev sudo -E waise upgrade
   uninstall [--restore-backup] [--purge] [-y]
                        Elimina el tema y devuelve el panel a su estado original.
   status               Muestra si el tema está activo y dónde.
@@ -39,6 +44,7 @@ Comandos:
 
 Ejemplos:
   sudo waise install --accent "#ff5c8a"
+  sudo waise upgrade
   sudo waise uninstall --purge
 EOF
 }
@@ -51,6 +57,10 @@ fi
 case "$cmd" in
     install|update|reinstall)
         exec bash "${SHARE}/install.sh" "$@"
+        ;;
+    upgrade|self-update)
+        waise_require_root
+        waise_upgrade_from_git "$@"
         ;;
     uninstall|remove|delete)
         exec bash "${SHARE}/uninstall.sh" "$@"

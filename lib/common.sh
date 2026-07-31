@@ -5,7 +5,12 @@
 # Este archivo se carga con `source`, no se ejecuta directamente.
 
 WAISE_NAME="Waise Theme"
-WAISE_VERSION="1.0.0"
+WAISE_VERSION="1.1.0"
+
+# Repositorio usado por `waise upgrade`. Se puede sobrescribir exportando
+# WAISE_REPO_URL / WAISE_REPO_BRANCH antes de ejecutar el comando.
+WAISE_REPO_URL="${WAISE_REPO_URL:-https://github.com/eloyvicent13-lgtm/tema.git}"
+WAISE_REPO_BRANCH="${WAISE_REPO_BRANCH:-main}"
 
 WAISE_MARKER_START="WAISE-THEME:START"
 WAISE_MARKER_END="WAISE-THEME:END"
@@ -13,6 +18,8 @@ WAISE_MARKER_END="WAISE-THEME:END"
 WAISE_STATE_DIR="/var/lib/waise-theme"
 WAISE_STATE_FILE="${WAISE_STATE_DIR}/state.env"
 WAISE_BACKUP_ROOT="${WAISE_STATE_DIR}/backups"
+# Caché del repositorio gestionada por el propio tema (la usa `waise upgrade`).
+WAISE_SRC_DIR="${WAISE_STATE_DIR}/src"
 WAISE_SHARE_DIR="/usr/local/share/waise-theme"
 WAISE_BIN_PATH="/usr/local/bin/waise"
 
@@ -216,6 +223,65 @@ waise_inject_block() {
     rm -f "$tmp"
 
     waise_has_block "$file"
+}
+
+# waise_upgrade_from_git [args extra para install.sh]
+# Descarga la última versión del repositorio en WAISE_SRC_DIR y reinstala el
+# tema conservando la ruta del panel y los colores guardados en el estado.
+waise_upgrade_from_git() {
+    waise_require_cmds git bash
+
+    local prev_version="" panel_dir="" accent="" accent2=""
+    if waise_load_state; then
+        prev_version="${STATE_VERSION:-}"
+        panel_dir="${STATE_PANEL_DIR:-}"
+        accent="${STATE_ACCENT:-}"
+        accent2="${STATE_ACCENT_2:-}"
+    fi
+
+    mkdir -p "$WAISE_STATE_DIR"
+
+    if [[ -d "${WAISE_SRC_DIR}/.git" ]]; then
+        waise_log "Descargando cambios de ${WAISE_REPO_URL} (${WAISE_REPO_BRANCH})..."
+        git -C "$WAISE_SRC_DIR" remote set-url origin "$WAISE_REPO_URL" >/dev/null 2>&1 || true
+        if ! git -C "$WAISE_SRC_DIR" fetch --depth 1 origin "$WAISE_REPO_BRANCH"; then
+            waise_die "No se pudo contactar con ${WAISE_REPO_URL}. Revisa la conexión o la URL."
+        fi
+        # WAISE_SRC_DIR es una caché interna del tema, nunca un repo del usuario.
+        git -C "$WAISE_SRC_DIR" reset --hard "origin/${WAISE_REPO_BRANCH}" >/dev/null
+        git -C "$WAISE_SRC_DIR" clean -qfd
+    else
+        waise_log "Clonando ${WAISE_REPO_URL} en ${WAISE_SRC_DIR}..."
+        rm -rf "${WAISE_SRC_DIR:?}"
+        if ! git clone --depth 1 --branch "$WAISE_REPO_BRANCH" "$WAISE_REPO_URL" "$WAISE_SRC_DIR"; then
+            waise_die "No se pudo clonar ${WAISE_REPO_URL} (rama ${WAISE_REPO_BRANCH})."
+        fi
+    fi
+
+    [[ -f "${WAISE_SRC_DIR}/install.sh" ]] || \
+        waise_die "El repositorio descargado no contiene install.sh."
+
+    local new_version="desconocida"
+    if [[ -f "${WAISE_SRC_DIR}/VERSION" ]]; then
+        new_version="$(tr -d ' \t\r\n' < "${WAISE_SRC_DIR}/VERSION")"
+    fi
+    waise_log "Instalada: ${prev_version:-ninguna}  ->  disponible: ${new_version}"
+
+    local args=(-y)
+    if [[ -n "$panel_dir" ]]; then
+        args+=(--path "$panel_dir")
+    fi
+    if [[ "$accent" =~ ^#[0-9a-fA-F]{6}$ ]]; then
+        args+=(--accent "$accent")
+    fi
+    if [[ "$accent2" =~ ^#[0-9a-fA-F]{6}$ ]]; then
+        args+=(--accent2 "$accent2")
+    fi
+    if [[ $# -gt 0 ]]; then
+        args+=("$@")
+    fi
+
+    bash "${WAISE_SRC_DIR}/install.sh" "${args[@]}"
 }
 
 waise_load_state() {

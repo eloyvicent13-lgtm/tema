@@ -4,6 +4,11 @@ Tema moderno, oscuro y semitransparente (glassmorphism) para **Pterodactyl Panel
 inspirado en el estilo Arix, con instalación y desinstalación automáticas mediante un comando.
 
 - Panel de cliente (React + Tailwind) y panel de administración (AdminLTE) tematizados.
+- **Navegación lateral estilo Arix**: la barra superior se convierte por CSS en una sidebar
+  fija a la izquierda (logo + iconos arriba, menú del servidor debajo). En tablet y móvil
+  vuelve automáticamente al layout apilado nativo del panel.
+- **Servidores como tiles de cristal**: la lista del dashboard pasa a una rejilla de tarjetas
+  cuadradas semitransparentes con desenfoque y elevación al pasar el ratón.
 - **Compatible con addons y plugins**: no modifica componentes React, rutas, controladores ni
   vistas Blade existentes. Solo añade un bloque `<link>` delimitado por marcadores dentro del
   `<head>`, así que cualquier addon que sobrescriba vistas o componentes sigue funcionando.
@@ -14,6 +19,7 @@ inspirado en el estilo Arix, con instalación y desinstalación automáticas med
 
 - Pterodactyl Panel 1.14.x instalado (por defecto en `/var/www/pterodactyl`).
 - Linux con `bash`, `php`, `awk`, `sed` y acceso `root` (o `sudo`).
+- `git` (necesario para `waise upgrade`).
 
 ## Instalación
 
@@ -56,10 +62,27 @@ También funciona directamente desde el repositorio:
 
     sudo bash uninstall.sh
 
+## Actualizar el tema
+
+    sudo waise upgrade
+
+Descarga la última versión desde GitHub en `/var/lib/waise-theme/src` y reinstala
+automáticamente, conservando la ruta del panel y los colores de acento guardados en el
+estado. Acepta las mismas opciones que el instalador para cambiar de colores al vuelo:
+
+    sudo waise upgrade --accent "#ff5c8a" --accent2 "#ffb35c"
+
+Para probar otra rama del repositorio:
+
+    WAISE_REPO_BRANCH=dev sudo -E waise upgrade
+
+> `upgrade` descarga código nuevo y reaplica el tema; `update` solo reaplica la copia local
+> ya instalada en `/usr/local/share/waise-theme` (útil tras actualizar el panel).
+
 ## Otros comandos
 
     sudo waise status      # muestra si el tema está activo, versión y rutas
-    sudo waise update      # reinstala/actualiza (idempotente)
+    sudo waise update      # reinstala/actualiza con la copia local (idempotente)
     waise version
 
 Tras cada actualización del panel (`php artisan up` incluido) reaplica el tema con
@@ -88,6 +111,7 @@ Ese archivo se **sobrescribe** al reinstalar; si quieres cambios permanentes, ed
 | `resources/views/templates/wrapper.blade.php` | Se inyecta el bloque `WAISE-THEME` antes de `</head>`. |
 | `resources/views/layouts/admin.blade.php` | Igual que el anterior. |
 | `/var/lib/waise-theme/backups/<fecha>/` | Copia de seguridad de las vistas modificadas. |
+| `/var/lib/waise-theme/src/` | Caché del repositorio que usa `waise upgrade`. |
 | `/usr/local/share/waise-theme/` | Copia del tema para poder desinstalar/actualizar. |
 | `/usr/local/bin/waise` | Comando CLI. |
 
@@ -97,6 +121,11 @@ Tras instalar o desinstalar se ejecuta `php artisan view:clear` y `php artisan c
 
 - Probado contra la estructura de vistas de Pterodactyl 1.14.x
   (`resources/views/templates/wrapper.blade.php` y `resources/views/layouts/admin.blade.php`).
+- La sidebar usa `:has()`. Si el navegador no lo soporta, el tema mantiene la barra superior
+  original en lugar de romper el layout.
+- El desenfoque de la sidebar se aplica en `#navigation::before` y no en `#navigation`:
+  `backdrop-filter` en el contenedor crearía un bloque contenedor para posicionamiento fijo
+  y dejaría el modal de búsqueda del panel atrapado dentro de la barra lateral.
 - Los scripts usan finales de línea LF (ver `.gitattributes`). Si editas en Windows,
   no los conviertas a CRLF o `bash` fallará.
 - Algunos selectores apuntan a clases utilitarias de Tailwind y a AdminLTE; si una versión

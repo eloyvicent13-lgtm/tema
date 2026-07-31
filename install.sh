@@ -178,5 +178,6 @@ chmod 600 "$WAISE_STATE_FILE"
 printf '\n%s%s v%s instalado correctamente.%s\n\n' "$C_GREEN" "$WAISE_NAME" "$WAISE_VERSION" "$C_RESET"
 printf 'Siguiente paso: recarga el panel con Ctrl+F5 (o vacía la caché del navegador).\n'
 printf '  Ver estado    : %ssudo waise status%s\n' "$C_DIM" "$C_RESET"
+printf '  Actualizar    : %ssudo waise upgrade%s\n' "$C_DIM" "$C_RESET"
 printf '  Desinstalar   : %ssudo waise uninstall%s\n' "$C_DIM" "$C_RESET"
 printf '  Personalizar  : %s%s/css/waise-overrides.css%s\n\n' "$C_DIM" "$PUBLIC_DIR" "$C_RESET"
