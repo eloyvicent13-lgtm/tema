@@ -534,6 +534,35 @@ html.waise-mainnav-ready {
         max-height: none !important;
     }
 
+    /* El rótulo desaparecía aunque sobrara sitio: los envoltorios del panel
+       llevan `truncate` (overflow: hidden), y un item flex con overflow oculto
+       resuelve `min-width: auto` a 0, así que se encoge hasta 0 y solo queda el
+       icono. Se excluyen los SVG para no tocar su tamaño fijo. */
+    html.waise-sidebar-ready .waise-server-nav a > *:not(svg),
+    html.waise-mainnav-ready .waise-main-nav a > *:not(svg),
+    html.waise-mainnav-ready .waise-main-nav button > *:not(svg) {
+        min-width: 0;
+        width: auto !important;
+        max-width: 100%;
+        flex: 0 1 auto;
+    }
+
+    /* Se garantiza que el texto herede color y tamaño del enlace y que ninguna
+       utilidad de recorte lo deje en cero. */
+    html.waise-sidebar-ready .waise-server-nav a span:not(:empty),
+    html.waise-mainnav-ready .waise-main-nav a span:not(:empty),
+    html.waise-mainnav-ready .waise-main-nav button span:not(:empty) {
+        overflow: hidden;
+        color: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        text-indent: 0;
+        text-overflow: ellipsis;
+        clip: auto;
+        clip-path: none;
+        opacity: 1;
+    }
+
     html.waise-sidebar-ready .waise-server-nav a,
     html.waise-mainnav-ready .waise-main-nav a,
     html.waise-mainnav-ready .waise-main-nav button {
@@ -564,6 +593,24 @@ html.waise-mainnav-ready {
         box-shadow: none !important;
         transform: none;
         cursor: pointer;
+    }
+
+    /* Rótulos de la barra principal. Sus enlaces son de solo icono, así que el
+       JS publica el nombre en data-waise-label y aquí se pinta. Se usa ::after
+       para no insertar nodos en un árbol que React controla. Si el enlace ya
+       tenía texto (menú de servidor), el JS no pone el atributo y esta regla
+       no aplica: nunca hay rótulo duplicado. */
+    html.waise-mainnav-ready .waise-main-nav a[data-waise-label]::after,
+    html.waise-mainnav-ready .waise-main-nav button[data-waise-label]::after {
+        content: attr(data-waise-label);
+        flex: 0 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        color: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
 
     /* Los iconos SVG no deben estirarse al pasar a filas de ancho completo. */

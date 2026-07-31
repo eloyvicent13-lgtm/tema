@@ -51,6 +51,12 @@
     /* La barra principal puede tener muy pocos enlaces (inicio + cuenta). */
     var MIN_MAIN_LINKS = 2;
 
+    /* Los enlaces de la barra principal son de SOLO ICONO: en horizontal se
+       entendían, pero en la columna quedan iconos sin nombre. El rótulo se
+       publica en este atributo y el CSS lo pinta con ::after. No se inserta
+       texto en el DOM para no interferir con React. */
+    var LABEL_ATTR = 'data-waise-label';
+
     /* Cotas de seguridad: un contenedor con demasiados hijos no es una barra de
        navegación, es un envoltorio de página; convertirlo en columna rompería
        el layout. Lo mismo para el host que se neutraliza. */
@@ -120,6 +126,84 @@
             return null;
         }
         return MAIN_PATH.test(pathname) ? pathname : null;
+    }
+
+    /* Rótulo por ruta. Se compara por prefijo porque /account y /admin tienen
+       subpáginas y el enlace puede apuntar a cualquiera de ellas. */
+    function labelFor(pathname) {
+        if (pathname === '/') {
+            return 'Inicio';
+        }
+        if (/^\/account(?:\/|$)/.test(pathname)) {
+            return 'Cuenta';
+        }
+        if (/^\/admin(?:\/|$)/.test(pathname)) {
+            return 'Administración';
+        }
+        if (/^\/auth\/logout\/?$/.test(pathname)) {
+            return 'Cerrar sesión';
+        }
+        return null;
+    }
+
+    /* Quita el rótulo y el aria-label SOLO si lo pusimos nosotros (coinciden). */
+    function dropLabel(node) {
+        if (node.getAttribute('aria-label') === node.getAttribute(LABEL_ATTR)) {
+            node.removeAttribute('aria-label');
+        }
+        node.removeAttribute(LABEL_ATTR);
+    }
+
+    function clearLabels(keep) {
+        var labelled = document.querySelectorAll('[' + LABEL_ATTR + ']');
+        for (var i = 0; i < labelled.length; i++) {
+            if (keep && keep.contains(labelled[i])) {
+                continue;
+            }
+            dropLabel(labelled[i]);
+        }
+    }
+
+    /**
+     * Rotula los elementos de la barra principal que no tienen texto visible.
+     * Es idempotente: no escribe si el valor ya es el correcto, así no genera
+     * mutaciones inútiles en cada pasada del observer.
+     */
+    function labelMainNav(nav) {
+        var items = nav.querySelectorAll('a[href], button');
+        var i;
+
+        for (i = 0; i < items.length; i++) {
+            var item = items[i];
+
+            /* Si ya tiene texto propio no se inventa ninguno: es el caso del
+               menú de servidor y de cualquier barra que sí venga rotulada. */
+            if (item.textContent.trim() !== '') {
+                dropLabel(item);
+                continue;
+            }
+
+            /* Los botones (buscar, etc.) no tienen ruta: se respeta el nombre
+               accesible que traigan y, si no traen ninguno, se dejan como
+               están en lugar de adivinar para qué sirven. */
+            var label = item.tagName === 'BUTTON'
+                ? (item.getAttribute('aria-label') || item.getAttribute('title'))
+                : labelFor(pathnameOf(item) || '');
+
+            if (!label) {
+                dropLabel(item);
+                continue;
+            }
+
+            if (item.getAttribute(LABEL_ATTR) !== label) {
+                item.setAttribute(LABEL_ATTR, label);
+            }
+            /* El texto de ::after no forma parte del DOM accesible en todos los
+               navegadores; el aria-label garantiza que se anuncie. */
+            if (!item.getAttribute('aria-label') && !item.getAttribute('title')) {
+                item.setAttribute('aria-label', label);
+            }
+        }
     }
 
     function register(groups, node, key, depth) {
@@ -303,6 +387,7 @@
         removeClassFrom('.' + MAIN_CLASS, MAIN_CLASS, null);
         removeClassFrom('.' + HOST_CLASS, HOST_CLASS, null);
         removeClassFrom('.' + CLEAR_CLASS, CLEAR_CLASS, null);
+        clearLabels(null);
     }
 
     function apply() {
@@ -338,8 +423,11 @@
         if (mainNav) {
             mainNav.classList.add(MAIN_CLASS);
             root.classList.add(HTML_MAIN);
+            clearLabels(mainNav);
+            labelMainNav(mainNav);
         } else {
             root.classList.remove(HTML_MAIN);
+            clearLabels(null);
         }
 
         if (host) {
