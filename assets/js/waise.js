@@ -1,5 +1,5 @@
 /* =========================================================================
-   Waise Theme v1.3.2 - Sidebar lateral del panel de cliente (Pterodactyl)
+   Waise Theme v1.3.3 - Sidebar lateral del panel de cliente (Pterodactyl)
 
    Qué hace:
    - Dentro de un servidor: el menú del servidor (Consola, Archivos, Bases de

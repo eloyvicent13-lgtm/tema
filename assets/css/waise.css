@@ -1,5 +1,5 @@
 /* =========================================================================
-   Waise Theme v1.3.2 - Panel de cliente (Pterodactyl 1.14.x)
+   Waise Theme v1.3.3 - Panel de cliente (Pterodactyl 1.14.x)
    Estilo Arix-like: oscuro, semitransparente, bordes suaves y desenfoque.
 
    NOTA v1.3.1: la clase `waise-nav-clear` (la pone el JS solo en los ancestros
@@ -509,12 +509,29 @@ html.waise-mainnav-ready {
         content: "Panel";
     }
 
-    /* Los hijos no deben estirarse ni encogerse en vertical. */
+    /* Los hijos vienen de una barra HORIZONTAL, donde `h-full` (height: 100%)
+       era inofensivo porque la fila medía ~56px. En la columna, que va de
+       top: 0 a bottom: 0, ese 100% es la altura de la VENTANA: un solo enlace
+       la ocupaba entera y el resto quedaba fuera de vista (v1.3.3).
+       `flex: 0 0 auto` no bastaba: flex-basis auto resuelve a `height`, así que
+       hay que anular la altura heredada de forma explícita. */
     html.waise-sidebar-ready .waise-server-nav > *,
     html.waise-mainnav-ready .waise-main-nav > * {
-        flex: 0 0 auto;
+        flex: 0 0 auto !important;
         width: 100%;
         max-width: 100%;
+        height: auto !important;
+        align-self: stretch;
+        margin-block: 0;
+    }
+
+    /* La misma altura al 100% aparece en los envoltorios intermedios y en los
+       propios enlaces. Se excluyen los SVG para no anular el tamaño de icono
+       que se define más abajo. */
+    html.waise-sidebar-ready .waise-server-nav *:not(svg):not(svg *),
+    html.waise-mainnav-ready .waise-main-nav *:not(svg):not(svg *) {
+        height: auto !important;
+        max-height: none !important;
     }
 
     html.waise-sidebar-ready .waise-server-nav a,
