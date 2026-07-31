@@ -4,14 +4,15 @@ Tema moderno, oscuro y semitransparente (glassmorphism) para **Pterodactyl Panel
 inspirado en el estilo Arix, con instalación y desinstalación automáticas mediante un comando.
 
 - Panel de cliente (React + Tailwind) y panel de administración (AdminLTE) tematizados.
-- **Navegación lateral estilo Arix**: la barra superior se convierte por CSS en una sidebar
-  fija a la izquierda (logo + iconos arriba, menú del servidor debajo). En tablet y móvil
-  vuelve automáticamente al layout apilado nativo del panel.
-- **Servidores como tiles de cristal**: la lista del dashboard pasa a una rejilla de tarjetas
-  cuadradas semitransparentes con desenfoque y elevación al pasar el ratón.
-- **Compatible con addons y plugins**: no modifica componentes React, rutas, controladores ni
-  vistas Blade existentes. Solo añade un bloque `<link>` delimitado por marcadores dentro del
-  `<head>`, así que cualquier addon que sobrescriba vistas o componentes sigue funcionando.
+- **Navegación lateral estilo Arix**: el JS localiza el contenedor real de la barra y la
+  convierte en una sidebar fija de 248 px a la izquierda. En tablet y móvil vuelve
+  automáticamente al layout apilado nativo del panel.
+- **Servidores como tarjetas de cristal (v1.4.0)**: la lista del dashboard pasa a una
+  rejilla de tarjetas rectangulares semitransparentes con desenfoque y elevación al pasar
+  el ratón.
+- **Compatible con addons y plugins**: no modifica componentes React, rutas, controladores
+  ni vistas Blade existentes. Solo añade un bloque `<link>` delimitado por marcadores
+  dentro del `<head>`.
 - Desinstalación quirúrgica: se elimina exactamente el bloque inyectado (o se restaura el
   backup original si lo prefieres).
 
@@ -103,11 +104,46 @@ Puedes editar ese archivo para ajustar colores, radios o intensidad del desenfoq
 Ese archivo se **sobrescribe** al reinstalar; si quieres cambios permanentes, edita
 `assets/css/waise.css` en el repositorio y vuelve a ejecutar el instalador.
 
+## Cómo funciona la sidebar (técnico)
+
+El CSS nunca mueve nodos del DOM ni usa `:has()`. En su lugar, `waise.js` localiza el
+contenedor real de la barra por los enlaces que contiene y añade clases a `<html>`:
+
+- `waise-sidebar-ready` → el menú del servidor ocupa la columna lateral.
+- `waise-mainnav-ready` → la barra principal (Inicio, Cuenta, Admin…) ocupa la columna.
+
+Nunca las dos a la vez. Si el JS no encuentra ningún contenedor, el panel conserva su
+layout nativo sin ningún estado intermedio roto.
+
+Antes de fijar la columna, el JS neutraliza los ancestros que romperían `position: fixed`
+(los que tienen `transform`, `filter` o `backdrop-filter` activos). Si la columna no puede
+colocarse correctamente, el layout nativo se restaura automáticamente.
+
+## Cómo funciona la rejilla de tarjetas (v1.4.0)
+
+La lista de servidores del dashboard pasa de filas estiradas a una rejilla de tarjetas
+rectangulares con superficie liquid glass.
+
+El JS detecta el listado comparando el recuento total y único de enlaces a `/server/…`:
+si `total === unique` cada enlace apunta a un servidor distinto → es el dashboard, no el
+menú de un servidor.
+
+Cuando lo confirma, añade:
+
+- `waise-cards-ready` a `<html>` (gate que activa todas las reglas CSS de la rejilla).
+- `waise-server-grid` al contenedor del listado.
+- `waise-server-card` a cada enlace de servidor.
+- `waise-grid-full` a los hijos que no son tarjetas (título, buscador, paginación).
+
+El CSS activa `display: grid` con `repeat(auto-fill, minmax(min(100%, 288px), 1fr))`,
+`backdrop-filter: blur()`, reflejo de color en `::before`, hover con elevación y franja
+de estado en el borde derecho. Sin el gate, la lista nativa del panel se conserva intacta.
+
 ## Qué toca exactamente el instalador
 
 | Ruta | Acción |
 | --- | --- |
-| `public/waise/**` | Se crea (CSS e imagen de fondo). |
+| `public/waise/**` | Se crea (CSS, JS e imagen de fondo). |
 | `resources/views/templates/wrapper.blade.php` | Se inyecta el bloque `WAISE-THEME` antes de `</head>`. |
 | `resources/views/layouts/admin.blade.php` | Igual que el anterior. |
 | `/var/lib/waise-theme/backups/<fecha>/` | Copia de seguridad de las vistas modificadas. |
@@ -119,13 +155,11 @@ Tras instalar o desinstalar se ejecuta `php artisan view:clear` y `php artisan c
 
 ## Notas de compatibilidad
 
-- Probado contra la estructura de vistas de Pterodactyl 1.14.x
-  (`resources/views/templates/wrapper.blade.php` y `resources/views/layouts/admin.blade.php`).
-- La sidebar usa `:has()`. Si el navegador no lo soporta, el tema mantiene la barra superior
-  original en lugar de romper el layout.
-- El desenfoque de la sidebar se aplica en `#navigation::before` y no en `#navigation`:
-  `backdrop-filter` en el contenedor crearía un bloque contenedor para posicionamiento fijo
-  y dejaría el modal de búsqueda del panel atrapado dentro de la barra lateral.
+- Probado contra la estructura de vistas de Pterodactyl 1.14.x.
+- La sidebar **no** usa `:has()`: la detección del contenedor la hace íntegramente el JS,
+  lo que garantiza compatibilidad con navegadores que no soportan esa pseudo-clase.
+- El desenfoque de la sidebar se aplica en la propia columna fija, no en `#navigation`,
+  para evitar que `backdrop-filter` cree un bloque contenedor que atrape los modales.
 - Los scripts usan finales de línea LF (ver `.gitattributes`). Si editas en Windows,
   no los conviertas a CRLF o `bash` fallará.
 - Algunos selectores apuntan a clases utilitarias de Tailwind y a AdminLTE; si una versión
