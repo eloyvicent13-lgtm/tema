@@ -1530,6 +1530,76 @@ td,th,span,label,li { color: var(--waise-text) !important; }
 }
 
 /* =====================================================================
+   v1.5.5 — Network widget + File manager rows
+   ===================================================================== */
+
+/* Network / gráficas de red: el wrapper tiene clase hasheada de CSS Modules,
+   no hay selector estable de clase, así que se apunta por estructura.
+   El widget es un div con flex+items-center+justify-between anidado en un
+   div hermano de un <canvas>. Se usa el atributo del canvas como ancla. */
+div:has(> canvas[role="img"]) {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    backdrop-filter: blur(14px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 10px !important;
+}
+
+/* Cabecera del widget (h3 + iconos) */
+div:has(> canvas[role="img"]) > div:first-child {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+div:has(> canvas[role="img"]) h3 {
+    color: var(--waise-text-dim) !important;
+}
+
+/* File manager: filas de archivo (styled-components estable por prefijo) */
+[class*="FileObjectRow"],
+[class^="FileObjectRow"] {
+    color: var(--waise-text) !important;
+    background: transparent !important;
+}
+
+/* Fila completa del gestor de archivos */
+[class*="style-module_HHpjDvv7"],
+div:has(> [class*="FileObjectRow"]) {
+    background: transparent !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
+    color: var(--waise-text) !important;
+    transition: background 0.15s ease !important;
+}
+
+div:has(> [class*="FileObjectRow"]):hover {
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Texto de columnas del file manager */
+[class*="FileObjectRow___StyledDiv2"],
+[class*="FileObjectRow___StyledDiv3"],
+[class*="FileObjectRow___StyledDiv4"] {
+    color: var(--waise-text-dim) !important;
+}
+
+[class*="FileObjectRow___StyledDiv2"] {
+    color: var(--waise-text) !important;
+}
+
+/* Menú de tres puntos del archivo */
+[class*="FileDropdownMenu"] {
+    color: var(--waise-text-dim) !important;
+    background: transparent !important;
+}
+
+[class*="FileDropdownMenu"]:hover {
+    color: var(--waise-text) !important;
+}
+
+/* =====================================================================
    v1.5.4 — Stat pills de servidor y campos grises (address, uptime, disk…)
    Clase exacta del DOM: bg-gray-600 (wrapper), bg-gray-700 (icono bg)
    ===================================================================== */
