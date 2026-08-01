@@ -30,7 +30,17 @@
         passwordReveal: true,
         pageTitle: true,
         helpOverlay: true,
-        sessionClock: false
+        sessionClock: false,
+        statusNotify: false,
+        consoleExport: true,
+        consoleSearch: true,
+        macros: true,
+        unsavedGuard: true,
+        density: true,
+        recentServers: true,
+        uiZoom: true,
+        netStatus: true,
+        pasteGuard: true
     };
 
     var prefs = (function readPrefs() {
@@ -73,7 +83,17 @@
         passwordReveal: 'featPasswordReveal',
         pageTitle: 'featPageTitle',
         helpOverlay: 'featHelpOverlay',
-        sessionClock: 'featSessionClock'
+        sessionClock: 'featSessionClock',
+        statusNotify: 'featStatusNotify',
+        consoleExport: 'featConsoleExport',
+        consoleSearch: 'featConsoleSearch',
+        macros: 'featMacros',
+        unsavedGuard: 'featUnsavedGuard',
+        density: 'featDensity',
+        recentServers: 'featRecentServers',
+        uiZoom: 'featUiZoom',
+        netStatus: 'featNetStatus',
+        pasteGuard: 'featPasteGuard'
     };
 
     function masterAllows(name) {
@@ -446,7 +466,400 @@
         /* Fase de captura: llega antes que el handler de React. */
         input.addEventListener('keydown', onConsoleKeyDown, true);
         input.addEventListener('blur', hideHint);
+        input.addEventListener('paste', onConsolePaste, true);
     }
+
+    /* ====================================================================
+       Guardia de pegado multilinea en consola
+       ==================================================================== */
+
+    var pasteArmed = false;
+
+    function onConsolePaste(ev) {
+        if (!getPref('pasteGuard')) return;
+        var data = ev.clipboardData || window.clipboardData;
+        if (!data) return;
+        var text = '';
+        try { text = data.getData('text') || ''; } catch (e) { return; }
+        var lines = text.replace(/\n+$/, '').split('\n');
+        if (lines.length < 2) return;
+        if (pasteArmed) { pasteArmed = false; return; }
+
+        /* Pegar 40 lineas en la consola las envia como 40 comandos: se pide
+           una segunda pulsacion antes de dejarlo pasar. */
+        ev.preventDefault();
+        ev.stopPropagation();
+        pasteArmed = true;
+        toast(lines.length + ' lineas en el portapapeles: pega otra vez en 5 s para confirmar', 'error');
+        window.setTimeout(function () { pasteArmed = false; }, 5000);
+    }
+
+    /* ====================================================================
+       Macros de comandos (Alt + 1..9)
+       ==================================================================== */
+
+    var MACRO_KEY = 'waise:macros';
+
+    function macroKey() { return MACRO_KEY + ':' + (currentServerId() || 'global'); }
+
+    function loadMacros() {
+        try {
+            var raw = window.localStorage.getItem(macroKey());
+            var parsed = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(parsed)) return [];
+            return parsed.filter(function (x) { return typeof x === 'string' && x.length; });
+        } catch (e) { return []; }
+    }
+
+    function saveMacros(list) {
+        try { window.localStorage.setItem(macroKey(), JSON.stringify(list)); }
+        catch (e) { /* cuota llena: la macro no persiste */ }
+    }
+
+    function storeMacro() {
+        var input = findConsoleInput();
+        if (!input) { toast('La consola no esta visible en esta pagina', 'error'); return; }
+        var value = (input.value || '').trim();
+        if (!value) { toast('Escribe un comando antes de guardarlo como macro', 'error'); return; }
+        var list = loadMacros();
+        var existing = list.indexOf(value);
+        if (existing !== -1) { toast('Ya es la macro Alt+' + (existing + 1), 'ok'); return; }
+        if (list.length >= 9) list.shift();
+        list.push(value);
+        saveMacros(list);
+        toast('Macro guardada en Alt+' + list.length + ': ' + value, 'ok');
+    }
+
+    function runMacro(index) {
+        var list = loadMacros();
+        var value = list[index];
+        if (!value) { toast('Sin macro en Alt+' + (index + 1), 'error'); return; }
+        var input = findConsoleInput();
+        if (!input) { toast('La consola no esta visible en esta pagina', 'error'); return; }
+        /* Se rellena pero NO se envia: el usuario confirma con Enter. */
+        setInputValue(input, value);
+        input.focus();
+        window.requestAnimationFrame(function () {
+            var end = input.value.length;
+            try { input.setSelectionRange(end, end); } catch (e) { /* input sin seleccion */ }
+        });
+    }
+
+    /* ====================================================================
+       Exportar la consola
+       ==================================================================== */
+
+    function consoleText() {
+        var host = document.querySelector('.xterm-rows') ||
+                   document.querySelector('#terminal') ||
+                   document.querySelector('[class*="terminal"]');
+        if (!host) return null;
+        var text = host.innerText || host.textContent || '';
+        text = text.replace(/\n{3,}/g, '\n\n').replace(/[ \t]+$/gm, '');
+        return text.trim() ? text : null;
+    }
+
+    function exportConsole() {
+        if (!getPref('consoleExport')) return;
+        var text = consoleText();
+        if (!text) { toast('No se encontro contenido de consola en esta pagina', 'error'); return; }
+        var name = 'consola-' + (currentServerId() || 'panel') + '-' +
+                   new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.txt';
+        var blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+        toast('Consola exportada: ' + name, 'ok');
+    }
+
+    /* ====================================================================
+       Buscar dentro de la consola
+       ==================================================================== */
+
+    var findBar = null;
+
+    function consoleRows() {
+        var host = document.querySelector('.xterm-rows');
+        if (!host) return null;
+        var rows = host.children;
+        return rows && rows.length ? rows : null;
+    }
+
+    function closeConsoleFind() {
+        var rows = consoleRows();
+        if (rows) {
+            for (var i = 0; i < rows.length; i++) rows[i].classList.remove('waise-hidden');
+        }
+        if (!findBar) return false;
+        if (findBar.parentNode) findBar.parentNode.removeChild(findBar);
+        findBar = null;
+        return true;
+    }
+
+    function openConsoleFind() {
+        if (!getPref('consoleSearch')) return;
+        if (!consoleRows()) {
+            /* Con el renderizador de canvas de xterm no hay nodos por linea. */
+            toast('Esta consola no permite filtrar por lineas', 'error');
+            return;
+        }
+        if (findBar) { findBar.querySelector('input').focus(); return; }
+
+        findBar = document.createElement('div');
+        findBar.className = 'waise-cfind';
+
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'waise-cfind__input';
+        input.placeholder = 'Filtrar lineas de consola...';
+        input.setAttribute('aria-label', 'Filtrar lineas de consola');
+
+        var count = document.createElement('span');
+        count.className = 'waise-cfind__count';
+
+        function apply() {
+            var rows = consoleRows();
+            if (!rows) return;
+            var needle = input.value.trim().toLowerCase();
+            var shown = 0;
+            for (var i = 0; i < rows.length; i++) {
+                var hit = !needle || (rows[i].textContent || '').toLowerCase().indexOf(needle) !== -1;
+                rows[i].classList.toggle('waise-hidden', !hit);
+                if (hit) shown++;
+            }
+            count.textContent = shown + ' / ' + rows.length;
+        }
+
+        input.addEventListener('input', apply);
+        input.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Escape') { ev.stopPropagation(); closeConsoleFind(); }
+        });
+
+        var close = document.createElement('button');
+        close.type = 'button';
+        close.className = 'waise-cfind__close';
+        close.textContent = '\u00d7';
+        close.title = 'Cerrar filtro';
+        close.addEventListener('click', closeConsoleFind);
+
+        findBar.appendChild(input);
+        findBar.appendChild(count);
+        findBar.appendChild(close);
+        document.body.appendChild(findBar);
+        apply();
+        input.focus();
+    }
+
+    /* ====================================================================
+       Notificaciones de cambio de estado del servidor
+       ==================================================================== */
+
+    var STATUS_RE = /^(offline|starting|running|online|stopping|installing|desconectado|iniciando|encendido|apagando)$/i;
+    var lastStatus = null;
+    var statusTimer = null;
+
+    function readStatus() {
+        var nodes = document.querySelectorAll('[class*="tatus"], [class*="tatus"] span');
+        for (var i = 0; i < nodes.length && i < 200; i++) {
+            var text = (nodes[i].textContent || '').trim();
+            if (text.length > 12) continue;
+            if (STATUS_RE.test(text)) return text.toLowerCase();
+        }
+        return null;
+    }
+
+    function notify(title, body) {
+        if (!('Notification' in window) || Notification.permission !== 'granted') return;
+        try { new Notification(title, { body: body, tag: 'waise-status' }); }
+        catch (e) { /* algunos navegadores exigen ServiceWorker: se ignora */ }
+    }
+
+    function pollStatus() {
+        if (!getPref('statusNotify') || !currentServerId()) { lastStatus = null; return; }
+        var status = readStatus();
+        if (!status) return;
+        if (lastStatus === null) { lastStatus = status; return; }
+        if (status === lastStatus) return;
+        var previous = lastStatus;
+        lastStatus = status;
+        var kind = /offline|desconectado/.test(status) ? 'error' : 'ok';
+        toast('Estado del servidor: ' + previous + ' -> ' + status, kind);
+        notify('Waise - ' + (currentServerId() || 'servidor'), 'Estado: ' + status);
+    }
+
+    function toggleStatusNotify() {
+        var on = !getPref('statusNotify');
+        if (on && 'Notification' in window && Notification.permission === 'default') {
+            /* La peticion de permiso exige gesto del usuario: llega desde la
+               pulsacion de teclado, que cuenta como tal. */
+            Notification.requestPermission();
+        }
+        setPref('statusNotify', on);
+        lastStatus = null;
+        toast(on ? 'Avisos de estado activados' : 'Avisos de estado desactivados', 'ok');
+    }
+
+    /* ====================================================================
+       Aviso de cambios sin guardar en el editor de ficheros
+       ==================================================================== */
+
+    var dirty = false;
+    var dirtyPath = '';
+
+    function isEditorRoute() {
+        return /\/server\/[^/]+\/files\/(edit|new)/.test(window.location.pathname);
+    }
+
+    function markDirty(ev) {
+        if (!getPref('unsavedGuard') || !isEditorRoute()) return;
+        var el = ev.target;
+        if (!el || !el.closest) return;
+        if (!el.closest('.ace_editor, .CodeMirror, [class*="editor"], textarea')) return;
+        if (ev.key && ev.key.length > 1 && ev.key !== 'Backspace' && ev.key !== 'Delete' && ev.key !== 'Enter') return;
+        dirty = true;
+        dirtyPath = window.location.pathname;
+    }
+
+    function clearDirty(ev) {
+        if (!dirty) return;
+        var btn = ev.target && ev.target.closest ? ev.target.closest('button') : null;
+        if (!btn) return;
+        if (!/guardar|save/i.test((btn.textContent || '').trim())) return;
+        dirty = false;
+        dirtyPath = '';
+    }
+
+    function onBeforeUnload(ev) {
+        if (!dirty || !getPref('unsavedGuard')) return;
+        ev.preventDefault();
+        ev.returnValue = '';
+        return '';
+    }
+
+    /* ====================================================================
+       Densidad compacta y zoom de interfaz
+       ==================================================================== */
+
+    var DENSITY_KEY = 'waise:density';
+    var ZOOM_KEY = 'waise:zoom';
+    var ZOOM_MIN = 80;
+    var ZOOM_MAX = 130;
+
+    function applyDensity(on) {
+        document.documentElement.classList.toggle('waise-compact', !!on);
+        try { window.localStorage.setItem(DENSITY_KEY, on ? '1' : '0'); } catch (e) { /* ignorado */ }
+    }
+
+    function toggleDensity() {
+        if (!getPref('density')) return;
+        var on = !document.documentElement.classList.contains('waise-compact');
+        applyDensity(on);
+        toast(on ? 'Modo compacto activado' : 'Modo compacto desactivado', 'ok');
+    }
+
+    function readZoom() {
+        var value = 100;
+        try { value = parseInt(window.localStorage.getItem(ZOOM_KEY), 10) || 100; }
+        catch (e) { value = 100; }
+        if (value < ZOOM_MIN) value = ZOOM_MIN;
+        if (value > ZOOM_MAX) value = ZOOM_MAX;
+        return value;
+    }
+
+    function applyZoom(value) {
+        document.documentElement.style.fontSize = value === 100 ? '' : value + '%';
+        try { window.localStorage.setItem(ZOOM_KEY, String(value)); } catch (e) { /* ignorado */ }
+    }
+
+    function stepZoom(delta) {
+        if (!getPref('uiZoom')) return;
+        var value = delta === 0 ? 100 : readZoom() + delta;
+        if (value < ZOOM_MIN) value = ZOOM_MIN;
+        if (value > ZOOM_MAX) value = ZOOM_MAX;
+        applyZoom(value);
+        toast('Zoom de interfaz: ' + value + '%', 'ok');
+    }
+
+    function restoreUiPrefs() {
+        if (getPref('density')) {
+            try {
+                if (window.localStorage.getItem(DENSITY_KEY) === '1') {
+                    document.documentElement.classList.add('waise-compact');
+                }
+            } catch (e) { /* ignorado */ }
+        }
+        if (getPref('uiZoom')) {
+            var zoom = readZoom();
+            if (zoom !== 100) document.documentElement.style.fontSize = zoom + '%';
+        }
+    }
+
+    /* ====================================================================
+       Servidores recientes
+       ==================================================================== */
+
+    var RECENT_KEY = 'waise:recent';
+    var RECENT_MAX = 8;
+
+    var recent = (function readRecent() {
+        try {
+            var raw = window.localStorage.getItem(RECENT_KEY);
+            var parsed = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(parsed)) return [];
+            return parsed.filter(function (x) { return x && typeof x.id === 'string'; });
+        } catch (e) { return []; }
+    })();
+
+    function trackRecent() {
+        if (!getPref('recentServers')) return;
+        var id = currentServerId();
+        if (!id) return;
+        var el = document.querySelector('[class*="ServerName"], main h1, h1');
+        var name = el ? (el.textContent || '').trim() : '';
+        if (!name || name.length > 60) name = id;
+
+        var head = recent[0];
+        if (head && head.id === id && head.name === name) return;
+        recent = recent.filter(function (x) { return x.id !== id; });
+        recent.unshift({ id: id, name: name });
+        if (recent.length > RECENT_MAX) recent = recent.slice(0, RECENT_MAX);
+        try { window.localStorage.setItem(RECENT_KEY, JSON.stringify(recent)); }
+        catch (e) { /* cuota llena: la lista vive en memoria */ }
+    }
+
+    function jumpToPreviousServer() {
+        if (!getPref('recentServers')) return;
+        var id = currentServerId();
+        var target = null;
+        for (var i = 0; i < recent.length; i++) {
+            if (recent[i].id !== id) { target = recent[i]; break; }
+        }
+        if (!target) { toast('Todavia no hay otro servidor reciente', 'error'); return; }
+        window.location.assign('/server/' + target.id);
+    }
+
+    /* ====================================================================
+       Estado de conexion del navegador
+       ==================================================================== */
+
+    function setupNetStatus() {
+        window.addEventListener('offline', function () {
+            if (!getPref('netStatus')) return;
+            document.documentElement.classList.add('waise-offline');
+            toast('Sin conexion: el panel dejara de actualizarse', 'error');
+        });
+        window.addEventListener('online', function () {
+            if (!getPref('netStatus')) return;
+            document.documentElement.classList.remove('waise-offline');
+            toast('Conexion restablecida', 'ok');
+        });
+    }
+
 
     /* ====================================================================
        Atajos de teclado
@@ -515,6 +928,24 @@
             ev.preventDefault();
             toggleFocusMode();
             return;
+        }
+
+        if (ev.altKey && !ev.ctrlKey && !ev.metaKey) {
+            var digit = ev.key >= '1' && ev.key <= '9' ? parseInt(ev.key, 10) : 0;
+            if (digit && getPref('macros')) { ev.preventDefault(); runMacro(digit - 1); return; }
+            var letter = (ev.key || '').toLowerCase();
+            if (letter === 'm' && getPref('macros')) { ev.preventDefault(); storeMacro(); return; }
+            if (letter === 'e') { ev.preventDefault(); exportConsole(); return; }
+            if (letter === 'f') { ev.preventDefault(); openConsoleFind(); return; }
+            if (letter === 'n') { ev.preventDefault(); toggleStatusNotify(); return; }
+            if (letter === 'd') { ev.preventDefault(); toggleDensity(); return; }
+            if (letter === 'r') { ev.preventDefault(); jumpToPreviousServer(); return; }
+        }
+
+        if ((ev.ctrlKey || ev.metaKey) && ev.altKey) {
+            if (ev.key === '+' || ev.key === '=') { ev.preventDefault(); stepZoom(5); return; }
+            if (ev.key === '-') { ev.preventDefault(); stepZoom(-5); return; }
+            if (ev.key === '0') { ev.preventDefault(); stepZoom(0); return; }
         }
 
         if (ev.key === '?' && !isTyping(document.activeElement)) {
@@ -722,6 +1153,10 @@
         }
         for (var k = 0; k < favorites.length; k++) {
             items.push({ label: 'Favorito: ' + favorites[k], url: '/server/' + favorites[k] });
+        }
+        for (var r = 0; r < recent.length; r++) {
+            if (recent[r].id === id) continue;
+            items.push({ label: 'Reciente: ' + recent[r].name, url: '/server/' + recent[r].id });
         }
         return items;
     }
@@ -974,7 +1409,15 @@
         ['Flecha arriba / abajo', 'Historial de comandos'],
         ['Tab', 'Autocompletar comando'],
         ['?', 'Mostrar esta ayuda'],
-        ['Esc', 'Cerrar modal o panel']
+        ['Esc', 'Cerrar modal o panel'],
+        ['Alt + 1..9', 'Ejecutar macro de comando'],
+        ['Alt + M', 'Guardar el comando actual como macro'],
+        ['Alt + F', 'Filtrar lineas de la consola'],
+        ['Alt + E', 'Exportar la consola a .txt'],
+        ['Alt + N', 'Avisos de cambio de estado'],
+        ['Alt + D', 'Modo compacto'],
+        ['Alt + R', 'Ir al servidor anterior'],
+        ['Ctrl + Alt + +/-/0', 'Zoom de la interfaz']
     ];
 
     function closeHelp() {
@@ -1058,7 +1501,7 @@
     }
 
     function closeOverlays() {
-        return closePalette() || closeHelp();
+        return closePalette() || closeHelp() || closeConsoleFind();
     }
 
     /* ====================================================================
@@ -1082,6 +1525,7 @@
                 setupPasswordReveal();
                 setupSessionClock();
                 updatePageTitle();
+                trackRecent();
             } catch (e) {
                 /* Una feature rota no debe dejar el panel a medias. */
             }
@@ -1091,6 +1535,8 @@
     function onNavigate() {
         hideHint();
         closeOverlays();
+        lastStatus = null;
+        if (dirty && dirtyPath !== window.location.pathname) { dirty = false; dirtyPath = ''; }
         historyServer = null;
         lastTitle = '';
         schedule();
@@ -1098,9 +1544,15 @@
 
     function init() {
         restoreFocusMode();
+        restoreUiPrefs();
         schedule();
 
         document.addEventListener('click', onGuardClick, true);
+        document.addEventListener('keydown', markDirty, true);
+        document.addEventListener('click', clearDirty, true);
+        window.addEventListener('beforeunload', onBeforeUnload);
+        setupNetStatus();
+        statusTimer = window.setInterval(pollStatus, 3000);
 
         var observer = new MutationObserver(function (muts) {
             for (var i = 0; i < muts.length; i++) {
@@ -1135,7 +1587,12 @@
         toggleFavorite: toggleFavorite,
         openPalette: openPalette,
         openHelp: openHelp,
-        toggleFocusMode: toggleFocusMode
+        toggleFocusMode: toggleFocusMode,
+        exportConsole: exportConsole,
+        openConsoleFind: openConsoleFind,
+        toggleDensity: toggleDensity,
+        setZoom: applyZoom,
+        recentServers: function () { return recent.slice(); }
     };
 
     if (document.readyState === 'loading') {

@@ -440,6 +440,107 @@
     .waise-overlay { padding-top: 6vh; }
 }
 
+/* --- Filtro de la consola ---------------------------------------------- */
+
+.waise-cfind {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 99997;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .375rem .5rem;
+    border-radius: .625rem;
+    background: var(--waise-fx-surface);
+    border: 1px solid var(--waise-fx-border);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .5);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    max-width: calc(100vw - 2rem);
+}
+
+.waise-cfind__input {
+    width: 14rem;
+    max-width: 45vw;
+    padding: .3125rem .5rem;
+    border-radius: .4375rem;
+    border: 1px solid var(--waise-fx-border);
+    background: rgba(255, 255, 255, .05);
+    color: var(--waise-fx-text);
+    font-size: .8125rem;
+}
+
+.waise-cfind__input:focus {
+    outline: none;
+    border-color: var(--waise-accent, #6f5cff);
+}
+
+.waise-cfind__count {
+    color: var(--waise-fx-muted);
+    font-size: .6875rem;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.waise-cfind__close {
+    border: 0;
+    background: transparent;
+    color: var(--waise-fx-muted);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 .25rem;
+}
+
+.waise-cfind__close:hover { color: var(--waise-fx-text); }
+
+/* --- Modo compacto ------------------------------------------------------ */
+
+.waise-compact main,
+.waise-compact [class*="ContentContainer"] {
+    padding-top: .75rem !important;
+    padding-bottom: .75rem !important;
+}
+
+.waise-compact table td,
+.waise-compact table th {
+    padding-top: .375rem !important;
+    padding-bottom: .375rem !important;
+}
+
+.waise-compact .waise-server-card,
+.waise-compact [class*="GreyRowBox"] {
+    margin-bottom: .5rem !important;
+}
+
+/* --- Sin conexion ------------------------------------------------------- */
+
+.waise-offline body::after {
+    content: 'Sin conexion';
+    position: fixed;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    z-index: 99999;
+    padding: .1875rem .75rem;
+    border-radius: 0 0 .5rem .5rem;
+    background: var(--waise-fx-error);
+    color: #fff;
+    font-size: .6875rem;
+    font-weight: 700;
+    letter-spacing: .03em;
+    pointer-events: none;
+}
+
+@media (max-width: 640px) {
+    .waise-clock { display: none; }
+    .waise-help__key { flex-basis: 7rem; }
+    .waise-overlay { padding-top: 6vh; }
+    .waise-cfind { left: 1rem; right: 1rem; }
+    .waise-cfind__input { width: 100%; max-width: none; }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .waise-toast,
     .waise-toast--out,
