@@ -1533,28 +1533,40 @@ td,th,span,label,li { color: var(--waise-text) !important; }
    v1.5.5 — Network widget + File manager rows
    ===================================================================== */
 
-/* Network / gráficas de red: el wrapper tiene clase hasheada de CSS Modules,
-   no hay selector estable de clase, así que se apunta por estructura.
-   El widget es un div con flex+items-center+justify-between anidado en un
-   div hermano de un <canvas>. Se usa el atributo del canvas como ancla. */
-div:has(> canvas[role="img"]) {
+/* Widgets de gráficas (CPU Load, Memory, Network):
+   estructura: div.style-module_xxx.group > div(header) + div.z-10.ml-2 > canvas
+   Ancla estable: el div padre que contiene en algún descendiente canvas[role="img"]
+   y también un h3 con font-header (distingue de otros canvas en la página). */
+div:has(canvas[role="img"]):has(h3) {
     background-color: rgba(255, 255, 255, 0.04) !important;
     backdrop-filter: blur(14px) saturate(140%) !important;
     -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
     border: 1px solid rgba(255, 255, 255, 0.08) !important;
     border-radius: 10px !important;
+    overflow: hidden;
 }
 
-/* Cabecera del widget (h3 + iconos) */
-div:has(> canvas[role="img"]) > div:first-child {
+/* La cabecera dentro del widget no debe heredar el fondo del widget padre */
+div:has(canvas[role="img"]):has(h3) > div:first-child {
     background: transparent !important;
     border: 0 !important;
     border-radius: 0 !important;
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
 }
 
-div:has(> canvas[role="img"]) h3 {
+/* El wrapper del canvas tampoco debe añadir fondo */
+div:has(canvas[role="img"]):has(h3) > div:last-child {
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    box-shadow: none !important;
+}
+
+div:has(canvas[role="img"]):has(h3) h3 {
     color: var(--waise-text-dim) !important;
 }
 
