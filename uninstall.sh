@@ -146,6 +146,17 @@ PUBLIC_DIR="${PANEL_DIR}/public/${WAISE_PUBLIC_SUBDIR}"
 if [[ -d "$PUBLIC_DIR" ]]; then
     rm -rf -- "$PUBLIC_DIR"
     waise_ok "Assets eliminados (public/${WAISE_PUBLIC_SUBDIR})."
+# --- 2b. Configuracion del Theme Editor ------------------------------------
+# Sin --purge se conserva: reinstalar recupera colores, logo y textos tal cual.
+STORAGE_DIR="${PANEL_DIR}/storage/waise"
+if [[ -d "$STORAGE_DIR" ]]; then
+    if [[ $PURGE -eq 1 ]]; then
+        rm -rf -- "$STORAGE_DIR"
+        waise_ok "Configuracion del Theme Editor eliminada (storage/waise)."
+    else
+        waise_log "Configuracion conservada en storage/waise (usa --purge para borrarla)."
+    fi
+fi
 fi
 
 # --- 3. Cachés -------------------------------------------------------------
