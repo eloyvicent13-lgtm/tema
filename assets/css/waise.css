@@ -1612,6 +1612,189 @@ div:has(> [class*="FileObjectRow"]):hover {
 }
 
 /* =====================================================================
+   v1.5.8 — Modal body, TitledGreyBox, Switch, PermissionRow, Buttons, form-control
+   ===================================================================== */
+
+/* --- Cuerpo del modal (Modal___StyledDiv2) --- */
+[class*="Modal___StyledDiv2"] {
+    background: rgba(15, 15, 24, 0.96) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    color: var(--waise-text) !important;
+}
+
+/* Título h3 dentro del modal de schedule */
+[class*="EditScheduleModal___StyledH"],
+[class*="EditSubuserModal___StyledH"] {
+    color: var(--waise-text) !important;
+}
+
+/* Texto descriptivo de cron */
+[class*="EditScheduleModal___StyledP"] {
+    color: var(--waise-text-dim) !important;
+    font-size: 0.82rem !important;
+}
+
+/* --- TitledGreyBox (bloques de categorías de permisos) --- */
+[class*="TitledGreyBox___StyledDiv-sc-gvsoy-0"],
+[class*="TitledGreyBox___StyledDiv"]:not([class*="StyledDiv2"]):not([class*="StyledDiv3"]):not([class*="StyledDiv4"]) {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 8px !important;
+    overflow: hidden;
+}
+
+/* Cabecera del TitledGreyBox (fondo ligeramente más claro) */
+[class*="TitledGreyBox___StyledDiv2"] {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Cuerpo del TitledGreyBox */
+[class*="TitledGreyBox___StyledDiv3"] {
+    background: transparent !important;
+}
+
+/* Título de categoría de permisos (control, user, file…) */
+[class*="PermissionTitleBox___StyledP"] {
+    color: var(--waise-text) !important;
+    font-weight: 600 !important;
+    text-transform: capitalize !important;
+}
+
+[class*="PermissionTitleBox___StyledDiv"] {
+    background: transparent !important;
+}
+
+/* Descripción general de categoría */
+[class*="EditSubuserModal___StyledP2"] {
+    color: var(--waise-text-dim) !important;
+    font-size: 0.82rem !important;
+}
+
+/* --- PermissionRow (filas de permiso) --- */
+[class*="PermissionRow__Container"] {
+    border-radius: 6px !important;
+    transition: background 0.12s ease !important;
+}
+
+[class*="PermissionRow__Container"]:hover {
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Nombre del permiso (console, start, create…) */
+[class*="PermissionRow___StyledLabel"] {
+    color: var(--waise-text) !important;
+    font-weight: 500 !important;
+}
+
+/* Descripción del permiso */
+[class*="PermissionRow___StyledP"] {
+    color: var(--waise-text-dim) !important;
+    font-size: 0.8rem !important;
+}
+
+/* Div wrapper del checkbox en PermissionRow */
+[class*="PermissionRow___StyledDiv-sc"] {
+    background: transparent !important;
+}
+
+[class*="PermissionRow___StyledDiv2-sc"] {
+    background: transparent !important;
+}
+
+/* Checkbox nativo dentro de PermissionRow y Switch — apariencia personalizada */
+[class*="PermissionRow___StyledCheckbox"],
+[class*="Switch__ToggleContainer"] input[type="checkbox"] {
+    accent-color: #8b5cf6 !important;
+}
+
+/* --- Switch (toggles: Show Cheatsheet, Only When Online, Schedule Enabled) --- */
+[class*="Switch___StyledDiv-sc"] {
+    background: transparent !important;
+}
+
+[class*="Switch___StyledDiv2-sc"] {
+    background: transparent !important;
+}
+
+/* Label principal del switch */
+[class*="Switch___StyledLabel"] {
+    color: var(--waise-text) !important;
+    font-weight: 500 !important;
+}
+
+/* Descripción del switch */
+[class*="Switch___StyledP"] {
+    color: var(--waise-text-dim) !important;
+    font-size: 0.82rem !important;
+}
+
+/* Toggle visual del switch (el label que actúa de pill) */
+[class*="Switch___StyledToggleContainer"] label {
+    background: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.18) !important;
+    border-radius: 9999px !important;
+}
+
+[class*="Switch___StyledToggleContainer"] input[type="checkbox"]:checked + label {
+    background: rgba(139, 92, 246, 0.7) !important;
+    border-color: rgba(139, 92, 246, 0.9) !important;
+}
+
+/* --- Buttons styled-components (Invite User, Create schedule, etc.) --- */
+[class*="Button__ButtonStyle"],
+[class*="Button__ButtonStyle"]:is(button) {
+    background: rgba(139, 92, 246, 0.75) !important;
+    border: 1px solid rgba(139, 92, 246, 0.9) !important;
+    color: #fff !important;
+    border-radius: 6px !important;
+    transition: background 0.15s ease, border-color 0.15s ease !important;
+}
+
+[class*="Button__ButtonStyle"]:hover {
+    background: rgba(139, 92, 246, 0.95) !important;
+    border-color: #8b5cf6 !important;
+}
+
+[class*="Button___StyledSpan"] {
+    color: inherit !important;
+}
+
+/* --- InputSpinner (wrapper del input de búsqueda) --- */
+[class*="InputSpinner__Container"] {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+/* --- InputError (texto de error bajo inputs) --- */
+[class*="InputError___StyledP2"] {
+    color: var(--waise-text-dim) !important;
+    font-size: 0.8rem !important;
+}
+
+/* --- form-control (Bootstrap/Pterodactyl admin: Server Name, etc.) --- */
+.form-control {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    color: var(--waise-text) !important;
+    border-radius: 6px !important;
+    transition: border-color 0.15s ease, background 0.15s ease !important;
+}
+
+.form-control:focus {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(139, 92, 246, 0.6) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
+}
+
+.form-control::placeholder {
+    color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* =====================================================================
    v1.5.7 — Modales, formularios, inputs, labels y ContentBox
    ===================================================================== */
 
