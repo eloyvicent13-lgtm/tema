@@ -153,10 +153,300 @@
     white-space: nowrap;
 }
 
+/* --- Utilidad ---------------------------------------------------------- */
+
+.waise-hidden { display: none !important; }
+
+/* --- Favoritos --------------------------------------------------------- */
+
+.waise-server-card { position: relative; }
+
+.waise-fav-btn {
+    position: absolute;
+    top: .5rem;
+    right: .5rem;
+    z-index: 5;
+    width: 1.75rem;
+    height: 1.75rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    border-radius: .5rem;
+    border: 1px solid transparent;
+    background: transparent;
+    color: var(--waise-fx-muted);
+    font-size: 1rem;
+    line-height: 1;
+    cursor: pointer;
+    transition: color .15s ease, background-color .15s ease, transform .15s ease;
+}
+
+.waise-fav-btn:hover {
+    background: rgba(255, 255, 255, .1);
+    color: var(--waise-fx-text);
+    transform: scale(1.08);
+}
+
+.waise-fav-btn--on { color: #fbbf24; }
+
+.waise-fav-btn:focus-visible {
+    outline: 2px solid var(--waise-accent, #6f5cff);
+    outline-offset: 2px;
+}
+
+/* --- Filtro de servidores ---------------------------------------------- */
+
+.waise-filter {
+    display: flex;
+    align-items: center;
+    gap: .625rem;
+    margin: 0 0 .875rem;
+}
+
+.waise-filter__input {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: .5rem .75rem;
+    border-radius: .625rem;
+    border: 1px solid var(--waise-fx-border);
+    background: rgba(255, 255, 255, .05);
+    color: var(--waise-fx-text);
+    font-size: .8125rem;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+.waise-filter__input::placeholder { color: var(--waise-fx-muted); }
+
+.waise-filter__input:focus {
+    outline: none;
+    border-color: var(--waise-accent, #6f5cff);
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--waise-accent, #6f5cff) 25%, transparent);
+}
+
+.waise-filter__count {
+    flex: 0 0 auto;
+    color: var(--waise-fx-muted);
+    font-size: .75rem;
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- Overlays (paleta y ayuda) ----------------------------------------- */
+
+.waise-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99998;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 10vh 1rem 1rem;
+    background: rgba(6, 8, 18, .62);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    animation: waise-toast-in .16s ease-out both;
+}
+
+.waise-palette,
+.waise-help {
+    width: min(34rem, 100%);
+    max-height: 70vh;
+    overflow: hidden auto;
+    display: flex;
+    flex-direction: column;
+    border-radius: .875rem;
+    background: var(--waise-fx-surface);
+    border: 1px solid var(--waise-fx-border);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, .55);
+    color: var(--waise-fx-text);
+}
+
+.waise-palette__input {
+    padding: .875rem 1rem;
+    border: 0;
+    border-bottom: 1px solid var(--waise-fx-border);
+    background: transparent;
+    color: var(--waise-fx-text);
+    font-size: .9375rem;
+}
+
+.waise-palette__input:focus { outline: none; }
+.waise-palette__input::placeholder { color: var(--waise-fx-muted); }
+
+.waise-palette__list {
+    display: flex;
+    flex-direction: column;
+    padding: .375rem;
+    overflow-y: auto;
+}
+
+.waise-palette__item {
+    width: 100%;
+    text-align: left;
+    padding: .5rem .625rem;
+    border: 0;
+    border-radius: .5rem;
+    background: transparent;
+    color: var(--waise-fx-text);
+    font-size: .8125rem;
+    cursor: pointer;
+    transition: background-color .12s ease;
+}
+
+.waise-palette__item:hover,
+.waise-palette__item--active {
+    background: color-mix(in srgb, var(--waise-accent, #6f5cff) 26%, transparent);
+}
+
+.waise-palette__empty {
+    padding: .75rem .625rem;
+    color: var(--waise-fx-muted);
+    font-size: .8125rem;
+}
+
+/* --- Ayuda de atajos --------------------------------------------------- */
+
+.waise-help { padding: 1rem 1.125rem 1.25rem; }
+
+.waise-help__title {
+    margin-bottom: .75rem;
+    font-size: .9375rem;
+    font-weight: 700;
+}
+
+.waise-help__row {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    padding: .3125rem 0;
+    font-size: .8125rem;
+    color: var(--waise-fx-muted);
+}
+
+.waise-help__key {
+    flex: 0 0 9.5rem;
+    padding: .1875rem .4375rem;
+    border-radius: .375rem;
+    border: 1px solid var(--waise-fx-border);
+    background: rgba(255, 255, 255, .07);
+    color: var(--waise-fx-text);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .6875rem;
+    text-align: center;
+}
+
+/* --- Confirmacion de acciones destructivas ----------------------------- */
+
+.waise-armed {
+    box-shadow: 0 0 0 2px var(--waise-fx-error) !important;
+    animation: waise-pulse .9s ease-in-out infinite;
+}
+
+@keyframes waise-pulse {
+    0%, 100% { filter: none; }
+    50%      { filter: brightness(1.25); }
+}
+
+/* --- Modo enfoque ------------------------------------------------------ */
+
+.waise-focus #sidebar,
+.waise-focus nav[class*="SubNavigation"],
+.waise-focus div[class*="SubNavigation"] {
+    display: none !important;
+}
+
+.waise-focus main { padding-top: .75rem !important; }
+
+/* --- Volver arriba ----------------------------------------------------- */
+
+.waise-top-btn {
+    position: fixed;
+    right: 1rem;
+    bottom: 4.5rem;
+    z-index: 9990;
+    width: 2.5rem;
+    height: 2.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border: 1px solid var(--waise-fx-border);
+    background: var(--waise-fx-surface);
+    color: var(--waise-fx-text);
+    font-size: 1rem;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(.5rem);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, .45);
+    transition: opacity .18s ease, transform .18s ease, visibility .18s ease;
+}
+
+.waise-top-btn--on {
+    opacity: 1;
+    visibility: visible;
+    transform: none;
+}
+
+.waise-top-btn:hover { border-color: var(--waise-accent, #6f5cff); }
+
+/* --- Mostrar/ocultar contrasena ---------------------------------------- */
+
+.waise-pass-host { position: relative; }
+
+.waise-pass-btn {
+    position: absolute;
+    top: 50%;
+    right: .5rem;
+    transform: translateY(-50%);
+    z-index: 4;
+    padding: .125rem .4375rem;
+    border-radius: .375rem;
+    border: 1px solid var(--waise-fx-border);
+    background: rgba(255, 255, 255, .08);
+    color: var(--waise-fx-muted);
+    font-size: .6875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color .15s ease, background-color .15s ease;
+}
+
+.waise-pass-btn:hover {
+    color: var(--waise-fx-text);
+    background: rgba(255, 255, 255, .14);
+}
+
+/* --- Reloj de sesion --------------------------------------------------- */
+
+.waise-clock {
+    position: fixed;
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 9989;
+    padding: .3125rem .5625rem;
+    border-radius: .5rem;
+    border: 1px solid var(--waise-fx-border);
+    background: var(--waise-fx-surface);
+    color: var(--waise-fx-muted);
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .6875rem;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+}
+
+@media (max-width: 640px) {
+    .waise-clock { display: none; }
+    .waise-help__key { flex-basis: 7rem; }
+    .waise-overlay { padding-top: 6vh; }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .waise-toast,
     .waise-toast--out,
-    .waise-console-hint {
+    .waise-console-hint,
+    .waise-overlay {
         animation: none;
     }
+    .waise-armed { animation: none; }
+    .waise-top-btn { transition: none; }
 }

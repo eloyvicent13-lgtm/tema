@@ -20,7 +20,17 @@
     var defaults = {
         copyAddress: true,
         shortcuts: true,
-        consoleHistory: true
+        consoleHistory: true,
+        favorites: true,
+        serverFilter: true,
+        quickNav: true,
+        actionGuard: true,
+        focusMode: true,
+        backToTop: true,
+        passwordReveal: true,
+        pageTitle: true,
+        helpOverlay: true,
+        sessionClock: false
     };
 
     var prefs = (function readPrefs() {
@@ -53,7 +63,17 @@
     var MASTER_KEYS = {
         copyAddress: 'featCopyAddress',
         shortcuts: 'featShortcuts',
-        consoleHistory: 'featConsoleHistory'
+        consoleHistory: 'featConsoleHistory',
+        favorites: 'featFavorites',
+        serverFilter: 'featServerFilter',
+        quickNav: 'featQuickNav',
+        actionGuard: 'featActionGuard',
+        focusMode: 'featFocusMode',
+        backToTop: 'featBackToTop',
+        passwordReveal: 'featPasswordReveal',
+        pageTitle: 'featPageTitle',
+        helpOverlay: 'featHelpOverlay',
+        sessionClock: 'featSessionClock'
     };
 
     function masterAllows(name) {
@@ -483,6 +503,32 @@
             return;
         }
 
+        if ((ev.ctrlKey || ev.metaKey) && ev.shiftKey && ev.key.toLowerCase() === 'p') {
+            if (!getPref('quickNav')) return;
+            ev.preventDefault();
+            openPalette();
+            return;
+        }
+
+        if ((ev.ctrlKey || ev.metaKey) && ev.shiftKey && ev.key.toLowerCase() === 'f') {
+            if (!getPref('focusMode')) return;
+            ev.preventDefault();
+            toggleFocusMode();
+            return;
+        }
+
+        if (ev.key === '?' && !isTyping(document.activeElement)) {
+            if (!getPref('helpOverlay')) return;
+            ev.preventDefault();
+            if (!closeHelp()) openHelp();
+            return;
+        }
+
+        if (ev.key === 'Escape' && closeOverlays()) {
+            ev.preventDefault();
+            return;
+        }
+
         if (ev.key === 'Escape') {
             if (isTyping(document.activeElement) && document.activeElement.dataset[CONSOLE_FLAG]) {
                 hideHint();
@@ -491,6 +537,528 @@
             }
             closeTopModal();
         }
+    }
+
+    /* ====================================================================
+       Favoritos de servidores y filtro del dashboard
+       ==================================================================== */
+
+    var FAV_KEY = 'waise:favorites';
+    var FAV_FLAG = 'waiseFav';
+    var FILTER_FLAG = 'waiseFilter';
+
+    var favorites = (function readFavorites() {
+        try {
+            var raw = window.localStorage.getItem(FAV_KEY);
+            var parsed = raw ? JSON.parse(raw) : [];
+            if (!Array.isArray(parsed)) return [];
+            return parsed.filter(function (x) { return typeof x === 'string' && x.length; });
+        } catch (e) { return []; }
+    })();
+
+    function saveFavorites() {
+        try { window.localStorage.setItem(FAV_KEY, JSON.stringify(favorites)); }
+        catch (e) { /* cuota o modo privado: solo dura la sesion */ }
+    }
+
+    function isFavorite(id) { return favorites.indexOf(id) !== -1; }
+
+    function toggleFavorite(id) {
+        var i = favorites.indexOf(id);
+        if (i === -1) favorites.push(id); else favorites.splice(i, 1);
+        saveFavorites();
+        return i === -1;
+    }
+
+    /* Las tarjetas del dashboard son enlaces a /server/<id> sin subruta. Se
+       exige esa forma exacta para no capturar enlaces internos del servidor. */
+    function serverCards() {
+        var out = [];
+        var links = document.querySelectorAll('a[href^="/server/"]');
+        for (var i = 0; i < links.length; i++) {
+            var href = links[i].getAttribute('href') || '';
+            var m = href.match(/^\/server\/([A-Za-z0-9]+)\/?$/);
+            if (!m) continue;
+            links[i].setAttribute('data-waise-server', m[1]);
+            out.push(links[i]);
+        }
+        return out;
+    }
+
+    function paintFavButton(btn, active) {
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+        btn.classList.toggle('waise-fav-btn--on', active);
+        btn.title = active ? 'Quitar de favoritos' : 'Marcar como favorito';
+        btn.textContent = active ? '\u2605' : '\u2606';
+    }
+
+    function reorderFavorites(cards) {
+        if (!cards.length) return;
+        var parent = cards[0].parentElement;
+        if (!parent) return;
+        for (var i = cards.length - 1; i >= 0; i--) {
+            var card = cards[i];
+            if (card.parentElement !== parent) continue;
+            if (!isFavorite(card.getAttribute('data-waise-server'))) continue;
+            if (parent.firstChild !== card) parent.insertBefore(card, parent.firstChild);
+        }
+    }
+
+    function setupFavorites(cards) {
+        if (!getPref('favorites')) return;
+        for (var i = 0; i < cards.length; i++) {
+            var card = cards[i];
+            if (card.dataset[FAV_FLAG]) continue;
+            card.dataset[FAV_FLAG] = '1';
+            card.classList.add('waise-server-card');
+
+            var id = card.getAttribute('data-waise-server');
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'waise-fav-btn';
+            paintFavButton(btn, isFavorite(id));
+
+            (function (button, serverId) {
+                button.addEventListener('click', function (ev) {
+                    /* La tarjeta entera es un enlace: sin esto se navegaria. */
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    var now = toggleFavorite(serverId);
+                    paintFavButton(button, now);
+                    toast(now ? 'Anadido a favoritos' : 'Quitado de favoritos', 'ok');
+                    reorderFavorites(serverCards());
+                });
+            })(btn, id);
+
+            card.appendChild(btn);
+        }
+        reorderFavorites(cards);
+    }
+
+    function setupServerFilter(cards) {
+        if (!getPref('serverFilter')) return;
+        if (cards.length < 2) return;
+        var list = cards[0].parentElement;
+        if (!list || !list.parentElement) return;
+        if (list.dataset[FILTER_FLAG]) return;
+        list.dataset[FILTER_FLAG] = '1';
+
+        var bar = document.createElement('div');
+        bar.className = 'waise-filter';
+
+        var input = document.createElement('input');
+        input.type = 'search';
+        input.className = 'waise-filter__input';
+        input.placeholder = 'Filtrar servidores...';
+        input.setAttribute('aria-label', 'Filtrar servidores');
+
+        var count = document.createElement('span');
+        count.className = 'waise-filter__count';
+
+        function apply() {
+            var needle = input.value.trim().toLowerCase();
+            var current = serverCards();
+            var shown = 0;
+            for (var i = 0; i < current.length; i++) {
+                var text = (current[i].textContent || '').toLowerCase();
+                var hit = !needle || text.indexOf(needle) !== -1;
+                current[i].classList.toggle('waise-hidden', !hit);
+                if (hit) shown++;
+            }
+            count.textContent = shown + ' / ' + current.length;
+        }
+
+        input.addEventListener('input', apply);
+        input.addEventListener('keydown', function (ev) {
+            if (ev.key === 'Escape') { input.value = ''; apply(); input.blur(); }
+        });
+
+        bar.appendChild(input);
+        bar.appendChild(count);
+        list.parentElement.insertBefore(bar, list);
+        apply();
+    }
+
+    /* ====================================================================
+       Paleta de navegacion rapida (Ctrl+Shift+P)
+       ==================================================================== */
+
+    var SERVER_ROUTES = [
+        ['Consola', ''],
+        ['Ficheros', '/files'],
+        ['Bases de datos', '/databases'],
+        ['Programaciones', '/schedules'],
+        ['Usuarios', '/users'],
+        ['Copias de seguridad', '/backups'],
+        ['Red', '/network'],
+        ['Arranque', '/startup'],
+        ['Ajustes', '/settings'],
+        ['Actividad', '/activity']
+    ];
+
+    var GLOBAL_ROUTES = [
+        ['Panel principal', '/'],
+        ['Mi cuenta', '/account'],
+        ['Claves API', '/account/api'],
+        ['Claves SSH', '/account/ssh'],
+        ['Administracion', '/admin']
+    ];
+
+    var palette = null;
+
+    function buildPaletteItems() {
+        var items = [];
+        var id = currentServerId();
+        if (id) {
+            for (var i = 0; i < SERVER_ROUTES.length; i++) {
+                items.push({
+                    label: 'Servidor: ' + SERVER_ROUTES[i][0],
+                    url: '/server/' + id + SERVER_ROUTES[i][1]
+                });
+            }
+        }
+        for (var j = 0; j < GLOBAL_ROUTES.length; j++) {
+            items.push({ label: GLOBAL_ROUTES[j][0], url: GLOBAL_ROUTES[j][1] });
+        }
+        for (var k = 0; k < favorites.length; k++) {
+            items.push({ label: 'Favorito: ' + favorites[k], url: '/server/' + favorites[k] });
+        }
+        return items;
+    }
+
+    function closePalette() {
+        if (!palette) return false;
+        if (palette.root.parentNode) palette.root.parentNode.removeChild(palette.root);
+        palette = null;
+        return true;
+    }
+
+    function openPalette() {
+        if (!document.body) return;
+        closePalette();
+
+        var root = document.createElement('div');
+        root.className = 'waise-overlay';
+
+        var box = document.createElement('div');
+        box.className = 'waise-palette';
+        box.setAttribute('role', 'dialog');
+        box.setAttribute('aria-label', 'Navegacion rapida');
+
+        var input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'waise-palette__input';
+        input.placeholder = 'Ir a...';
+
+        var listEl = document.createElement('div');
+        listEl.className = 'waise-palette__list';
+
+        var all = buildPaletteItems();
+        var visible = all.slice();
+        var active = 0;
+
+        function render() {
+            listEl.textContent = '';
+            for (var i = 0; i < visible.length; i++) {
+                var row = document.createElement('button');
+                row.type = 'button';
+                row.className = 'waise-palette__item' + (i === active ? ' waise-palette__item--active' : '');
+                row.textContent = visible[i].label;
+                (function (url) {
+                    row.addEventListener('click', function () { closePalette(); window.location.assign(url); });
+                })(visible[i].url);
+                listEl.appendChild(row);
+            }
+            if (!visible.length) {
+                var empty = document.createElement('div');
+                empty.className = 'waise-palette__empty';
+                empty.textContent = 'Sin coincidencias';
+                listEl.appendChild(empty);
+            }
+        }
+
+        function filter() {
+            var needle = input.value.trim().toLowerCase();
+            visible = all.filter(function (it) {
+                return !needle || it.label.toLowerCase().indexOf(needle) !== -1;
+            });
+            active = 0;
+            render();
+        }
+
+        input.addEventListener('input', filter);
+        input.addEventListener('keydown', function (ev) {
+            if (ev.key === 'ArrowDown') {
+                ev.preventDefault();
+                if (visible.length) { active = (active + 1) % visible.length; render(); }
+            } else if (ev.key === 'ArrowUp') {
+                ev.preventDefault();
+                if (visible.length) { active = (active - 1 + visible.length) % visible.length; render(); }
+            } else if (ev.key === 'Enter') {
+                ev.preventDefault();
+                if (visible[active]) { var url = visible[active].url; closePalette(); window.location.assign(url); }
+            }
+        });
+
+        root.addEventListener('mousedown', function (ev) {
+            if (ev.target === root) closePalette();
+        });
+
+        box.appendChild(input);
+        box.appendChild(listEl);
+        root.appendChild(box);
+        document.body.appendChild(root);
+        palette = { root: root };
+        render();
+        input.focus();
+    }
+
+    /* ====================================================================
+       Confirmacion de acciones destructivas
+       ==================================================================== */
+
+    var GUARD_RE = /^(kill|matar|forzar\s+parada|delete|eliminar|borrar|destroy|reinstall|reinstalar)$/i;
+    var GUARD_FLAG = 'waiseArmed';
+
+    function onGuardClick(ev) {
+        if (!getPref('actionGuard')) return;
+        var target = ev.target;
+        if (!target || !target.closest) return;
+        var btn = target.closest('button');
+        if (!btn) return;
+        var label = (btn.textContent || '').trim();
+        if (!GUARD_RE.test(label)) return;
+        if (btn.dataset[GUARD_FLAG]) return;
+
+        ev.preventDefault();
+        ev.stopPropagation();
+        btn.dataset[GUARD_FLAG] = '1';
+        btn.classList.add('waise-armed');
+        toast('Accion destructiva: pulsa otra vez en 4 s para confirmar', 'error');
+
+        window.setTimeout(function () {
+            delete btn.dataset[GUARD_FLAG];
+            btn.classList.remove('waise-armed');
+        }, 4000);
+    }
+
+    /* ====================================================================
+       Modo enfoque
+       ==================================================================== */
+
+    var FOCUS_KEY = 'waise:focus-mode';
+
+    function applyFocusMode(on) {
+        document.documentElement.classList.toggle('waise-focus', !!on);
+        try { window.localStorage.setItem(FOCUS_KEY, on ? '1' : '0'); } catch (e) { /* ignorado */ }
+    }
+
+    function restoreFocusMode() {
+        if (!getPref('focusMode')) return;
+        try {
+            if (window.localStorage.getItem(FOCUS_KEY) === '1') {
+                document.documentElement.classList.add('waise-focus');
+            }
+        } catch (e) { /* ignorado */ }
+    }
+
+    function toggleFocusMode() {
+        var on = !document.documentElement.classList.contains('waise-focus');
+        applyFocusMode(on);
+        toast(on ? 'Modo enfoque activado' : 'Modo enfoque desactivado', 'ok');
+    }
+
+    /* ====================================================================
+       Boton volver arriba
+       ==================================================================== */
+
+    var topBtn = null;
+
+    function setupBackToTop() {
+        if (!getPref('backToTop')) return;
+        if (!document.body) return;
+        if (topBtn && topBtn.isConnected) return;
+
+        topBtn = document.createElement('button');
+        topBtn.type = 'button';
+        topBtn.className = 'waise-top-btn';
+        topBtn.title = 'Volver arriba';
+        topBtn.setAttribute('aria-label', 'Volver arriba');
+        topBtn.textContent = '\u2191';
+        topBtn.addEventListener('click', function () {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        document.body.appendChild(topBtn);
+
+        var ticking = false;
+        window.addEventListener('scroll', function () {
+            if (ticking) return;
+            ticking = true;
+            window.requestAnimationFrame(function () {
+                ticking = false;
+                if (!topBtn) return;
+                topBtn.classList.toggle('waise-top-btn--on', window.pageYOffset > 400);
+            });
+        }, { passive: true });
+    }
+
+    /* ====================================================================
+       Mostrar/ocultar contrasenas
+       ==================================================================== */
+
+    var REVEAL_FLAG = 'waiseReveal';
+
+    function setupPasswordReveal() {
+        if (!getPref('passwordReveal')) return;
+        var inputs = document.querySelectorAll('input[type="password"]');
+        for (var i = 0; i < inputs.length; i++) {
+            var input = inputs[i];
+            if (input.dataset[REVEAL_FLAG]) continue;
+            var host = input.parentElement;
+            if (!host) continue;
+            input.dataset[REVEAL_FLAG] = '1';
+            host.classList.add('waise-pass-host');
+
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'waise-pass-btn';
+            btn.title = 'Mostrar contrasena';
+            btn.setAttribute('aria-label', 'Mostrar contrasena');
+            btn.textContent = 'Ver';
+
+            (function (field, button) {
+                button.addEventListener('click', function (ev) {
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    var shown = field.getAttribute('type') === 'text';
+                    field.setAttribute('type', shown ? 'password' : 'text');
+                    button.textContent = shown ? 'Ver' : 'Ocultar';
+                    button.title = shown ? 'Mostrar contrasena' : 'Ocultar contrasena';
+                });
+            })(input, btn);
+
+            host.appendChild(btn);
+        }
+    }
+
+    /* ====================================================================
+       Titulo de pestana con el servidor activo
+       ==================================================================== */
+
+    var lastTitle = '';
+
+    function updatePageTitle() {
+        if (!getPref('pageTitle')) return;
+        var id = currentServerId();
+        if (!id) return;
+        var el = document.querySelector('[class*="ServerName"], main h1, h1');
+        var name = el ? (el.textContent || '').trim() : '';
+        if (!name || name.length > 60) name = id;
+        var next = name + ' | ' + (window.location.pathname.split('/')[3] || 'consola');
+        if (next === lastTitle) return;
+        lastTitle = next;
+        document.title = next;
+    }
+
+    /* ====================================================================
+       Panel de ayuda de atajos
+       ==================================================================== */
+
+    var helpEl = null;
+
+    var SHORTCUTS = [
+        ['Ctrl + K', 'Buscador del panel'],
+        ['Ctrl + `', 'Enfocar la consola'],
+        ['Ctrl + Shift + P', 'Navegacion rapida'],
+        ['Ctrl + Shift + F', 'Modo enfoque'],
+        ['Flecha arriba / abajo', 'Historial de comandos'],
+        ['Tab', 'Autocompletar comando'],
+        ['?', 'Mostrar esta ayuda'],
+        ['Esc', 'Cerrar modal o panel']
+    ];
+
+    function closeHelp() {
+        if (!helpEl) return false;
+        if (helpEl.parentNode) helpEl.parentNode.removeChild(helpEl);
+        helpEl = null;
+        return true;
+    }
+
+    function openHelp() {
+        if (!document.body) return;
+        closeHelp();
+        helpEl = document.createElement('div');
+        helpEl.className = 'waise-overlay';
+
+        var box = document.createElement('div');
+        box.className = 'waise-help';
+        box.setAttribute('role', 'dialog');
+        box.setAttribute('aria-label', 'Atajos de teclado');
+
+        var title = document.createElement('div');
+        title.className = 'waise-help__title';
+        title.textContent = 'Atajos de teclado';
+        box.appendChild(title);
+
+        for (var i = 0; i < SHORTCUTS.length; i++) {
+            var row = document.createElement('div');
+            row.className = 'waise-help__row';
+            var key = document.createElement('kbd');
+            key.className = 'waise-help__key';
+            key.textContent = SHORTCUTS[i][0];
+            var desc = document.createElement('span');
+            desc.textContent = SHORTCUTS[i][1];
+            row.appendChild(key);
+            row.appendChild(desc);
+            box.appendChild(row);
+        }
+
+        helpEl.addEventListener('mousedown', function (ev) {
+            if (ev.target === helpEl) closeHelp();
+        });
+
+        helpEl.appendChild(box);
+        document.body.appendChild(helpEl);
+    }
+
+    /* ====================================================================
+       Reloj de sesion
+       ==================================================================== */
+
+    var clockEl = null;
+    var clockTimer = null;
+    var sessionStart = Date.now();
+
+    function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+    function tickClock() {
+        if (!clockEl) return;
+        var now = new Date();
+        var elapsed = Math.floor((Date.now() - sessionStart) / 1000);
+        clockEl.textContent = pad2(now.getHours()) + ':' + pad2(now.getMinutes()) +
+            '  |  ' + pad2(Math.floor(elapsed / 3600)) + ':' +
+            pad2(Math.floor(elapsed / 60) % 60) + ':' + pad2(elapsed % 60);
+    }
+
+    function setupSessionClock() {
+        if (!getPref('sessionClock')) {
+            if (clockEl && clockEl.parentNode) clockEl.parentNode.removeChild(clockEl);
+            clockEl = null;
+            if (clockTimer) { window.clearInterval(clockTimer); clockTimer = null; }
+            return;
+        }
+        if (clockEl && clockEl.isConnected) return;
+        if (!document.body) return;
+        clockEl = document.createElement('div');
+        clockEl.className = 'waise-clock';
+        clockEl.title = 'Hora local | tiempo de sesion';
+        document.body.appendChild(clockEl);
+        tickClock();
+        if (!clockTimer) clockTimer = window.setInterval(tickClock, 1000);
+    }
+
+    function closeOverlays() {
+        return closePalette() || closeHelp();
     }
 
     /* ====================================================================
@@ -507,6 +1075,13 @@
             try {
                 setupConsole();
                 scanAddresses();
+                var cards = serverCards();
+                setupFavorites(cards);
+                setupServerFilter(cards);
+                setupBackToTop();
+                setupPasswordReveal();
+                setupSessionClock();
+                updatePageTitle();
             } catch (e) {
                 /* Una feature rota no debe dejar el panel a medias. */
             }
@@ -515,12 +1090,17 @@
 
     function onNavigate() {
         hideHint();
+        closeOverlays();
         historyServer = null;
+        lastTitle = '';
         schedule();
     }
 
     function init() {
+        restoreFocusMode();
         schedule();
+
+        document.addEventListener('click', onGuardClick, true);
 
         var observer = new MutationObserver(function (muts) {
             for (var i = 0; i < muts.length; i++) {
@@ -550,7 +1130,12 @@
         setPref: setPref,
         toast: toast,
         copyText: copyText,
-        currentServerId: currentServerId
+        currentServerId: currentServerId,
+        isFavorite: isFavorite,
+        toggleFavorite: toggleFavorite,
+        openPalette: openPalette,
+        openHelp: openHelp,
+        toggleFocusMode: toggleFocusMode
     };
 
     if (document.readyState === 'loading') {
