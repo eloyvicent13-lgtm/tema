@@ -2,6 +2,10 @@
    Waise Theme - assets/css/waise-editor.css
    Estilos del Theme Editor (solo panel de administracion) y de la marca
    aplicada por waise-brand.js (cliente y admin).
+
+   IMPORTANTE: aqui se usan px y NO rem a proposito. El panel de
+   administracion (AdminLTE) reduce el font-size base del <html>, y con rem
+   toda la interfaz del editor salia ilegible de pequena.
    ========================================================================== */
 
 /* --- Marca (cliente) ---------------------------------------------------- */
@@ -9,13 +13,13 @@
 .waise-brand {
     display: inline-flex;
     align-items: center;
-    gap: .5rem;
+    gap: 8px;
 }
 
 .waise-brand__logo {
-    height: 1.75rem;
+    height: 28px;
     width: auto;
-    max-width: 10rem;
+    max-width: 160px;
     object-fit: contain;
     display: block;
 }
@@ -28,11 +32,11 @@
 
 .waise-copyright {
     position: fixed;
-    left: .75rem;
-    bottom: .5rem;
+    left: 12px;
+    bottom: 8px;
     z-index: 40;
-    max-width: min(20rem, 60vw);
-    font-size: .6875rem;
+    max-width: min(320px, 60vw);
+    font-size: 11px;
     line-height: 1.4;
     color: var(--waise-muted, #9aa3c7);
     opacity: .7;
@@ -43,11 +47,11 @@
 @media (max-width: 640px) {
     .waise-copyright {
         position: static;
-        margin: 1rem .75rem;
+        margin: 16px 12px;
         max-width: none;
     }
 
-    .waise-brand__logo { height: 1.5rem; }
+    .waise-brand__logo { height: 24px; }
 }
 
 /* --- Enlace del menu del admin ------------------------------------------ */
@@ -56,15 +60,15 @@
 
 .waise-ed-error {
     position: fixed;
-    right: 1rem;
-    bottom: 1rem;
+    right: 16px;
+    bottom: 16px;
     z-index: 99999;
-    max-width: 24rem;
-    padding: .75rem 1rem;
-    border-radius: .5rem;
+    max-width: 380px;
+    padding: 12px 16px;
+    border-radius: 8px;
     background: #7f1d1d;
     color: #fee2e2;
-    font-size: .8125rem;
+    font-size: 13px;
     line-height: 1.4;
     box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
 }
@@ -81,17 +85,26 @@ body.waise-ed-open { overflow: hidden; }
     flex-direction: column;
     background: #10131f;
     color: #e8eaf6;
+    /* Base propia: no heredamos el font-size reducido del admin. */
+    font-size: 16px;
+    line-height: 1.45;
     font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 
 .waise-ed--open { display: flex; }
 
+.waise-ed *,
+.waise-ed *::before,
+.waise-ed *::after {
+    box-sizing: border-box;
+}
+
 .waise-ed__bar {
     display: flex;
     align-items: center;
-    gap: .625rem;
+    gap: 10px;
     flex-wrap: wrap;
-    padding: .625rem .875rem;
+    padding: 12px 16px;
     background: #171b2b;
     border-bottom: 1px solid rgba(255, 255, 255, .09);
     flex: 0 0 auto;
@@ -99,16 +112,16 @@ body.waise-ed-open { overflow: hidden; }
 
 .waise-ed__title {
     font-weight: 700;
-    font-size: .9375rem;
+    font-size: 16px;
     margin-right: auto;
     white-space: nowrap;
 }
 
 .waise-ed__notice {
-    font-size: .8125rem;
+    font-size: 13px;
     opacity: 0;
     transition: opacity .18s ease;
-    max-width: 26rem;
+    max-width: 420px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -119,13 +132,15 @@ body.waise-ed-open { overflow: hidden; }
 .waise-ed__notice--error { color: #fca5a5; }
 
 .waise-ed__btn {
-    padding: .4375rem .875rem;
-    border-radius: .5rem;
+    padding: 9px 16px;
+    border-radius: 8px;
     border: 1px solid rgba(255, 255, 255, .14);
     background: rgba(255, 255, 255, .06);
     color: #e8eaf6;
-    font-size: .8125rem;
+    font-size: 14px;
     font-weight: 600;
+    font-family: inherit;
+    line-height: 1.2;
     cursor: pointer;
     transition: background-color .15s ease, opacity .15s ease;
 }
@@ -143,90 +158,90 @@ body.waise-ed-open { overflow: hidden; }
 }
 
 .waise-ed__btn--primary {
-    background: var(--waise-accent, #6f5cff);
+    background: #6f5cff;
     border-color: transparent;
     color: #fff;
 }
 
-.waise-ed__btn--primary:hover:not(:disabled) {
-    background: var(--waise-accent, #6f5cff);
-    filter: brightness(1.12);
-}
+.waise-ed__btn--primary:hover:not(:disabled) { filter: brightness(1.12); }
 
 .waise-ed__close {
-    font-size: 1.125rem;
+    font-size: 20px;
     line-height: 1;
-    padding: .3125rem .625rem;
+    padding: 7px 12px;
 }
 
 .waise-ed__body {
     flex: 1 1 auto;
     display: grid;
-    grid-template-columns: minmax(18rem, 24rem) 1fr;
+    grid-template-columns: minmax(320px, 400px) 1fr;
     min-height: 0;
 }
 
 .waise-ed__form {
     overflow-y: auto;
-    padding: 1rem;
+    padding: 18px;
     display: flex;
     flex-direction: column;
-    gap: .875rem;
+    gap: 16px;
     border-right: 1px solid rgba(255, 255, 255, .09);
 }
 
 .waise-ed__field {
     display: flex;
     flex-direction: column;
-    gap: .3125rem;
+    gap: 6px;
 }
 
 .waise-ed__label {
-    font-size: .75rem;
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: .04em;
+    letter-spacing: .05em;
     color: #9aa3c7;
 }
 
 .waise-ed__control {
     display: flex;
     align-items: center;
-    gap: .5rem;
+    gap: 8px;
 }
 
 .waise-ed__input[type="text"],
 .waise-ed__hex {
     min-width: 0;
-    padding: .4375rem .5625rem;
-    border-radius: .4375rem;
+    height: 36px;
+    padding: 0 10px;
+    border-radius: 7px;
     border: 1px solid rgba(255, 255, 255, .14);
     background: rgba(0, 0, 0, .28);
     color: #e8eaf6;
-    font-size: .8125rem;
+    font-size: 14px;
+    font-family: inherit;
 }
 
 .waise-ed__input[type="text"] { flex: 1 1 auto; }
 
 .waise-ed__hex {
-    flex: 0 0 6rem;
+    flex: 0 0 96px;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 13px;
     text-transform: lowercase;
 }
 
 .waise-ed__input[type="text"]:focus,
 .waise-ed__hex:focus {
     outline: none;
-    border-color: var(--waise-accent, #6f5cff);
+    border-color: #6f5cff;
 }
 
 .waise-ed__input[type="color"] {
     flex: 0 0 auto;
-    width: 2.75rem;
-    height: 2rem;
+    width: 48px;
+    height: 36px;
     padding: 0;
     border: 1px solid rgba(255, 255, 255, .14);
-    border-radius: .4375rem;
+    border-radius: 7px;
     background: transparent;
     cursor: pointer;
 }
@@ -234,23 +249,26 @@ body.waise-ed-open { overflow: hidden; }
 .waise-ed__input[type="range"] {
     flex: 1 1 auto;
     min-width: 0;
-    accent-color: var(--waise-accent, #6f5cff);
+    height: 24px;
+    accent-color: #6f5cff;
     cursor: pointer;
 }
 
 .waise-ed__value {
-    flex: 0 0 3rem;
+    flex: 0 0 52px;
     text-align: right;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    font-size: .75rem;
+    font-size: 13px;
     color: #9aa3c7;
 }
 
 .waise-ed__hint {
-    font-size: .6875rem;
-    line-height: 1.4;
+    font-size: 12px;
+    line-height: 1.45;
     color: #8089ad;
 }
+
+/* --- Vista previa (maqueta local, sin iframe) ---------------------------- */
 
 .waise-ed__preview {
     display: flex;
@@ -262,27 +280,25 @@ body.waise-ed-open { overflow: hidden; }
 
 .waise-ed__preview-bar {
     flex: 0 0 auto;
-    padding: .375rem .75rem;
-    font-size: .6875rem;
-    letter-spacing: .04em;
+    padding: 8px 14px;
+    font-size: 12px;
+    letter-spacing: .05em;
     text-transform: uppercase;
     color: #8089ad;
     border-bottom: 1px solid rgba(255, 255, 255, .07);
 }
 
-.waise-ed__frame {
+/* El contenido real vive en un shadow root: el CSS del admin no lo alcanza. */
+.waise-ed__stage {
     flex: 1 1 auto;
-    width: 100%;
-    border: 0;
-    display: block;
-    background: #0b0e1a;
+    min-height: 0;
+    overflow: auto;
 }
 
-/* En pantallas estrechas la vista previa se apila debajo del formulario. */
 @media (max-width: 900px) {
     .waise-ed__body {
         grid-template-columns: 1fr;
-        grid-template-rows: minmax(0, 1fr) minmax(12rem, 45vh);
+        grid-template-rows: minmax(0, 1fr) minmax(220px, 45vh);
     }
 
     .waise-ed__form {
@@ -294,6 +310,7 @@ body.waise-ed-open { overflow: hidden; }
         order: 10;
         flex: 1 0 100%;
         max-width: none;
+        white-space: normal;
     }
 }
 
