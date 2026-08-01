@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Waise Theme v1.5.15 - assets/js/waise.js
+   Waise Theme v1.5.16 - assets/js/waise.js
    ========================================================================== */
 (function () {
     'use strict';
@@ -238,9 +238,16 @@
        padre revienta con NotFoundError al desmontar. Se ancla por CSS al pie
        de la columna, así que los handlers originales siguen intactos. */
     function dockTopbar(kind) {
-        if (kind !== 'server') return;
+        if (kind !== 'server') { undockTopbar(); return; }
         var bar = document.querySelector(TOPBAR_SEL);
-        if (!bar || bar === applied.target || bar.contains(applied.target)) return;
+        if (!bar || bar === applied.target || bar.contains(applied.target)) { undockTopbar(); return; }
+        /* React re-monta `NavigationBar` al cambiar de sección: el nodo viejo
+           puede seguir en el documento (o desconectado) con la clase puesta y
+           se pintaba un segundo bloque al pie de la columna. Solo la fila
+           vigente conserva el anclaje. */
+        document.querySelectorAll('.' + DOCK_CLASS).forEach(function (el) {
+            if (el !== bar) el.classList.remove(DOCK_CLASS);
+        });
         bar.classList.add(DOCK_CLASS);
         HTML.classList.add(DOCK_GATE);
         /* `NavigationBar` cuelga de otro subárbol que el menú del servidor, así
@@ -319,7 +326,7 @@
     function refreshSidebar() {
         if (window.innerWidth < MIN_VIEWPORT) { if (applied.target) revert(); return; }
         var found = locate();
-        if (!found || rejected.has(found.target)) { if (applied.target) revert(); return; }
+        if (!found || rejected.has(found.target)) { if (applied.target) revert(); else undockTopbar(); return; }
         if (applied.target === found.target && applied.kind === found.kind && found.target.isConnected) {
             mark(found, false); return;
         }
@@ -561,7 +568,8 @@
         });
 
         window.addEventListener('resize', schedule, { passive: true });
-        window.addEventListener('popstate', function () {
+
+        function onNavigate() {
             cardsDone = false;
             HTML.classList.remove('waise-cards-ready');
             document.querySelectorAll('.waise-server-grid, .waise-server-card, .waise-card-host, .waise-grid-full')
@@ -569,6 +577,22 @@
                     el.classList.remove('waise-server-grid', 'waise-server-card', 'waise-card-host', 'waise-grid-full');
                 });
             schedule();
+        }
+
+        window.addEventListener('popstate', onNavigate);
+
+        /* El panel navega con React Router: los clics en el menú llaman a
+           pushState, que NO dispara popstate. Sin esto el cambio de sección
+           solo se veía cuando alguna mutación del DOM lo arrastraba, y el
+           estado del anclaje quedaba desfasado respecto a la URL. */
+        ['pushState', 'replaceState'].forEach(function (name) {
+            var original = window.history[name];
+            if (typeof original !== 'function') return;
+            window.history[name] = function () {
+                var result = original.apply(this, arguments);
+                onNavigate();
+                return result;
+            };
         });
     }
 
