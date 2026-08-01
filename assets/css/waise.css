@@ -2332,6 +2332,59 @@ svg.text-gray-100 {
     }
 }
 
+/* Enlace "abrir en el admin" que el panel pinta junto al nombre del servidor:
+   es un <a> pelado con un SVG de FontAwesome a tamano heredado, sin superficie
+   ni alineacion, y desentona con el resto de la cabecera. Se acota por el
+   href para no tocar otros iconos, y se excluye el dock lateral, que ya tiene
+   su propia pastilla para la entrada de admin. */
+.waise-topbar-dock a[href^="/admin/"] {
+    /* el dock manda: aqui no se toca nada */
+}
+
+a[href^="/admin/servers/view/"]:not(.waise-topbar-dock a) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    margin-inline-start: 8px;
+    vertical-align: middle;
+    color: var(--waise-text-dim);
+    background-color: var(--waise-glass-bg);
+    border: 1px solid var(--waise-glass-border);
+    border-radius: var(--waise-radius-sm);
+    box-shadow: var(--waise-shadow-sm);
+    text-decoration: none;
+    transition:
+        color var(--waise-transition),
+        background-color var(--waise-transition),
+        border-color var(--waise-transition);
+}
+
+a[href^="/admin/servers/view/"]:not(.waise-topbar-dock a) svg {
+    /* el icono venia con el viewBox a pelo: se normaliza a la escala del tema */
+    width: 13px;
+    height: 13px;
+    opacity: 0.85;
+}
+
+a[href^="/admin/servers/view/"]:not(.waise-topbar-dock a):hover,
+a[href^="/admin/servers/view/"]:not(.waise-topbar-dock a):focus-visible {
+    color: #fff;
+    background-color: rgba(111, 92, 255, 0.16);
+    border-color: var(--waise-border-hover);
+}
+
+a[href^="/admin/servers/view/"]:not(.waise-topbar-dock a):hover svg {
+    opacity: 1;
+}
+
+a[href^="/admin/servers/view/"]:not(.waise-topbar-dock a):focus-visible {
+    outline: 2px solid var(--waise-accent);
+    outline-offset: 2px;
+}
+
 /* Respeto por quien pide menos movimiento. */
 @media (prefers-reduced-motion: reduce) {
     html.waise-sidebar-ready .waise-server-nav a,
