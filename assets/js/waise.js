@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Waise Theme v1.5.10 - assets/js/waise.js
+   Waise Theme v1.5.11 - assets/js/waise.js
    ========================================================================== */
 (function () {
     'use strict';
@@ -365,63 +365,41 @@
     ];
 
     function findServerRows() {
-        /* Intento 1: selectores de componente */
-        for (var i = 0; i < SERVER_ROW_SELS.length - 1; i++) {
-            var rows = Array.prototype.slice.call(document.querySelectorAll(SERVER_ROW_SELS[i]));
-            if (rows.length) return rows;
-        }
-
-        /* Intento 2: enlaces a /server/<id> — filtramos solo los de primer
-           nivel (no los que ya están dentro de un servidor al que hemos
-           navegado) y que tengan exactamente la forma /server/<uuid> */
+        /* Fuente de verdad: los enlaces a /server/<id> exacto (sin subruta).
+           En el marcado real la fila ES el propio <a> (GreyRowBox +
+           DashboardContainer___StyledServerRow), así que NO subimos por el
+           árbol aquí: la promoción a hijo directo de la rejilla la hace
+           setupServerCards, que ya conoce el contenedor. Buscar antes por
+           [class*="ServerRow..."] era contraproducente: engancha los divs
+           INTERNOS de una misma fila. */
         var links = Array.prototype.slice.call(document.querySelectorAll('a[href^="/server/"]'));
-        /* Un enlace que va a /server/<id> exacto (sin subruta) es el que
-           apunta a la página del servidor desde el listado. */
         var rootLinks = links.filter(function (a) {
             var path = a.getAttribute('href') || '';
             /* Acepta /server/<id> y /server/<id>/ pero NO /server/<id>/files */
             return /^\/server\/[^/]+(\/)?$/.test(path);
         });
+        if (rootLinks.length) return rootLinks;
 
-        if (rootLinks.length) {
-            /* Intentamos subir al ancestro que represente la "fila" completa:
-               el que tenga información de servidor (nombre, estado, métricas).
-               Subimos hasta 6 niveles buscando un elemento que tenga más de
-               un hijo con texto no trivial. */
-            var cardEls = rootLinks.map(function (link) {
-                var el = link;
-                for (var depth = 0; depth < 6; depth++) {
-                    var parent = el.parentElement;
-                    if (!parent) break;
-                    /* Si el padre ya contiene otros links de /server/ distintos,
-                       hemos subido demasiado: quedarnos en el nivel anterior. */
-                    var siblingLinks = parent.querySelectorAll('a[href^="/server/"]');
-                    if (siblingLinks.length > 1) break;
-                    el = parent;
-                }
-                return el;
+        /* Respaldo para paneles con marcado propio: selectores de componente,
+           descartando los que estén anidados dentro de otro candidato. */
+        for (var i = 0; i < SERVER_ROW_SELS.length - 1; i++) {
+            var found = Array.prototype.slice.call(document.querySelectorAll(SERVER_ROW_SELS[i]));
+            var outer = found.filter(function (el) {
+                return !found.some(function (other) {
+                    return other !== el && other.contains(el);
+                });
             });
-
-            /* Deduplicar: si varios links apuntan al mismo ancestro, una sola entrada */
-            var seen = [];
-            return cardEls.filter(function (el) {
-                if (seen.indexOf(el) !== -1) return false;
-                seen.push(el);
-                return true;
-            });
+            if (outer.length) return outer;
         }
 
         return [];
     }
 
     function findServerContainer(rows) {
-        /* 1. Selectores explícitos */
-        for (var i = 0; i < SERVER_CONT_SELS.length; i++) {
-            var c = document.querySelector(SERVER_CONT_SELS[i]);
-            if (c && rows.every(function (r) { return c.contains(r); })) return c;
-        }
-        /* 2. Ancestro común más próximo: subir desde el primer row hasta
-              encontrar el elemento que contenga TODOS los rows */
+        /* Ancestro común MÁS PRÓXIMO. Los selectores explícitos se descartaron
+           a propósito: acertaban un envoltorio demasiado alto (ContentContainer),
+           y un display:grid ahí no afecta a las filas porque no son sus hijos
+           directos — ese era el motivo de que las tarjetas no aparecieran. */
         var el = rows[0].parentElement;
         var guard = 0;
         while (el && guard++ < 12) {
@@ -465,8 +443,9 @@
 
             /* Envoltorios intermedios entre el contenedor y la tarjeta: se
                disuelven con display:contents para que la tarjeta sea el item
-               directo de la rejilla (regla .waise-card-host del CSS). Sin
-               esto el grid no se aplica a las tarjetas y quedan apiladas. */
+               directo de la rejilla (regla .waise-card-host del CSS). Si la
+               fila ya es hija directa del contenedor este bucle no hace nada,
+               que es el caso del marcado actual. */
             var wrap = row.parentElement;
             var guard = 0;
             while (wrap && wrap !== container && guard++ < 12) {
