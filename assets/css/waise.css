@@ -871,6 +871,140 @@ html.waise-mainnav-ready {
     }
 }
 
+/* ------------------------------- Barra superior anclada a la columna ---- */
+/* Dentro de un servidor la columna la ocupa el menú del servidor, y arriba
+   quedaban repetidas las acciones globales (buscar, servidores, admin, cuenta,
+   salir). El JS marca esa fila con `waise-topbar-dock` y aquí se fija al pie de
+   la columna. El nodo NO se mueve en el DOM, así que React sigue mandando sobre
+   él y los eventos originales (búsqueda, cerrar sesión) siguen funcionando.
+   Arriba solo se queda el logo. */
+
+@media (min-width: 1024px) {
+    html.waise-topbar-docked .waise-topbar-dock {
+        position: fixed;
+        bottom: 0;
+        inset-inline-start: 0;
+        z-index: 41;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        justify-content: flex-start !important;
+        gap: 2px;
+        width: var(--waise-sidebar-w);
+        max-width: 80vw;
+        height: auto !important;
+        padding: 10px 12px 16px;
+        background-color: var(--waise-glass-solid);
+        border-block-start: 1px solid var(--waise-border);
+        border-inline-end: 1px solid var(--waise-border);
+        -webkit-backdrop-filter: blur(18px) saturate(150%);
+        backdrop-filter: blur(18px) saturate(150%);
+    }
+
+    /* Hueco al final de la columna para que el último item del menú del
+       servidor no quede tapado por el anclaje. */
+    html.waise-topbar-docked .waise-server-nav {
+        padding-bottom: 200px;
+    }
+
+    /* Los hijos vienen de una fila horizontal con `h-full`: en vertical ese
+       100% se resolvería contra la ventana. Mismo saneado que en la columna. */
+    html.waise-topbar-docked .waise-topbar-dock > *,
+    html.waise-topbar-docked .waise-topbar-dock *:not(svg):not(svg *) {
+        height: auto !important;
+        max-height: none !important;
+    }
+
+    html.waise-topbar-docked .waise-topbar-dock > * {
+        flex: 0 0 auto !important;
+        width: 100%;
+        max-width: 100%;
+        margin-block: 0;
+    }
+
+    /* `.navigation-link` (buscar) es un div, no un enlace: se incluye para que
+       toda la lista tenga la misma pastilla. */
+    html.waise-topbar-docked .waise-topbar-dock > a,
+    html.waise-topbar-docked .waise-topbar-dock > button,
+    html.waise-topbar-docked .waise-topbar-dock > .navigation-link {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
+        min-height: 40px;
+        padding: 0 14px;
+        border: 0 !important;
+        border-radius: var(--waise-radius-sm);
+        background-color: transparent !important;
+        background-image: none !important;
+        box-shadow: none !important;
+        color: var(--waise-text-dim);
+        font-size: 0.92rem;
+        line-height: 1.2;
+        text-align: start;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+    }
+
+    html.waise-topbar-docked .waise-topbar-dock > a:hover,
+    html.waise-topbar-docked .waise-topbar-dock > a:focus-visible,
+    html.waise-topbar-docked .waise-topbar-dock > button:hover,
+    html.waise-topbar-docked .waise-topbar-dock > button:focus-visible,
+    html.waise-topbar-docked .waise-topbar-dock > .navigation-link:hover {
+        color: #fff;
+        background-color: rgba(255, 255, 255, 0.06) !important;
+    }
+
+    html.waise-topbar-docked .waise-topbar-dock svg {
+        flex: 0 0 auto;
+        width: 18px;
+        height: 18px;
+    }
+
+    /* El avatar de /account va dentro de un span con tamaño propio. */
+    html.waise-topbar-docked .waise-topbar-dock > a > span {
+        flex: 0 0 auto;
+        width: 18px !important;
+        height: 18px !important;
+    }
+
+    /* Rótulos: los items son de solo icono, el JS publica el nombre en
+       data-waise-label y se pinta con ::after para no insertar nodos en un
+       árbol que controla React. */
+    html.waise-topbar-docked .waise-topbar-dock [data-waise-label]::after {
+        content: attr(data-waise-label) !important;
+        flex: 0 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        color: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    /* El icono de búsqueda no es un enlace, así que no pasa por labelize. */
+    html.waise-topbar-docked .waise-topbar-dock > .navigation-link::after {
+        content: "Buscar";
+        flex: 0 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        color: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    /* Subrayado decorativo del tema base: en vertical no aplica. */
+    html.waise-topbar-docked .waise-topbar-dock > a:not([data-waise-label])::after,
+    html.waise-topbar-docked .waise-topbar-dock > button:not([data-waise-label])::after {
+        content: none !important;
+    }
+}
+
 /* Por debajo de 1024px no hay sidebar: el menú se queda en su fila original,
    solo se garantiza que se pueda desplazar si no cabe. */
 @media (max-width: 1023px) {
