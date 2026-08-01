@@ -2341,6 +2341,14 @@ a[href^="/admin/servers/view/"]:not(.waise-topbar-dock a) {
     display: none !important;
 }
 
+/* Ocultar solo el <a> dejaba un hueco: el panel lo envuelve en un contenedor
+   flex que, ya vacio, sigue aportando su ancho, gap y padding. Se colapsa
+   tambien el envoltorio, pero SOLO si el enlace es su unico hijo, para no
+   tumbar una fila que lleve el nombre del servidor u otras acciones. */
+:where(div, span, li):has(> a[href^="/admin/servers/view/"]:only-child):not(.waise-topbar-dock):not(.waise-topbar-dock *) {
+    display: none !important;
+}
+
 /* Respeto por quien pide menos movimiento. */
 @media (prefers-reduced-motion: reduce) {
     html.waise-sidebar-ready .waise-server-nav a,
