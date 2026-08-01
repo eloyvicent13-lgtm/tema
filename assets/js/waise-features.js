@@ -1347,16 +1347,31 @@
 
     var REVEAL_FLAG = 'waiseReveal';
 
+    /* Una sola fila flotante por campo: "Ver" y "Generar" con posiciones
+       absolutas independientes se pisaban entre si y con el icono nativo. */
+    function passActions(input) {
+        var host = input.parentElement;
+        if (!host) return null;
+        host.classList.add('waise-pass-host');
+        input.classList.add('waise-pass-input');
+        var row = host.querySelector(':scope > .waise-pass-actions');
+        if (!row) {
+            row = document.createElement('div');
+            row.className = 'waise-pass-actions';
+            host.appendChild(row);
+        }
+        return row;
+    }
+
     function setupPasswordReveal() {
         if (!getPref('passwordReveal')) return;
-        var inputs = document.querySelectorAll('input[type="password"]');
+        var inputs = document.querySelectorAll('input[type="password"], input[data-waise-pass]');
         for (var i = 0; i < inputs.length; i++) {
             var input = inputs[i];
             if (input.dataset[REVEAL_FLAG]) continue;
-            var host = input.parentElement;
-            if (!host) continue;
+            var row = passActions(input);
+            if (!row) continue;
             input.dataset[REVEAL_FLAG] = '1';
-            host.classList.add('waise-pass-host');
 
             var btn = document.createElement('button');
             btn.type = 'button';
@@ -1376,7 +1391,7 @@
                 });
             })(input, btn);
 
-            host.appendChild(btn);
+            row.appendChild(btn);
         }
     }
 
@@ -1713,16 +1728,10 @@
             btn.className = 'waise-folder-btn';
             btn.title = 'Mover a una carpeta';
             btn.setAttribute('aria-label', 'Mover a una carpeta');
-            btn.textContent = '\u25a4';
-
-            (function (button, serverId) {
-                button.addEventListener('click', function (ev) {
-                    /* La tarjeta entera es un enlace: sin esto se navegaria. */
-                    ev.preventDefault();
-                    ev.stopPropagation();
-                    openGroupMenu(button, serverId);
-                });
-            })(btn, id);
+            btn.setAttribute('data-waise-folder', id || '');
+            btn.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true">' +
+                '<path fill="currentColor" d="M3 6a2 2 0 0 1 2-2h3.6a2 2 0 0 1 1.4.6L11.4 6H19a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6Z"/>' +
+                '</svg>';
 
             card.appendChild(btn);
         }
@@ -1746,6 +1755,18 @@
 
     var ACCOUNT_FLAG = 'waiseAccount';
     var METER_FLAG = 'waiseMeter';
+    var ACCOUNT_ID_KEY = 'waise:account-id';
+
+    /* /account/api y /account/ssh no tienen los inputs de perfil: sin cache la
+       cabecera desaparecia al cambiar de subruta. */
+    var accountId = (function () {
+        try {
+            var raw = window.localStorage.getItem(ACCOUNT_ID_KEY);
+            var parsed = raw ? JSON.parse(raw) : null;
+            if (!parsed || typeof parsed !== 'object') return null;
+            return { email: parsed.email || '', user: parsed.user || '' };
+        } catch (e) { return null; }
+    })();
 
     function isAccountRoute() {
         return window.location.pathname.indexOf('/account') === 0;
@@ -1840,6 +1861,9 @@
         if (confirmInput) confirmInput.addEventListener('input', update);
         update();
 
+        var row = passActions(input);
+        if (!row) return;
+
         var gen = document.createElement('button');
         gen.type = 'button';
         gen.className = 'waise-gen-btn';
@@ -1859,8 +1883,8 @@
             });
             update();
         });
-        host.classList.add('waise-pass-host');
-        host.appendChild(gen);
+        /* Delante de "Ver" para que el orden sea estable en todos los campos. */
+        row.insertBefore(gen, row.firstChild);
     }
 
     function accountIdentity() {
@@ -1952,15 +1976,37 @@
         var fields = passwordFields();
         attachMeter(fields.next, fields.confirm);
 
+        var fresh = accountIdentity();
+        if (fresh.email || fresh.user) {
+            accountId = fresh;
+            try { window.localStorage.setItem(ACCOUNT_ID_KEY, JSON.stringify(fresh)); }
+            catch (e) { /* solo dura la sesion */ }
+        }
+        if (!accountId) return;
+
         var mount = document.querySelector('main') ||
                     document.querySelector('[class*="ContentContainer"]');
-        if (!mount || mount.dataset[ACCOUNT_FLAG]) return;
-        var id = accountIdentity();
-        /* Sin correo el formulario aun no ha hidratado: se reintenta en el
-           siguiente ciclo del observador en vez de pintar una tarjeta vacia. */
-        if (!id.email && !id.user) return;
+        if (!mount) return;
+
+        /* React reemplaza el subarbol al cambiar de subruta y se lleva la
+           tarjeta: el dataset solo no basta, hay que comprobar el DOM real. */
+        var existing = mount.querySelector('.waise-account-card');
+        if (existing) {
+            if (existing !== mount.firstChild) mount.insertBefore(existing, mount.firstChild);
+            return;
+        }
         mount.dataset[ACCOUNT_FLAG] = '1';
-        buildAccountHeader(mount, id);
+        buildAccountHeader(mount, accountId);
+    }
+
+    /* En captura y en mousedown: el guardia de navegacion escucha 'click' en
+       fase de captura sobre document y se comia el evento del boton. */
+    function onFolderPointer(ev) {
+        var btn = ev.target && ev.target.closest ? ev.target.closest('.waise-folder-btn') : null;
+        if (!btn) return;
+        ev.preventDefault();
+        ev.stopPropagation();
+        openGroupMenu(btn, btn.getAttribute('data-waise-folder'));
     }
 
     function closeOverlays() {
@@ -2013,9 +2059,18 @@
         schedule();
 
         document.addEventListener('click', onGuardClick, true);
+        document.addEventListener('mousedown', onFolderPointer, true);
+        document.addEventListener('click', function (ev) {
+            var btn = ev.target && ev.target.closest ? ev.target.closest('.waise-folder-btn') : null;
+            if (btn) { ev.preventDefault(); ev.stopPropagation(); }
+        }, true);
         document.addEventListener('mousedown', function (ev) {
-            if (groupMenu && !groupMenu.contains(ev.target)) closeGroupMenu();
+            if (!groupMenu) return;
+            if (groupMenu.contains(ev.target)) return;
+            if (ev.target && ev.target.closest && ev.target.closest('.waise-folder-btn')) return;
+            closeGroupMenu();
         });
+        window.addEventListener('resize', function () { closeGroupMenu(); });
         document.addEventListener('keydown', markDirty, true);
         document.addEventListener('click', clearDirty, true);
         window.addEventListener('beforeunload', onBeforeUnload);

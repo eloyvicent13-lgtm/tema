@@ -553,13 +553,17 @@
 }
 
 .waise-gchip {
-    padding: .3125rem .625rem;
-    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    gap: .375rem;
+    padding: .3125rem .6875rem;
+    border-radius: .5rem;
     border: 1px solid var(--waise-fx-border);
-    background: rgba(255, 255, 255, .05);
+    background: rgba(255, 255, 255, .04);
     color: var(--waise-fx-muted);
     font-size: .75rem;
     font-weight: 600;
+    letter-spacing: .01em;
     cursor: pointer;
     transition: background-color .15s ease, color .15s ease, border-color .15s ease;
 }
@@ -572,7 +576,8 @@
 .waise-gchip--on {
     color: #fff;
     border-color: var(--waise-accent, #6f5cff);
-    background: color-mix(in srgb, var(--waise-accent, #6f5cff) 32%, transparent);
+    background: color-mix(in srgb, var(--waise-accent, #6f5cff) 30%, transparent);
+    box-shadow: 0 0 0 1px color-mix(in srgb, var(--waise-accent, #6f5cff) 30%, transparent);
 }
 
 .waise-gchip--empty { opacity: .5; }
@@ -585,29 +590,35 @@
 .waise-folder-btn {
     position: absolute;
     top: .5rem;
-    right: 2.5rem;
+    right: 2.625rem;
     z-index: 5;
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 1.625rem;
+    height: 1.625rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     padding: 0;
-    border-radius: .5rem;
+    border-radius: .4375rem;
     border: 1px solid transparent;
     background: transparent;
     color: var(--waise-fx-muted);
-    font-size: .875rem;
-    line-height: 1;
+    line-height: 0;
+    opacity: .55;
     cursor: pointer;
-    transition: color .15s ease, background-color .15s ease, transform .15s ease;
+    transition: color .15s ease, background-color .15s ease,
+                border-color .15s ease, opacity .15s ease;
 }
 
+.waise-server-card:hover .waise-folder-btn { opacity: 1; }
+
 .waise-folder-btn:hover {
-    background: rgba(255, 255, 255, .1);
+    background: color-mix(in srgb, var(--waise-accent, #6f5cff) 22%, transparent);
+    border-color: color-mix(in srgb, var(--waise-accent, #6f5cff) 55%, transparent);
     color: var(--waise-fx-text);
-    transform: scale(1.08);
+    opacity: 1;
 }
+
+.waise-folder-btn svg { display: block; }
 
 .waise-folder-btn:focus-visible {
     outline: 2px solid var(--waise-accent, #6f5cff);
@@ -792,26 +803,48 @@
     font-variant-numeric: tabular-nums;
 }
 
-.waise-gen-btn {
+/* Fila unica de acciones: evita que "Ver" y "Generar" se solapen. */
+.waise-pass-actions {
     position: absolute;
     top: 50%;
-    right: 3.75rem;
+    right: .5rem;
     transform: translateY(-50%);
     z-index: 4;
-    padding: .125rem .4375rem;
+    display: flex;
+    align-items: center;
+    gap: .25rem;
+    pointer-events: none;
+}
+
+.waise-pass-actions > * { pointer-events: auto; }
+
+.waise-pass-input {
+    padding-right: 7.5rem !important;
+    text-overflow: ellipsis;
+}
+
+.waise-gen-btn,
+.waise-pass-host .waise-pass-btn {
+    position: static;
+    transform: none;
+    padding: .1875rem .5rem;
     border-radius: .375rem;
     border: 1px solid var(--waise-fx-border);
-    background: rgba(255, 255, 255, .08);
+    background: rgba(255, 255, 255, .07);
     color: var(--waise-fx-muted);
     font-size: .6875rem;
     font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
     cursor: pointer;
-    transition: color .15s ease, background-color .15s ease;
+    transition: color .15s ease, background-color .15s ease, border-color .15s ease;
 }
 
-.waise-gen-btn:hover {
+.waise-gen-btn:hover,
+.waise-pass-host .waise-pass-btn:hover {
     color: var(--waise-fx-text);
     background: rgba(255, 255, 255, .14);
+    border-color: color-mix(in srgb, var(--waise-accent, #6f5cff) 55%, transparent);
 }
 
 .waise-mismatch {
@@ -822,13 +855,14 @@
 @media (max-width: 640px) {
     .waise-account-card { gap: .75rem; }
     .waise-account-card__actions { width: 100%; }
-    .waise-gen-btn {
+    .waise-pass-actions {
         position: static;
         transform: none;
-        display: inline-block;
         margin-top: .375rem;
+        justify-content: flex-end;
     }
-    .waise-folder-btn { right: 2.25rem; }
+    .waise-pass-input { padding-right: .75rem !important; }
+    .waise-folder-btn { right: 2.25rem; opacity: 1; }
 }
 
 @media (prefers-reduced-motion: reduce) {
