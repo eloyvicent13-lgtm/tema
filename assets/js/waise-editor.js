@@ -4,12 +4,13 @@
 
    Se carga SOLO en admin.blade.php, que Pterodactyl ya restringe a root_admin.
    Anade una entrada "Theme Editor" en el menu lateral del admin y abre un
-   editor a pantalla completa con vista previa en vivo.
+   editor a pantalla completa.
 
-   La vista previa NO usa un iframe: el panel envia X-Frame-Options y el
-   navegador la bloquea (ERR_BLOCKED_BY_RESPONSE). En su lugar se dibuja una
-   maqueta del panel de cliente dentro de un shadow root, de modo que ni el
-   CSS del admin afecta a la maqueta ni la maqueta afecta al admin.
+   Vista previa: NO se usa iframe (el panel envia X-Frame-Options y el
+   navegador lo bloquea) ni maquetas. El editor deja un borrador en
+   localStorage y se abre el panel de cliente real en otra pestana con
+   ?waise-preview=1; waise-brand.js lo detecta y aplica el borrador encima.
+   El borrador no se publica: solo lo ve este navegador.
    ========================================================================== */
 (function () {
     'use strict';
@@ -17,32 +18,48 @@
     var TOKEN = (document.querySelector('meta[name="waise-token"]') || {}).content || '';
     var API = '/waise/api/theme.php';
     var HASH = '#waise-theme-editor';
+    var PREVIEW_KEY = 'waise:preview-draft';
+    var PREVIEW_URL = '/?waise-preview=1';
+
+    var TABS = [
+        { id: 'look', label: 'Aspecto' },
+        { id: 'features', label: 'Funciones' }
+    ];
 
     var FIELDS = [
-        { key: 'accent',       label: 'Color de acento',          type: 'color' },
-        { key: 'accent2',      label: 'Acento secundario',        type: 'color' },
-        { key: 'bg',           label: 'Fondo del panel',          type: 'color' },
-        { key: 'surface',      label: 'Superficie (tarjetas)',    type: 'color' },
-        { key: 'text',         label: 'Texto principal',          type: 'color' },
-        { key: 'muted',        label: 'Texto secundario',         type: 'color' },
-        { key: 'bgImage',      label: 'Imagen de fondo (URL)',    type: 'text',  hint: 'Ruta interna (/waise/img/...) o https://. Vacio = sin imagen.' },
-        { key: 'bgOverlay',    label: 'Oscurecer el fondo',       type: 'range', min: 0,   max: 1,   step: 0.05 },
-        { key: 'radius',       label: 'Redondeo (px)',            type: 'range', min: 0,   max: 40,  step: 1 },
-        { key: 'blur',         label: 'Desenfoque (px)',          type: 'range', min: 0,   max: 40,  step: 1 },
-        { key: 'sidebarWidth', label: 'Ancho de la columna (px)', type: 'range', min: 140, max: 400, step: 4 },
-        { key: 'font',         label: 'Fuente',                   type: 'text',  hint: 'Nombre de una fuente ya disponible. Vacio = la del panel.' },
-        { key: 'logoUrl',      label: 'Logo (URL)',               type: 'text' },
-        { key: 'faviconUrl',   label: 'Favicon (URL)',            type: 'text' },
-        { key: 'brandName',    label: 'Nombre de marca',          type: 'text' },
-        { key: 'copyright',    label: 'Texto de copyright',       type: 'text',  hint: 'Se muestra abajo a la izquierda en el panel de cliente.' }
+        { key: 'accent',       label: 'Color de acento',          type: 'color',  tab: 'look' },
+        { key: 'accent2',      label: 'Acento secundario',        type: 'color',  tab: 'look' },
+        { key: 'bg',           label: 'Fondo del panel',          type: 'color',  tab: 'look' },
+        { key: 'surface',      label: 'Superficie (tarjetas)',    type: 'color',  tab: 'look' },
+        { key: 'text',         label: 'Texto principal',          type: 'color',  tab: 'look' },
+        { key: 'muted',        label: 'Texto secundario',         type: 'color',  tab: 'look' },
+        { key: 'bgImage',      label: 'Imagen de fondo (URL)',    type: 'text',   tab: 'look',
+          hint: 'Ruta interna (/waise/img/...) o https://. Vacio = sin imagen.' },
+        { key: 'bgOverlay',    label: 'Oscurecer el fondo',       type: 'range',  tab: 'look', min: 0,   max: 1,   step: 0.05 },
+        { key: 'radius',       label: 'Redondeo (px)',            type: 'range',  tab: 'look', min: 0,   max: 40,  step: 1 },
+        { key: 'blur',         label: 'Desenfoque (px)',          type: 'range',  tab: 'look', min: 0,   max: 40,  step: 1 },
+        { key: 'sidebarWidth', label: 'Ancho de la columna (px)', type: 'range',  tab: 'look', min: 140, max: 400, step: 4 },
+        { key: 'font',         label: 'Fuente',                   type: 'text',   tab: 'look',
+          hint: 'Nombre de una fuente ya disponible. Vacio = la del panel.' },
+        { key: 'logoUrl',      label: 'Logo (URL)',               type: 'text',   tab: 'look' },
+        { key: 'faviconUrl',   label: 'Favicon (URL)',            type: 'text',   tab: 'look' },
+        { key: 'brandName',    label: 'Nombre de marca',          type: 'text',   tab: 'look' },
+        { key: 'copyright',    label: 'Texto de copyright',       type: 'text',   tab: 'look',
+          hint: 'Se muestra abajo a la izquierda en el panel de cliente.' },
+
+        { key: 'featCopyAddress', label: 'Boton de copiar direccion', type: 'toggle', tab: 'features',
+          hint: 'Anade un boton "Copiar" junto a las direcciones IP:puerto del panel de cliente.' },
+        { key: 'featShortcuts', label: 'Atajos de teclado', type: 'toggle', tab: 'features',
+          hint: 'Ctrl+K abre el buscador, Ctrl+` enfoca la consola, Esc cierra la ventana emergente activa.' },
+        { key: 'featConsoleHistory', label: 'Historial de consola', type: 'toggle', tab: 'features',
+          hint: 'Flechas arriba/abajo recorren los comandos anteriores y Tab autocompleta. El historial se guarda por servidor en el navegador de cada usuario.' }
     ];
 
     var config = null;
     var root = null;
-    var shadow = null;
-    var previewStyle = null;
     var inputs = {};
     var dirty = false;
+    var activeTab = TABS[0].id;
 
     /* --- Red ------------------------------------------------------------- */
 
@@ -79,116 +96,42 @@
         }, 5000);
     }
 
-    /* --- Maqueta de la vista previa -------------------------------------- */
+    /* --- Borrador de previsualizacion ------------------------------------ */
 
-    var PREVIEW_MARKUP =
-        '<div class="pv">' +
-            '<header class="pv__top">' +
-                '<span class="pv__brand"><img class="pv__logo" alt="" hidden><span class="pv__brandname"></span></span>' +
-                '<nav class="pv__nav"><span>Cuenta</span><span>API</span><span>Salir</span></nav>' +
-            '</header>' +
-            '<div class="pv__main">' +
-                '<aside class="pv__side">' +
-                    '<span class="pv__item pv__item--active">Consola</span>' +
-                    '<span class="pv__item">Archivos</span>' +
-                    '<span class="pv__item">Bases de datos</span>' +
-                    '<span class="pv__item">Copias de seguridad</span>' +
-                    '<span class="pv__item">Ajustes</span>' +
-                '</aside>' +
-                '<section class="pv__content">' +
-                    '<div class="pv__stats">' +
-                        '<div class="pv__stat"><b>CPU</b><span>34%</span></div>' +
-                        '<div class="pv__stat"><b>Memoria</b><span>1.2 GB</span></div>' +
-                        '<div class="pv__stat"><b>Disco</b><span>8.4 GB</span></div>' +
-                    '</div>' +
-                    '<div class="pv__card">' +
-                        '<div class="pv__console">' +
-                            '<div>[Waise] Servidor iniciado correctamente.</div>' +
-                            '<div>[Waise] Escuchando en 0.0.0.0:25565</div>' +
-                            '<div class="pv__dim">Vista previa - datos de ejemplo</div>' +
-                        '</div>' +
-                        '<div class="pv__actions">' +
-                            '<button class="pv__btn pv__btn--primary" type="button">Iniciar</button>' +
-                            '<button class="pv__btn" type="button">Reiniciar</button>' +
-                        '</div>' +
-                    '</div>' +
-                '</section>' +
-            '</div>' +
-            '<div class="pv__copy"></div>' +
-        '</div>';
+    var previewOk = true;
 
-    var PREVIEW_BASE_CSS =
-        ':host{all:initial;display:block;height:100%;}' +
-        '*{box-sizing:border-box;margin:0;padding:0;}' +
-        '.pv{min-height:100%;display:flex;flex-direction:column;font-size:13px;' +
-            'font-family:var(--waise-font,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif);' +
-            'color:var(--waise-text);background-color:var(--waise-bg);' +
-            'background-image:var(--waise-bg-image);background-size:cover;background-position:center;}' +
-        '.pv__top{display:flex;align-items:center;gap:12px;padding:12px 16px;' +
-            'background:var(--waise-surface);border-bottom:1px solid rgba(255,255,255,.08);}' +
-        '.pv__brand{display:inline-flex;align-items:center;gap:8px;font-weight:700;margin-right:auto;}' +
-        '.pv__logo{height:24px;max-width:140px;object-fit:contain;display:block;}' +
-        '.pv__nav{display:flex;gap:14px;color:var(--waise-muted);font-size:12px;}' +
-        '.pv__main{flex:1 1 auto;display:flex;min-height:0;gap:14px;padding:14px;}' +
-        '.pv__side{flex:0 0 auto;width:var(--waise-sidebar-width);display:flex;flex-direction:column;gap:4px;' +
-            'padding:10px;border-radius:var(--waise-radius);background:var(--waise-surface);' +
-            'backdrop-filter:blur(var(--waise-blur));}' +
-        '.pv__item{padding:8px 10px;border-radius:calc(var(--waise-radius) * .6);color:var(--waise-muted);}' +
-        '.pv__item--active{background:var(--waise-accent);color:#fff;font-weight:600;}' +
-        '.pv__content{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:12px;}' +
-        '.pv__stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}' +
-        '.pv__stat{padding:12px;border-radius:var(--waise-radius);background:var(--waise-surface);' +
-            'display:flex;flex-direction:column;gap:4px;border-top:2px solid var(--waise-accent-2);}' +
-        '.pv__stat b{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--waise-muted);}' +
-        '.pv__stat span{font-size:17px;font-weight:700;}' +
-        '.pv__card{flex:1 1 auto;padding:14px;border-radius:var(--waise-radius);background:var(--waise-surface);' +
-            'backdrop-filter:blur(var(--waise-blur));display:flex;flex-direction:column;gap:12px;}' +
-        '.pv__console{flex:1 1 auto;min-height:110px;padding:10px;border-radius:calc(var(--waise-radius) * .6);' +
-            'background:rgba(0,0,0,.45);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;line-height:1.7;}' +
-        '.pv__dim{color:var(--waise-muted);}' +
-        '.pv__actions{display:flex;gap:8px;}' +
-        '.pv__btn{padding:8px 16px;border-radius:calc(var(--waise-radius) * .6);border:1px solid var(--waise-muted);' +
-            'background:transparent;color:var(--waise-text);font:inherit;font-weight:600;cursor:default;}' +
-        '.pv__btn--primary{background:var(--waise-accent);border-color:transparent;color:#fff;}' +
-        '.pv__copy{padding:8px 16px;font-size:11px;color:var(--waise-muted);opacity:.75;}' +
-        '@media (max-width:700px){.pv__main{flex-direction:column;}.pv__side{width:auto;}' +
-            '.pv__stats{grid-template-columns:1fr;}}';
-
-    function previewVars(c) {
-        var bgImage = c.bgImage
-            ? 'linear-gradient(rgba(0,0,0,' + c.bgOverlay + '),rgba(0,0,0,' + c.bgOverlay + ')),url("' + c.bgImage + '")'
-            : 'none';
-        return ':host{' +
-            '--waise-accent:' + c.accent + ';' +
-            '--waise-accent-2:' + c.accent2 + ';' +
-            '--waise-bg:' + c.bg + ';' +
-            '--waise-surface:' + c.surface + ';' +
-            '--waise-text:' + c.text + ';' +
-            '--waise-muted:' + c.muted + ';' +
-            '--waise-radius:' + c.radius + 'px;' +
-            '--waise-blur:' + c.blur + 'px;' +
-            '--waise-sidebar-width:' + c.sidebarWidth + 'px;' +
-            '--waise-bg-image:' + bgImage + ';' +
-            (c.font ? '--waise-font:"' + c.font + '",system-ui,sans-serif;' : '') +
-            '}';
+    function writeDraft() {
+        try {
+            window.localStorage.setItem(PREVIEW_KEY, JSON.stringify(config));
+            previewOk = true;
+        } catch (e) {
+            /* Modo privado o cuota llena: la pestana de vista previa no se
+               enterara de los cambios, y el admin debe saberlo. */
+            previewOk = false;
+        }
+        updatePreviewState();
     }
 
-    function updatePreview() {
-        if (!shadow) return;
-        previewStyle.textContent = previewVars(config) + PREVIEW_BASE_CSS;
+    function clearDraft() {
+        try { window.localStorage.removeItem(PREVIEW_KEY); }
+        catch (e) { /* nada que limpiar si localStorage no esta disponible */ }
+    }
 
-        var logo = shadow.querySelector('.pv__logo');
-        if (config.logoUrl) {
-            logo.src = config.logoUrl;
-            logo.hidden = false;
-        } else {
-            logo.hidden = true;
-            logo.removeAttribute('src');
+    function updatePreviewState() {
+        if (!root) return;
+        var el = root.querySelector('.waise-ed__preview-state');
+        if (!previewOk) {
+            el.textContent = 'No se pudo guardar el borrador (almacenamiento del navegador bloqueado).';
+            return;
         }
-        logo.onerror = function () { logo.hidden = true; };
+        el.textContent = dirty
+            ? 'Borrador actualizado. La pestana de vista previa se refresca sola.'
+            : 'Borrador al dia con lo publicado.';
+    }
 
-        shadow.querySelector('.pv__brandname').textContent = config.brandName || 'Tu Panel';
-        shadow.querySelector('.pv__copy').textContent = config.copyright || '';
+    function openPreview() {
+        writeDraft();
+        window.open(PREVIEW_URL, 'waise-preview');
     }
 
     /* --- Formulario ------------------------------------------------------ */
@@ -197,7 +140,7 @@
         config[key] = value;
         dirty = true;
         root.querySelector('.waise-ed__save').disabled = false;
-        updatePreview();
+        writeDraft();
     }
 
     function buildField(field) {
@@ -258,6 +201,14 @@
             row.appendChild(input);
             row.appendChild(out);
             inputs[field.key] = { main: input, extra: out };
+        } else if (field.type === 'toggle') {
+            input.type = 'checkbox';
+            input.checked = config[field.key] !== false;
+            input.addEventListener('change', function () {
+                onFieldChange(field.key, input.checked);
+            });
+            row.appendChild(input);
+            inputs[field.key] = { main: input, extra: null };
         } else {
             input.type = 'text';
             input.value = config[field.key];
@@ -285,9 +236,26 @@
             var field = FIELDS[i];
             var pair = inputs[field.key];
             if (!pair) continue;
+            if (field.type === 'toggle') {
+                pair.main.checked = config[field.key] !== false;
+                continue;
+            }
             pair.main.value = config[field.key];
             if (field.type === 'color' && pair.extra) pair.extra.value = config[field.key];
             if (field.type === 'range' && pair.extra) pair.extra.textContent = config[field.key];
+        }
+    }
+
+    function selectTab(id) {
+        activeTab = id;
+        var tabs = root.querySelectorAll('.waise-ed__tab');
+        for (var i = 0; i < tabs.length; i++) {
+            var on = tabs[i].dataset.tab === id;
+            tabs[i].setAttribute('aria-selected', on ? 'true' : 'false');
+        }
+        var groups = root.querySelectorAll('.waise-ed__group');
+        for (var j = 0; j < groups.length; j++) {
+            groups[j].hidden = groups[j].dataset.tab !== id;
         }
     }
 
@@ -300,8 +268,8 @@
         request('POST', { action: 'save', config: config }).then(function (data) {
             config = data.config;
             syncInputs();
-            updatePreview();
             dirty = false;
+            writeDraft();
             notify('Guardado. Los usuarios lo veran al recargar (Ctrl+F5).', 'ok');
         }).catch(function (err) {
             button.disabled = false;
@@ -316,8 +284,8 @@
         request('POST', { action: 'reset' }).then(function (data) {
             config = data.config;
             syncInputs();
-            updatePreview();
             dirty = false;
+            writeDraft();
             root.querySelector('.waise-ed__save').disabled = true;
             notify('Valores por defecto restaurados.', 'ok');
         }).catch(function (err) {
@@ -327,6 +295,9 @@
 
     function close() {
         if (dirty && !window.confirm('Hay cambios sin guardar. Cerrar de todas formas?')) return;
+        /* Al salir con cambios sin guardar se borra el borrador: si no, la
+           pestana de vista previa seguiria mostrando algo que ya no existe. */
+        if (dirty) clearDraft();
         root.classList.remove('waise-ed--open');
         document.body.classList.remove('waise-ed-open');
         if (window.location.hash === HASH) {
@@ -348,32 +319,54 @@
                 '<button type="button" class="waise-ed__btn waise-ed__close" aria-label="Cerrar">&times;</button>' +
             '</div>' +
             '<div class="waise-ed__body">' +
-                '<form class="waise-ed__form"></form>' +
+                '<div class="waise-ed__panel">' +
+                    '<div class="waise-ed__tabs" role="tablist"></div>' +
+                    '<form class="waise-ed__form"></form>' +
+                '</div>' +
                 '<div class="waise-ed__preview">' +
-                    '<div class="waise-ed__preview-bar">Vista previa en vivo &middot; panel de cliente</div>' +
-                    '<div class="waise-ed__stage"></div>' +
+                    '<div class="waise-ed__preview-title">Vista previa sobre tu panel real</div>' +
+                    '<p class="waise-ed__preview-text">Abre tu panel de cliente en otra pestana con el tema que estas editando aplicado encima: tus servidores y tus datos de verdad. Cada cambio que hagas aqui se refleja alli al instante.</p>' +
+                    '<div class="waise-ed__preview-actions">' +
+                        '<button type="button" class="waise-ed__btn waise-ed__btn--primary waise-ed__preview-open">Abrir vista previa</button>' +
+                    '</div>' +
+                    '<div class="waise-ed__preview-state"></div>' +
+                    '<div class="waise-ed__preview-warn">Lo que ves en esa pestana solo existe en este navegador. Hasta que pulses <strong>Guardar cambios</strong>, el resto de usuarios sigue viendo el tema anterior.</div>' +
                 '</div>' +
             '</div>';
 
+        var tabBar = root.querySelector('.waise-ed__tabs');
         var form = root.querySelector('.waise-ed__form');
-        for (var i = 0; i < FIELDS.length; i++) {
-            form.appendChild(buildField(FIELDS[i]));
+
+        for (var t = 0; t < TABS.length; t++) {
+            (function (tab) {
+                var button = document.createElement('button');
+                button.type = 'button';
+                button.className = 'waise-ed__tab';
+                button.dataset.tab = tab.id;
+                button.setAttribute('role', 'tab');
+                button.textContent = tab.label;
+                button.addEventListener('click', function () { selectTab(tab.id); });
+                tabBar.appendChild(button);
+
+                var group = document.createElement('div');
+                group.className = 'waise-ed__group';
+                group.dataset.tab = tab.id;
+                for (var i = 0; i < FIELDS.length; i++) {
+                    if (FIELDS[i].tab === tab.id) group.appendChild(buildField(FIELDS[i]));
+                }
+                form.appendChild(group);
+            })(TABS[t]);
         }
+
         form.addEventListener('submit', function (ev) { ev.preventDefault(); save(); });
 
         root.querySelector('.waise-ed__save').addEventListener('click', save);
         root.querySelector('.waise-ed__reset').addEventListener('click', reset);
         root.querySelector('.waise-ed__close').addEventListener('click', close);
+        root.querySelector('.waise-ed__preview-open').addEventListener('click', openPreview);
 
         document.body.appendChild(root);
-
-        var stage = root.querySelector('.waise-ed__stage');
-        shadow = stage.attachShadow({ mode: 'open' });
-        previewStyle = document.createElement('style');
-        shadow.appendChild(previewStyle);
-        var holder = document.createElement('div');
-        holder.innerHTML = PREVIEW_MARKUP;
-        shadow.appendChild(holder.firstChild);
+        selectTab(activeTab);
 
         document.addEventListener('keydown', function (ev) {
             if (ev.key === 'Escape' && root.classList.contains('waise-ed--open')) close();
@@ -390,7 +383,7 @@
         if (!root) build();
         root.classList.add('waise-ed--open');
         document.body.classList.add('waise-ed-open');
-        updatePreview();
+        writeDraft();
     }
 
     /* --- Entrada en el menu del admin ------------------------------------ */

@@ -47,7 +47,24 @@
         catch (e) { /* modo privado: la preferencia solo dura la sesion */ }
     }
 
+    /* Interruptores maestros fijados por el admin en el Theme Editor. Si uno
+       esta en false, la funcion queda apagada aunque el usuario la tenga
+       activada en su navegador: apagar algo tiene que apagarlo de verdad. */
+    var MASTER_KEYS = {
+        copyAddress: 'featCopyAddress',
+        shortcuts: 'featShortcuts',
+        consoleHistory: 'featConsoleHistory'
+    };
+
+    function masterAllows(name) {
+        var cfg = window.WaiseConfig;
+        var key = MASTER_KEYS[name];
+        if (!cfg || !key || !Object.prototype.hasOwnProperty.call(cfg, key)) return true;
+        return cfg[key] !== false;
+    }
+
     function getPref(name) {
+        if (!masterAllows(name)) return false;
         return Object.prototype.hasOwnProperty.call(prefs, name) ? prefs[name] : undefined;
     }
 

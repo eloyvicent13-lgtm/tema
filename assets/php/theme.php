@@ -33,6 +33,13 @@ const WAISE_SCHEMA = [
     'brandName'     => ['type' => 'text',   'default' => '',   'max' => 60],
     'copyright'     => ['type' => 'text',   'default' => '',   'max' => 200],
     'faviconUrl'    => ['type' => 'url',    'default' => ''],
+
+    /* Interruptores maestros del modulo de funcionalidades. Si el admin pone
+       uno en false, la funcion queda desactivada para todos los usuarios
+       aunque la tengan activada en su navegador. */
+    'featCopyAddress'    => ['type' => 'bool', 'default' => true],
+    'featShortcuts'      => ['type' => 'bool', 'default' => true],
+    'featConsoleHistory' => ['type' => 'bool', 'default' => true],
 ];
 
 /* --- Rutas ---------------------------------------------------------------- */
@@ -121,6 +128,19 @@ function waise_sanitize(array $input): array
                 break;
             case 'font':
                 $out[$key] = waise_clean_font(is_string($raw) ? $raw : '', $fallback);
+                break;
+            case 'bool':
+                /* El JSON del editor manda booleanos, pero un theme.json
+                   editado a mano puede traer "true"/1: se aceptan igual. */
+                if (is_bool($raw)) {
+                    $out[$key] = $raw;
+                } elseif (is_string($raw)) {
+                    $out[$key] = in_array(strtolower(trim($raw)), ['1', 'true', 'yes', 'on'], true);
+                } elseif (is_int($raw) || is_float($raw)) {
+                    $out[$key] = (bool) $raw;
+                } else {
+                    $out[$key] = (bool) $fallback;
+                }
                 break;
             case 'number':
                 if (!is_numeric($raw)) {
