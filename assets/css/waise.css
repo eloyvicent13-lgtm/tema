@@ -1612,6 +1612,117 @@ div:has(> [class*="FileObjectRow"]):hover {
 }
 
 /* =====================================================================
+   v1.5.7 — Modales, formularios, inputs, labels y ContentBox
+   ===================================================================== */
+
+/* --- Panel de modal (headlessui dialog-panel) --- */
+[id^="headlessui-dialog-panel"],
+[class*="style-module_roOGoeRb"] {
+    background: rgba(18, 18, 28, 0.92) !important;
+    backdrop-filter: blur(20px) saturate(150%) !important;
+    -webkit-backdrop-filter: blur(20px) saturate(150%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 12px !important;
+    color: var(--waise-text) !important;
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Título del modal */
+[class*="style-module_Lib9Jbcw"],
+[id^="headlessui-dialog-title"] {
+    color: var(--waise-text) !important;
+}
+
+/* Footer del modal (bg-gray-700) */
+.bg-gray-700 {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* bg-neutral-700 (code block de ruta en "Create Directory") */
+.bg-neutral-700,
+code.bg-neutral-700 {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    color: var(--waise-text) !important;
+}
+
+/* --- Labels --- */
+[class*="Label-sc"],
+.Label-sc-g780ms-0 {
+    color: var(--waise-text-dim) !important;
+}
+
+/* --- Inputs (todos los contextos: modal, form, file manager, etc.) --- */
+[class*="Input-sc"],
+.Input-sc-19rce1w-0 {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    color: var(--waise-text) !important;
+    border-radius: 6px !important;
+    transition: border-color 0.15s ease, background 0.15s ease !important;
+}
+
+[class*="Input-sc"]:focus,
+.Input-sc-19rce1w-0:focus {
+    background-color: rgba(255, 255, 255, 0.08) !important;
+    border-color: rgba(139, 92, 246, 0.6) !important;
+    outline: none !important;
+    box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2) !important;
+}
+
+[class*="Input-sc"]::placeholder,
+.Input-sc-19rce1w-0::placeholder {
+    color: rgba(255, 255, 255, 0.3) !important;
+}
+
+/* Input error state */
+[class*="Input-sc"].error,
+.Input-sc-19rce1w-0.error {
+    border-color: rgba(239, 68, 68, 0.6) !important;
+}
+
+/* Texto de ayuda / error bajo los inputs */
+.input-help {
+    color: var(--waise-text-dim) !important;
+    font-size: 0.8rem !important;
+}
+
+.input-help.error {
+    color: #f87171 !important;
+}
+
+/* Texto de ruta ("This directory will be created as...") */
+[class*="NewDirectoryButton___StyledP"],
+[class*="NewDirectoryButton___StyledSpan"] {
+    color: var(--waise-text-dim) !important;
+}
+
+[class*="NewDirectoryButton___StyledSpan2"] {
+    color: var(--waise-text) !important;
+}
+
+/* --- ContentBox (Update Password, otras secciones de ajustes) --- */
+[class*="ContentBox___StyledDiv"] {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 10px !important;
+    color: var(--waise-text) !important;
+}
+
+/* Formularios styled-components genéricos dentro de ContentBox y modales */
+[class*="UpdatePasswordForm___StyledForm"],
+[class*="NewDirectoryButton___StyledForm"] {
+    background: transparent !important;
+}
+
+[class*="UpdatePasswordForm___StyledDiv"],
+[class*="UpdatePasswordForm___StyledDiv2"],
+[class*="UpdatePasswordForm___StyledDiv3"] {
+    background: transparent !important;
+    color: var(--waise-text) !important;
+}
+
+/* =====================================================================
    v1.5.4 — Stat pills de servidor y campos grises (address, uptime, disk…)
    Clase exacta del DOM: bg-gray-600 (wrapper), bg-gray-700 (icono bg)
    ===================================================================== */
