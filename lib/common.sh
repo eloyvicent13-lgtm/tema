@@ -12,7 +12,7 @@ WAISE_NAME="Waise Theme"
 # /usr/local/share/waise-theme, porque install.sh copia VERSION junto a lib/.
 # El valor de abajo es solo la reserva por si el archivo falta o estâ”œÃ­ corrupto:
 # asâ”œÂ¡ el banner y `waise status` nunca quedan sin versiâ”œâ”‚n.
-WAISE_VERSION="1.5.2"
+WAISE_VERSION="1.5.3"
 
 # Sin `|| ...` de reserva, un fallo de la sustituciâ”œâ”‚n abortarâ”œÂ¡a el script que
 # hace `source` de este archivo (install.sh usa `set -e`).
