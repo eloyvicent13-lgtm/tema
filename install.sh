@@ -99,6 +99,8 @@ cp -f "${SCRIPT_DIR}/assets/css/waise.css"       "${PUBLIC_DIR}/css/waise.css"
 cp -f "${SCRIPT_DIR}/assets/css/waise-admin.css" "${PUBLIC_DIR}/css/waise-admin.css"
 cp -f "${SCRIPT_DIR}/assets/img/waise-bg.svg"    "${PUBLIC_DIR}/img/waise-bg.svg"
 cp -f "${SCRIPT_DIR}/assets/js/waise.js"         "${PUBLIC_DIR}/js/waise.js"
+cp -f "${SCRIPT_DIR}/assets/css/waise-features.css" "${PUBLIC_DIR}/css/waise-features.css"
+cp -f "${SCRIPT_DIR}/assets/js/waise-features.js"   "${PUBLIC_DIR}/js/waise-features.js"
 
 cat > "${PUBLIC_DIR}/css/waise-overrides.css" <<EOF
 /* -------------------------------------------------------------------------
@@ -126,9 +128,21 @@ build_block() {
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/${css}?v=${ASSET_VER}">
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-overrides.css?v=${ASSET_VER}">
 EOF
+    # El modulo de funcionalidades es solo del panel de cliente y NO depende
+    # de --no-sidebar: son cosas distintas (una es navegacion, otra utilidades).
+    if [[ "$css" == "waise.css" ]]; then
+        cat <<EOF
+        <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-features.css?v=${ASSET_VER}">
+EOF
+    fi
     if [[ -n "$js" ]]; then
         cat <<EOF
         <script src="/${WAISE_PUBLIC_SUBDIR}/js/${js}?v=${ASSET_VER}" defer></script>
+EOF
+    fi
+    if [[ "$css" == "waise.css" ]]; then
+        cat <<EOF
+        <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-features.js?v=${ASSET_VER}" defer></script>
 EOF
     fi
     cat <<EOF
