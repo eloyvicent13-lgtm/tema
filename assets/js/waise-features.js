@@ -2081,13 +2081,20 @@
            Sin este filtro, renderGroupBar vaciaba y repoblaba la barra en cada
            schedule(), el observer lo detectaba y volvia a llamar a schedule():
            un bucle a cada frame. Solo reaccionamos a nodos ajenos. */
+        function hasWaiseClass(node) {
+            /* classList existe tambien en SVG, donde className NO es un string.
+               Recorremos todas las clases: 'waise-' puede no ser la primera. */
+            var list = node && node.classList;
+            if (!list) return false;
+            for (var k = 0; k < list.length; k++) {
+                if (list[k].indexOf('waise-') === 0) return true;
+            }
+            return false;
+        }
+
         function isOwnNode(node) {
             if (!node || node.nodeType !== 1) return true;
-            var cls = typeof node.className === 'string' ? node.className : '';
-            if (cls.indexOf('waise-') === 0) return true;
-            var parent = node.parentElement;
-            var pcls = parent && typeof parent.className === 'string' ? parent.className : '';
-            return pcls.indexOf('waise-') === 0;
+            return hasWaiseClass(node) || hasWaiseClass(node.parentElement);
         }
 
         var observer = new MutationObserver(function (muts) {
