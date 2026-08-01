@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # ---------------------------------------------------------------------------
 # Waise Theme - instalador automático para Pterodactyl Panel 1.14.x
 # Uso: sudo bash install.sh [--path DIR] [--accent #RRGGBB] [--accent2 #RRGGBB] [-y]

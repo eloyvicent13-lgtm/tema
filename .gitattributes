@@ -1,6 +1,15 @@
+# Forzar LF en todos los archivos de texto para que el servidor Linux
+# nunca reciba CRLF, independientemente del editor/OS del desarrollador.
 * text=auto eol=lf
-*.sh text eol=lf
-bin/waise text eol=lf
-*.css text eol=lf
-*.svg text eol=lf
-*.md text eol=lf
+
+# Binarios: sin conversion
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.eot binary
+*.otf binary

@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+﻿#!/usr/bin/env bash
 # ---------------------------------------------------------------------------
 # Waise Theme - desinstalador
 # Uso: sudo bash uninstall.sh [--path DIR] [--restore-backup] [--purge] [-y]
