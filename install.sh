@@ -101,6 +101,11 @@ cp -f "${SCRIPT_DIR}/assets/img/waise-bg.svg"    "${PUBLIC_DIR}/img/waise-bg.svg
 cp -f "${SCRIPT_DIR}/assets/js/waise.js"         "${PUBLIC_DIR}/js/waise.js"
 cp -f "${SCRIPT_DIR}/assets/css/waise-features.css" "${PUBLIC_DIR}/css/waise-features.css"
 cp -f "${SCRIPT_DIR}/assets/js/waise-features.js"   "${PUBLIC_DIR}/js/waise-features.js"
+cp -f "${SCRIPT_DIR}/assets/css/waise-editor.css"   "${PUBLIC_DIR}/css/waise-editor.css"
+cp -f "${SCRIPT_DIR}/assets/js/waise-editor.js"     "${PUBLIC_DIR}/js/waise-editor.js"
+cp -f "${SCRIPT_DIR}/assets/js/waise-brand.js"      "${PUBLIC_DIR}/js/waise-brand.js"
+mkdir -p "${PUBLIC_DIR}/api"
+cp -f "${SCRIPT_DIR}/assets/php/theme.php"          "${PUBLIC_DIR}/api/theme.php"
 
 cat > "${PUBLIC_DIR}/css/waise-overrides.css" <<EOF
 /* -------------------------------------------------------------------------
@@ -113,6 +118,46 @@ cat > "${PUBLIC_DIR}/css/waise-overrides.css" <<EOF
 }
 EOF
 waise_ok "Assets instalados en public/${WAISE_PUBLIC_SUBDIR}"
+
+# --- 2b. Theme Editor: token y configuracion persistente -------------------
+# La config vive en storage/waise, FUERA de public y FUERA de lo que se
+# sobrescribe: sobrevive a `waise upgrade` y a las updates del panel.
+STORAGE_DIR="${PANEL_DIR}/storage/waise"
+TOKEN_FILE="${STORAGE_DIR}/token"
+mkdir -p "$STORAGE_DIR"
+
+if [[ -s "$TOKEN_FILE" ]]; then
+    WAISE_TOKEN="$(tr -d ' \t\r\n' < "$TOKEN_FILE")"
+    waise_log "Token del Theme Editor conservado."
+else
+    if command -v openssl >/dev/null 2>&1; then
+        WAISE_TOKEN="$(openssl rand -hex 32)"
+    else
+        WAISE_TOKEN="$(head -c 32 /dev/urandom | od -An -tx1 | tr -d ' \n')"
+    fi
+    printf '%s\n' "$WAISE_TOKEN" > "$TOKEN_FILE"
+    waise_ok "Token del Theme Editor generado."
+fi
+chmod 640 "$TOKEN_FILE"
+
+if [[ -z "$WAISE_TOKEN" ]]; then
+    waise_die "No se pudo generar el token del Theme Editor."
+fi
+
+# Genera theme.json (si falta) y los assets estaticos waise-config.css/js.
+if command -v php >/dev/null 2>&1; then
+    if php "${PUBLIC_DIR}/api/theme.php" --regen >/dev/null 2>&1; then
+        waise_ok "Configuracion del tema aplicada."
+    else
+        waise_warn "No se pudieron generar los assets de configuracion; se usaran los valores por defecto."
+    fi
+else
+    waise_warn "PHP no esta en el PATH; el Theme Editor generara la configuracion en el primer guardado."
+fi
+
+# Sin estos archivos las vistas cargarian un 404 hasta el primer guardado.
+[[ -f "${PUBLIC_DIR}/css/waise-config.css" ]] || : > "${PUBLIC_DIR}/css/waise-config.css"
+[[ -f "${PUBLIC_DIR}/js/waise-config.js" ]]   || : > "${PUBLIC_DIR}/js/waise-config.js"
 
 # --- 3. Inyección en las vistas -------------------------------------------
 ASSET_VER="${WAISE_VERSION}-${STAMP}"
@@ -127,6 +172,10 @@ build_block() {
         {{-- ${WAISE_MARKER_START} v${WAISE_VERSION} :: bloque gestionado automáticamente, no editar --}}
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/${css}?v=${ASSET_VER}">
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-overrides.css?v=${ASSET_VER}">
+        <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-editor.css?v=${ASSET_VER}">
+        <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-config.css?v=${ASSET_VER}">
+        <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-config.js?v=${ASSET_VER}"></script>
+        <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-brand.js?v=${ASSET_VER}" defer></script>
 EOF
     # El modulo de funcionalidades es solo del panel de cliente y NO depende
     # de --no-sidebar: son cosas distintas (una es navegacion, otra utilidades).
@@ -143,6 +192,13 @@ EOF
     if [[ "$css" == "waise.css" ]]; then
         cat <<EOF
         <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-features.js?v=${ASSET_VER}" defer></script>
+EOF
+    else
+        # El token solo se expone en la vista de administracion, que el panel
+        # ya sirve unicamente a root_admin.
+        cat <<EOF
+        <meta name="waise-token" content="${WAISE_TOKEN}">
+        <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-editor.js?v=${ASSET_VER}" defer></script>
 EOF
     fi
     cat <<EOF
@@ -178,6 +234,11 @@ fi
 waise_log "Ajustando permisos..."
 chown -R "${WEB_USER}:${WEB_GROUP}" "$PUBLIC_DIR" 2>/dev/null || \
     waise_warn "No se pudo cambiar el propietario de ${PUBLIC_DIR}"
+# El servidor web escribe theme.json al guardar desde el Theme Editor.
+chown -R "${WEB_USER}:${WEB_GROUP}" "$STORAGE_DIR" 2>/dev/null || \
+    waise_warn "No se pudo cambiar el propietario de ${STORAGE_DIR}"
+chmod 750 "$STORAGE_DIR" 2>/dev/null || true
+chmod 640 "$TOKEN_FILE" 2>/dev/null || true
 find "$PUBLIC_DIR" -type d -exec chmod 755 {} + 2>/dev/null || true
 find "$PUBLIC_DIR" -type f -exec chmod 644 {} + 2>/dev/null || true
 waise_ok "Permisos aplicados."
@@ -221,4 +282,5 @@ printf '  Ver estado    : %ssudo waise status%s\n' "$C_DIM" "$C_RESET"
 printf '  Actualizar    : %ssudo waise upgrade%s\n' "$C_DIM" "$C_RESET"
 printf '  Desinstalar   : %ssudo waise uninstall%s\n' "$C_DIM" "$C_RESET"
 printf '  Sin sidebar   : %ssudo waise install --no-sidebar%s\n' "$C_DIM" "$C_RESET"
-printf '  Personalizar  : %s%s/css/waise-overrides.css%s\n\n' "$C_DIM" "$PUBLIC_DIR" "$C_RESET"
+printf '  Personalizar  : %s%s/css/waise-overrides.css%s\n' "$C_DIM" "$PUBLIC_DIR" "$C_RESET"
+printf '  Theme Editor  : %s/admin -> menu lateral -> Theme Editor%s\n\n' "$C_DIM" "$C_RESET"

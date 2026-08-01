@@ -1,0 +1,305 @@
+/* ==========================================================================
+   Waise Theme - assets/css/waise-editor.css
+   Estilos del Theme Editor (solo panel de administracion) y de la marca
+   aplicada por waise-brand.js (cliente y admin).
+   ========================================================================== */
+
+/* --- Marca (cliente) ---------------------------------------------------- */
+
+.waise-brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.waise-brand__logo {
+    height: 1.75rem;
+    width: auto;
+    max-width: 10rem;
+    object-fit: contain;
+    display: block;
+}
+
+.waise-brand__name {
+    font-weight: 700;
+    letter-spacing: .01em;
+    white-space: nowrap;
+}
+
+.waise-copyright {
+    position: fixed;
+    left: .75rem;
+    bottom: .5rem;
+    z-index: 40;
+    max-width: min(20rem, 60vw);
+    font-size: .6875rem;
+    line-height: 1.4;
+    color: var(--waise-muted, #9aa3c7);
+    opacity: .7;
+    pointer-events: none;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+}
+
+@media (max-width: 640px) {
+    .waise-copyright {
+        position: static;
+        margin: 1rem .75rem;
+        max-width: none;
+    }
+
+    .waise-brand__logo { height: 1.5rem; }
+}
+
+/* --- Enlace del menu del admin ------------------------------------------ */
+
+.waise-ed-link > a { cursor: pointer; }
+
+.waise-ed-error {
+    position: fixed;
+    right: 1rem;
+    bottom: 1rem;
+    z-index: 99999;
+    max-width: 24rem;
+    padding: .75rem 1rem;
+    border-radius: .5rem;
+    background: #7f1d1d;
+    color: #fee2e2;
+    font-size: .8125rem;
+    line-height: 1.4;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .4);
+}
+
+/* --- Editor -------------------------------------------------------------- */
+
+body.waise-ed-open { overflow: hidden; }
+
+.waise-ed {
+    position: fixed;
+    inset: 0;
+    z-index: 99998;
+    display: none;
+    flex-direction: column;
+    background: #10131f;
+    color: #e8eaf6;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+.waise-ed--open { display: flex; }
+
+.waise-ed__bar {
+    display: flex;
+    align-items: center;
+    gap: .625rem;
+    flex-wrap: wrap;
+    padding: .625rem .875rem;
+    background: #171b2b;
+    border-bottom: 1px solid rgba(255, 255, 255, .09);
+    flex: 0 0 auto;
+}
+
+.waise-ed__title {
+    font-weight: 700;
+    font-size: .9375rem;
+    margin-right: auto;
+    white-space: nowrap;
+}
+
+.waise-ed__notice {
+    font-size: .8125rem;
+    opacity: 0;
+    transition: opacity .18s ease;
+    max-width: 26rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.waise-ed__notice--show { opacity: 1; }
+.waise-ed__notice--ok    { color: #4ade80; }
+.waise-ed__notice--error { color: #fca5a5; }
+
+.waise-ed__btn {
+    padding: .4375rem .875rem;
+    border-radius: .5rem;
+    border: 1px solid rgba(255, 255, 255, .14);
+    background: rgba(255, 255, 255, .06);
+    color: #e8eaf6;
+    font-size: .8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color .15s ease, opacity .15s ease;
+}
+
+.waise-ed__btn:hover:not(:disabled) { background: rgba(255, 255, 255, .13); }
+
+.waise-ed__btn:focus-visible {
+    outline: 2px solid var(--waise-accent, #6f5cff);
+    outline-offset: 2px;
+}
+
+.waise-ed__btn:disabled {
+    opacity: .45;
+    cursor: not-allowed;
+}
+
+.waise-ed__btn--primary {
+    background: var(--waise-accent, #6f5cff);
+    border-color: transparent;
+    color: #fff;
+}
+
+.waise-ed__btn--primary:hover:not(:disabled) {
+    background: var(--waise-accent, #6f5cff);
+    filter: brightness(1.12);
+}
+
+.waise-ed__close {
+    font-size: 1.125rem;
+    line-height: 1;
+    padding: .3125rem .625rem;
+}
+
+.waise-ed__body {
+    flex: 1 1 auto;
+    display: grid;
+    grid-template-columns: minmax(18rem, 24rem) 1fr;
+    min-height: 0;
+}
+
+.waise-ed__form {
+    overflow-y: auto;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: .875rem;
+    border-right: 1px solid rgba(255, 255, 255, .09);
+}
+
+.waise-ed__field {
+    display: flex;
+    flex-direction: column;
+    gap: .3125rem;
+}
+
+.waise-ed__label {
+    font-size: .75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+    color: #9aa3c7;
+}
+
+.waise-ed__control {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.waise-ed__input[type="text"],
+.waise-ed__hex {
+    min-width: 0;
+    padding: .4375rem .5625rem;
+    border-radius: .4375rem;
+    border: 1px solid rgba(255, 255, 255, .14);
+    background: rgba(0, 0, 0, .28);
+    color: #e8eaf6;
+    font-size: .8125rem;
+}
+
+.waise-ed__input[type="text"] { flex: 1 1 auto; }
+
+.waise-ed__hex {
+    flex: 0 0 6rem;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    text-transform: lowercase;
+}
+
+.waise-ed__input[type="text"]:focus,
+.waise-ed__hex:focus {
+    outline: none;
+    border-color: var(--waise-accent, #6f5cff);
+}
+
+.waise-ed__input[type="color"] {
+    flex: 0 0 auto;
+    width: 2.75rem;
+    height: 2rem;
+    padding: 0;
+    border: 1px solid rgba(255, 255, 255, .14);
+    border-radius: .4375rem;
+    background: transparent;
+    cursor: pointer;
+}
+
+.waise-ed__input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 0;
+    accent-color: var(--waise-accent, #6f5cff);
+    cursor: pointer;
+}
+
+.waise-ed__value {
+    flex: 0 0 3rem;
+    text-align: right;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: .75rem;
+    color: #9aa3c7;
+}
+
+.waise-ed__hint {
+    font-size: .6875rem;
+    line-height: 1.4;
+    color: #8089ad;
+}
+
+.waise-ed__preview {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    background: #0b0e1a;
+}
+
+.waise-ed__preview-bar {
+    flex: 0 0 auto;
+    padding: .375rem .75rem;
+    font-size: .6875rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    color: #8089ad;
+    border-bottom: 1px solid rgba(255, 255, 255, .07);
+}
+
+.waise-ed__frame {
+    flex: 1 1 auto;
+    width: 100%;
+    border: 0;
+    display: block;
+    background: #0b0e1a;
+}
+
+/* En pantallas estrechas la vista previa se apila debajo del formulario. */
+@media (max-width: 900px) {
+    .waise-ed__body {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(0, 1fr) minmax(12rem, 45vh);
+    }
+
+    .waise-ed__form {
+        border-right: 0;
+        border-bottom: 1px solid rgba(255, 255, 255, .09);
+    }
+
+    .waise-ed__notice {
+        order: 10;
+        flex: 1 0 100%;
+        max-width: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .waise-ed__notice,
+    .waise-ed__btn {
+        transition: none;
+    }
+}
