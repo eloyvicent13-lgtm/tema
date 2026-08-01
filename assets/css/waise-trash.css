@@ -1,0 +1,206 @@
+/* -------------------------------------------------------------------------
+   Waise Theme - estilos de la papelera de reciclaje (waise-trash.js).
+   ------------------------------------------------------------------------- */
+
+.waise-trash-fab {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    z-index: 900;
+    padding: 10px 18px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 999px;
+    background: var(--waise-accent, #6f5cff);
+    color: #fff;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+
+.waise-trash-fab:hover,
+.waise-trash-fab:focus-visible {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.45);
+    outline: none;
+}
+
+.waise-trash-fab:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: 2px;
+}
+
+.waise-trash-fab:active {
+    transform: translateY(0);
+}
+
+.waise-trash {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(6, 8, 16, 0.72);
+    backdrop-filter: blur(4px);
+}
+
+.waise-trash__box {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-width: 640px;
+    max-height: 80vh;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 14px;
+    background: #171a24;
+    color: #e6e8f0;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    overflow: hidden;
+}
+
+.waise-trash__head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 16px 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.waise-trash__title {
+    margin: 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+}
+
+.waise-trash__close {
+    border: none;
+    background: none;
+    color: #9aa0b5;
+    font-size: 1.5rem;
+    line-height: 1;
+    padding: 0 4px;
+    cursor: pointer;
+}
+
+.waise-trash__close:hover,
+.waise-trash__close:focus-visible {
+    color: #fff;
+    outline: none;
+}
+
+.waise-trash__list {
+    flex: 1 1 auto;
+    min-height: 80px;
+    overflow-y: auto;
+    padding: 8px 12px;
+}
+
+.waise-trash__row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.waise-trash__row:last-child {
+    border-bottom: none;
+}
+
+.waise-trash__info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.waise-trash__name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.waise-trash__meta {
+    font-size: 0.75rem;
+    color: #8f96ad;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.waise-trash__actions {
+    display: flex;
+    flex: 0 0 auto;
+    gap: 8px;
+}
+
+.waise-trash__btn {
+    padding: 6px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 8px;
+    background: transparent;
+    color: #e6e8f0;
+    font: inherit;
+    font-size: 0.78rem;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.waise-trash__btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.waise-trash__btn:disabled {
+    opacity: 0.5;
+    cursor: default;
+}
+
+.waise-trash__btn--restore:hover:not(:disabled) {
+    border-color: var(--waise-accent-2, #17c9c9);
+    color: var(--waise-accent-2, #17c9c9);
+}
+
+.waise-trash__btn--purge:hover:not(:disabled) {
+    border-color: #ff6b6b;
+    color: #ff6b6b;
+}
+
+.waise-trash__empty {
+    margin: 24px 0;
+    text-align: center;
+    color: #8f96ad;
+    font-size: 0.88rem;
+}
+
+.waise-trash__foot {
+    padding: 12px 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    color: #8f96ad;
+    font-size: 0.75rem;
+}
+
+@media (max-width: 640px) {
+    .waise-trash__row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .waise-trash__actions {
+        justify-content: flex-end;
+    }
+
+    .waise-trash-fab {
+        right: 12px;
+        bottom: 12px;
+        padding: 9px 14px;
+    }
+}

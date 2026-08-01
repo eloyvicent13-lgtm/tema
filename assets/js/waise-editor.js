@@ -52,7 +52,9 @@
         { key: 'featShortcuts', label: 'Atajos de teclado', type: 'toggle', tab: 'features',
           hint: 'Ctrl+K abre el buscador, Ctrl+` enfoca la consola, Esc cierra la ventana emergente activa.' },
         { key: 'featConsoleHistory', label: 'Historial de consola', type: 'toggle', tab: 'features',
-          hint: 'Flechas arriba/abajo recorren los comandos anteriores y Tab autocompleta. El historial se guarda por servidor en el navegador de cada usuario.' }
+          hint: 'Flechas arriba/abajo recorren los comandos anteriores y Tab autocompleta. El historial se guarda por servidor en el navegador de cada usuario.' },
+        { key: 'featTrash', label: 'Papelera de reciclaje', type: 'toggle', tab: 'features',
+          hint: 'Los archivos borrados en el gestor se mueven a .waise-trash dentro del propio servidor y se pueden restaurar durante 7 dias. Si falla, el borrado normal del panel sigue funcionando.' }
     ];
 
     var config = null;

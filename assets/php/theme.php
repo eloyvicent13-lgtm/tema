@@ -40,6 +40,7 @@ const WAISE_SCHEMA = [
     'featCopyAddress'    => ['type' => 'bool', 'default' => true],
     'featShortcuts'      => ['type' => 'bool', 'default' => true],
     'featConsoleHistory' => ['type' => 'bool', 'default' => true],
+    'featTrash'          => ['type' => 'bool', 'default' => true],
 ];
 
 /* --- Rutas ---------------------------------------------------------------- */

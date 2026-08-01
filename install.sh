@@ -100,6 +100,9 @@ cp -f "${SCRIPT_DIR}/assets/css/waise-admin.css" "${PUBLIC_DIR}/css/waise-admin.
 cp -f "${SCRIPT_DIR}/assets/img/waise-bg.svg"    "${PUBLIC_DIR}/img/waise-bg.svg"
 cp -f "${SCRIPT_DIR}/assets/js/waise.js"         "${PUBLIC_DIR}/js/waise.js"
 cp -f "${SCRIPT_DIR}/assets/css/waise-features.css" "${PUBLIC_DIR}/css/waise-features.css"
+cp -f "${SCRIPT_DIR}/assets/js/waise-api.js"        "${PUBLIC_DIR}/js/waise-api.js"
+cp -f "${SCRIPT_DIR}/assets/css/waise-trash.css"    "${PUBLIC_DIR}/css/waise-trash.css"
+cp -f "${SCRIPT_DIR}/assets/js/waise-trash.js"      "${PUBLIC_DIR}/js/waise-trash.js"
 cp -f "${SCRIPT_DIR}/assets/js/waise-features.js"   "${PUBLIC_DIR}/js/waise-features.js"
 cp -f "${SCRIPT_DIR}/assets/css/waise-editor.css"   "${PUBLIC_DIR}/css/waise-editor.css"
 cp -f "${SCRIPT_DIR}/assets/js/waise-editor.js"     "${PUBLIC_DIR}/js/waise-editor.js"
@@ -182,6 +185,7 @@ EOF
     if [[ "$css" == "waise.css" ]]; then
         cat <<EOF
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-features.css?v=${ASSET_VER}">
+        <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-trash.css?v=${ASSET_VER}">
 EOF
     fi
     if [[ -n "$js" ]]; then
@@ -191,7 +195,9 @@ EOF
     fi
     if [[ "$css" == "waise.css" ]]; then
         cat <<EOF
+        <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-api.js?v=${ASSET_VER}" defer></script>
         <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-features.js?v=${ASSET_VER}" defer></script>
+        <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-trash.js?v=${ASSET_VER}" defer></script>
 EOF
     else
         # El token solo se expone en la vista de administracion, que el panel
