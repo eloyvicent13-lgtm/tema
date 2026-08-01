@@ -2103,3 +2103,220 @@ svg.text-gray-100 {
 .bg-gray-600 span {
     color: var(--waise-text) !important;
 }
+
+/* --------------------- v1.5.14 · Refinado estético de la columna lateral ---- */
+/* Bloque puramente cosmético y ADITIVO: va al final a propósito, para ganar la
+   cascada sin reescribir el layout de la columna ni el anclaje inferior, que ya
+   funcionan. Los iconos del menú del servidor se pintan con mask-image (data
+   URI) en vez de FontAwesome: ese markup llega sin ningún <svg>, y así el icono
+   toma el color del enlace vía currentColor sin depender de la fuente. */
+
+@media (min-width: 1024px) {
+    html.waise-sidebar-ready .waise-server-nav,
+    html.waise-mainnav-ready .waise-main-nav {
+        gap: 2px;
+        padding-inline: 10px;
+        background-image:
+            radial-gradient(120% 55% at 0% 0%, rgba(111, 92, 255, 0.16), transparent 70%),
+            radial-gradient(90% 40% at 0% 100%, rgba(23, 201, 201, 0.10), transparent 72%);
+        scrollbar-gutter: stable;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
+    }
+
+    html.waise-sidebar-ready .waise-server-nav::-webkit-scrollbar,
+    html.waise-mainnav-ready .waise-main-nav::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    html.waise-sidebar-ready .waise-server-nav::-webkit-scrollbar-thumb,
+    html.waise-mainnav-ready .waise-main-nav::-webkit-scrollbar-thumb {
+        border-radius: 99px;
+        background-color: rgba(255, 255, 255, 0.14);
+    }
+
+    html.waise-sidebar-ready .waise-server-nav:hover::-webkit-scrollbar-thumb,
+    html.waise-mainnav-ready .waise-main-nav:hover::-webkit-scrollbar-thumb {
+        background-color: rgba(255, 255, 255, 0.24);
+    }
+
+    /* Cabecera de sección: separador y tono más contenido. */
+    html.waise-sidebar-ready .waise-server-nav::before,
+    html.waise-mainnav-ready .waise-main-nav::before {
+        margin-block-end: 4px;
+        padding-block: 4px 12px;
+        border-block-end: 1px solid rgba(255, 255, 255, 0.06);
+        color: var(--waise-text-muted);
+        font-size: 0.64rem;
+        letter-spacing: 0.18em;
+        opacity: 1;
+    }
+
+    /* Pastillas: transición completa y desplazamiento sutil en hover. */
+    html.waise-sidebar-ready .waise-server-nav a,
+    html.waise-mainnav-ready .waise-main-nav a,
+    html.waise-mainnav-ready .waise-main-nav button,
+    html.waise-topbar-docked .waise-topbar-dock > a,
+    html.waise-topbar-docked .waise-topbar-dock > button,
+    html.waise-topbar-docked .waise-topbar-dock > .navigation-link {
+        position: relative;
+        gap: 12px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+        transition:
+            color var(--waise-transition),
+            background-color var(--waise-transition),
+            box-shadow var(--waise-transition),
+            transform var(--waise-transition);
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a:hover,
+    html.waise-mainnav-ready .waise-main-nav a:hover,
+    html.waise-mainnav-ready .waise-main-nav button:hover,
+    html.waise-topbar-docked .waise-topbar-dock > a:hover,
+    html.waise-topbar-docked .waise-topbar-dock > button:hover,
+    html.waise-topbar-docked .waise-topbar-dock > .navigation-link:hover {
+        transform: translateX(2px);
+        background-color: rgba(255, 255, 255, 0.075) !important;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+    }
+
+    /* Accesibilidad: la columna no tenía ningún anillo de foco visible. */
+    html.waise-sidebar-ready .waise-server-nav a:focus-visible,
+    html.waise-mainnav-ready .waise-main-nav a:focus-visible,
+    html.waise-mainnav-ready .waise-main-nav button:focus-visible,
+    html.waise-topbar-docked .waise-topbar-dock > a:focus-visible,
+    html.waise-topbar-docked .waise-topbar-dock > button:focus-visible {
+        outline: 2px solid var(--waise-accent);
+        outline-offset: -2px;
+    }
+
+    /* Estado activo: degradado más contenido y peso tipográfico. La barra de
+       acento se mantiene con el inset del bloque de layout. */
+    html.waise-sidebar-ready .waise-server-nav a.active,
+    html.waise-sidebar-ready .waise-server-nav a[aria-current="page"],
+    html.waise-mainnav-ready .waise-main-nav a.active,
+    html.waise-mainnav-ready .waise-main-nav a[aria-current="page"] {
+        background-image: linear-gradient(90deg, rgba(111, 92, 255, 0.26), rgba(23, 201, 201, 0.06) 65%, transparent);
+        font-weight: 600;
+    }
+
+    /* --- Iconos del menú del servidor -------------------------------------
+       `::before` está libre en estos enlaces (arriba solo se anula el ::after
+       decorativo). Sin --waise-icon la máscara queda vacía y no se pinta nada,
+       así que un enlace desconocido no muestra un cuadro suelto. */
+    html.waise-sidebar-ready .waise-server-nav a[href]::before {
+        content: "";
+        flex: 0 0 auto;
+        width: 17px;
+        height: 17px;
+        background-color: currentColor;
+        opacity: 0.72;
+        transition: opacity var(--waise-transition);
+        -webkit-mask-repeat: no-repeat;
+        mask-repeat: no-repeat;
+        -webkit-mask-position: center;
+        mask-position: center;
+        -webkit-mask-size: contain;
+        mask-size: contain;
+        -webkit-mask-image: var(--waise-icon, none);
+        mask-image: var(--waise-icon, none);
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a:hover::before,
+    html.waise-sidebar-ready .waise-server-nav a.active::before,
+    html.waise-sidebar-ready .waise-server-nav a[aria-current="page"]::before {
+        opacity: 1;
+    }
+
+    /* Consola: su enlace es la raíz del servidor y no termina en palabra clave,
+       así que se identifica por ser el primero de la lista. */
+    html.waise-sidebar-ready .waise-server-nav a:first-of-type {
+        --waise-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 17l6-5-6-5'/%3E%3Cpath d='M12 19h8'/%3E%3C/svg%3E");
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a[href$="/files"] {
+        --waise-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z'/%3E%3C/svg%3E");
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a[href$="/databases"] {
+        --waise-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cellipse cx='12' cy='6' rx='8' ry='3'/%3E%3Cpath d='M4 6v12c0 1.7 3.6 3 8 3s8-1.3 8-3V6'/%3E%3Cpath d='M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3'/%3E%3C/svg%3E");
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a[href$="/schedules"] {
+        --waise-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M12 7v5l3 2'/%3E%3C/svg%3E");
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a[href$="/users"] {
+        --waise-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='9' cy='8' r='4'/%3E%3Cpath d='M2 21c0-3.9 3.1-7 7-7s7 3.1 7 7'/%3E%3Cpath d='M17 4.5a4 4 0 0 1 0 7'/%3E%3C/svg%3E");
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a[href$="/backups"] {
+        --waise-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='4' rx='1'/%3E%3Cpath d='M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8'/%3E%3Cpath d='M10 12h4'/%3E%3C/svg%3E");
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a[href$="/network"] {
+        --waise-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M3 12h18'/%3E%3Cpath d='M12 3c2.5 2.6 3.8 5.7 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.7-3.8-9S9.5 5.6 12 3z'/%3E%3C/svg%3E");
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a[href$="/startup"] {
+        --waise-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 4l13 8-13 8z'/%3E%3C/svg%3E");
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a[href$="/settings"] {
+        --waise-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='3.2'/%3E%3Cpath d='M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9L7 7M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1'/%3E%3C/svg%3E");
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a[href$="/activity"] {
+        --waise-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12h4l3 8 4-16 3 8h4'/%3E%3C/svg%3E");
+    }
+
+    /* Enlace al panel de administración: separado y atenuado, porque saca al
+       usuario del contexto del servidor. */
+    html.waise-sidebar-ready .waise-server-nav a[target="_blank"] {
+        margin-block-start: 10px;
+        padding-block-start: 12px;
+        border-block-start: 1px solid rgba(255, 255, 255, 0.06) !important;
+        border-radius: 0;
+        color: var(--waise-text-muted);
+        font-size: 0.84rem;
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a[target="_blank"]::before {
+        content: none;
+    }
+
+    html.waise-sidebar-ready .waise-server-nav a[target="_blank"]:hover {
+        transform: none;
+        background-color: transparent !important;
+        box-shadow: none;
+        color: var(--waise-text);
+    }
+
+    /* Anclaje inferior: mismo lenguaje visual que la columna. */
+    html.waise-topbar-docked .waise-topbar-dock {
+        gap: 2px;
+        padding-inline: 10px;
+        background-image: linear-gradient(180deg, transparent, rgba(111, 92, 255, 0.07));
+    }
+
+    html.waise-topbar-docked .waise-topbar-dock svg {
+        opacity: 0.72;
+        transition: opacity var(--waise-transition);
+    }
+
+    html.waise-topbar-docked .waise-topbar-dock > *:hover svg {
+        opacity: 1;
+    }
+}
+
+/* Respeto por quien pide menos movimiento. */
+@media (prefers-reduced-motion: reduce) {
+    html.waise-sidebar-ready .waise-server-nav a,
+    html.waise-mainnav-ready .waise-main-nav a,
+    html.waise-mainnav-ready .waise-main-nav button,
+    html.waise-topbar-docked .waise-topbar-dock > * {
+        transition: none !important;
+        transform: none !important;
+    }
+}
