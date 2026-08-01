@@ -2077,9 +2077,25 @@
         setupNetStatus();
         statusTimer = window.setInterval(pollStatus, 3000);
 
+        /* La UI que inyectamos (chips, menus, botones) tambien muta el DOM.
+           Sin este filtro, renderGroupBar vaciaba y repoblaba la barra en cada
+           schedule(), el observer lo detectaba y volvia a llamar a schedule():
+           un bucle a cada frame. Solo reaccionamos a nodos ajenos. */
+        function isOwnNode(node) {
+            if (!node || node.nodeType !== 1) return true;
+            var cls = typeof node.className === 'string' ? node.className : '';
+            if (cls.indexOf('waise-') === 0) return true;
+            var parent = node.parentElement;
+            var pcls = parent && typeof parent.className === 'string' ? parent.className : '';
+            return pcls.indexOf('waise-') === 0;
+        }
+
         var observer = new MutationObserver(function (muts) {
             for (var i = 0; i < muts.length; i++) {
-                if (muts[i].addedNodes.length) { schedule(); return; }
+                var added = muts[i].addedNodes;
+                for (var j = 0; j < added.length; j++) {
+                    if (!isOwnNode(added[j])) { schedule(); return; }
+                }
             }
         });
         observer.observe(document.body, { childList: true, subtree: true });
