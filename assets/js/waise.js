@@ -58,6 +58,20 @@
         [/^\/(index)?$/,               'Servidores']
     ];
 
+    /* Ultimo recurso para botones que no son enlaces y llegan sin aria-label ni
+       title: el boton de cerrar sesion de Pterodactyl solo contiene un SVG de
+       FontAwesome con aria-hidden, asi que sin esto se queda sin rotulo y el
+       CSS lo anula con :not([data-waise-label]). Se identifica por el icono. */
+    var ICON_LABELS = [
+        ['sign-out-alt', 'Cerrar sesion'],
+        ['sign-out',     'Cerrar sesion'],
+        ['sign-in-alt',  'Iniciar sesion'],
+        ['search',       'Buscar'],
+        ['user',         'Cuenta'],
+        ['cogs',         'Admin'],
+        ['layer-group',  'Servidores']
+    ];
+
     var applied  = { target: null, kind: null, root: null };
     var labeled  = [];
     var styleLog = [];
@@ -207,6 +221,21 @@
             try { path = new URL(href, window.location.origin).pathname; } catch (e) { path = href; }
             for (var i = 0; i < MAIN_LABELS.length; i++) {
                 if (MAIN_LABELS[i][0].test(path)) return MAIN_LABELS[i][1];
+            }
+        }
+        var icon = el.querySelector('svg[data-icon]');
+        var iconName = icon ? icon.getAttribute('data-icon') : null;
+        if (!iconName) {
+            /* Fallback por clase: algunas versiones renderizan fa-sign-out-alt
+               sin exponer data-icon. className en un SVG es SVGAnimatedString. */
+            var svg = el.querySelector('svg');
+            var cls = svg ? (svg.getAttribute('class') || '') : '';
+            var m = cls.match(/\bfa-([a-z0-9-]+)\b/);
+            if (m && m[1] !== 'w' && m[1] !== 'fw' && m[1] !== 'inline') iconName = m[1];
+        }
+        if (iconName) {
+            for (var j = 0; j < ICON_LABELS.length; j++) {
+                if (ICON_LABELS[j][0] === iconName) return ICON_LABELS[j][1];
             }
         }
         return null;
