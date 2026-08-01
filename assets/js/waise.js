@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Waise Theme v1.5.16 - assets/js/waise.js
+   Waise Theme v1.5.17 - assets/js/waise.js
    ========================================================================== */
 (function () {
     'use strict';
@@ -301,7 +301,6 @@
             child = parent; parent = parent.parentElement;
         }
         labelize(target, kind);
-        dockTopbar(kind);
         if (!verify) return;
         if (verifyPosition(target)) return;
         clearAllAncestors(target);
@@ -323,15 +322,28 @@
         applied = { target: null, kind: null, root: null };
     }
 
+    /* El anclaje se reconcilia SIEMPRE al final del ciclo, nunca dentro de
+       `mark()`: React reutiliza el nodo de `NavigationBar` entre secciones, así
+       que la clase sobrevive a la navegación y las salidas anticipadas de
+       `refreshSidebar` dejaban el gate del <html> descuadrado (visible fuera del
+       servidor, apagado dentro). Un único punto de salida evita esas fugas. */
     function refreshSidebar() {
-        if (window.innerWidth < MIN_VIEWPORT) { if (applied.target) revert(); return; }
-        var found = locate();
-        if (!found || rejected.has(found.target)) { if (applied.target) revert(); else undockTopbar(); return; }
-        if (applied.target === found.target && applied.kind === found.kind && found.target.isConnected) {
-            mark(found, false); return;
+        if (window.innerWidth < MIN_VIEWPORT) {
+            if (applied.target) revert(); else undockTopbar();
+            return;
         }
-        revert();
-        mark(found, true);
+        var found = locate();
+        if (!found || rejected.has(found.target)) {
+            if (applied.target) revert(); else undockTopbar();
+            return;
+        }
+        if (applied.target === found.target && applied.kind === found.kind && found.target.isConnected) {
+            mark(found, false);
+        } else {
+            revert();
+            mark(found, true);
+        }
+        if (applied.kind) dockTopbar(applied.kind); else undockTopbar();
     }
 
     /* ====================================================================
