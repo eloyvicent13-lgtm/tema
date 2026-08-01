@@ -40,7 +40,9 @@
         recentServers: true,
         uiZoom: true,
         netStatus: true,
-        pasteGuard: true
+        pasteGuard: true,
+        serverGroups: true,
+        accountTools: true
     };
 
     var prefs = (function readPrefs() {
@@ -93,7 +95,9 @@
         recentServers: 'featRecentServers',
         uiZoom: 'featUiZoom',
         netStatus: 'featNetStatus',
-        pasteGuard: 'featPasteGuard'
+        pasteGuard: 'featPasteGuard',
+        serverGroups: 'featServerGroups',
+        accountTools: 'featAccountTools'
     };
 
     function masterAllows(name) {
@@ -1500,8 +1504,467 @@
         if (!clockTimer) clockTimer = window.setInterval(tickClock, 1000);
     }
 
+    /* ====================================================================
+       Carpetas de servidores
+       ==================================================================== */
+
+    var GROUPS_KEY = 'waise:groups';
+    var GROUP_ACTIVE_KEY = 'waise:group-active';
+    var GROUP_FLAG = 'waiseGroup';
+    var GROUP_BAR_FLAG = 'waiseGroupBar';
+
+    var groups = (function readGroups() {
+        try {
+            var raw = window.localStorage.getItem(GROUPS_KEY);
+            var parsed = raw ? JSON.parse(raw) : {};
+            if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return {};
+            var out = {};
+            for (var name in parsed) {
+                if (!Object.prototype.hasOwnProperty.call(parsed, name)) continue;
+                if (!Array.isArray(parsed[name])) continue;
+                out[name] = parsed[name].filter(function (x) { return typeof x === 'string' && x.length; });
+            }
+            return out;
+        } catch (e) { return {}; }
+    })();
+
+    var activeGroup = (function readActiveGroup() {
+        try { return window.localStorage.getItem(GROUP_ACTIVE_KEY) || ''; }
+        catch (e) { return ''; }
+    })();
+
+    var groupMenu = null;
+
+    function saveGroups() {
+        try { window.localStorage.setItem(GROUPS_KEY, JSON.stringify(groups)); }
+        catch (e) { /* cuota o modo privado: solo dura la sesion */ }
+    }
+
+    function setActiveGroup(name) {
+        activeGroup = name || '';
+        try { window.localStorage.setItem(GROUP_ACTIVE_KEY, activeGroup); }
+        catch (e) { /* ignorado */ }
+    }
+
+    function groupNames() {
+        var out = [];
+        for (var name in groups) {
+            if (Object.prototype.hasOwnProperty.call(groups, name)) out.push(name);
+        }
+        return out.sort();
+    }
+
+    function groupOf(id) {
+        var names = groupNames();
+        for (var i = 0; i < names.length; i++) {
+            if (groups[names[i]].indexOf(id) !== -1) return names[i];
+        }
+        return '';
+    }
+
+    /* Un servidor pertenece como mucho a una carpeta: dos carpetas con el
+       mismo servidor confundirian los contadores y el filtro. */
+    function assignGroup(id, name) {
+        var names = groupNames();
+        for (var i = 0; i < names.length; i++) {
+            var list = groups[names[i]];
+            var at = list.indexOf(id);
+            if (at !== -1) list.splice(at, 1);
+            if (!list.length && names[i] !== name) delete groups[names[i]];
+        }
+        if (name) {
+            if (!groups[name]) groups[name] = [];
+            groups[name].push(id);
+        }
+        saveGroups();
+    }
+
+    function closeGroupMenu() {
+        if (!groupMenu) return false;
+        if (groupMenu.parentNode) groupMenu.parentNode.removeChild(groupMenu);
+        groupMenu = null;
+        return true;
+    }
+
+    function openGroupMenu(anchor, id) {
+        closeGroupMenu();
+        groupMenu = document.createElement('div');
+        groupMenu.className = 'waise-gmenu';
+        groupMenu.setAttribute('role', 'menu');
+
+        var title = document.createElement('div');
+        title.className = 'waise-gmenu__title';
+        title.textContent = 'Mover a carpeta';
+        groupMenu.appendChild(title);
+
+        var current = groupOf(id);
+
+        function row(label, handler, active) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'waise-gmenu__item' + (active ? ' waise-gmenu__item--on' : '');
+            btn.textContent = label;
+            btn.addEventListener('click', function (ev) {
+                ev.preventDefault();
+                ev.stopPropagation();
+                handler();
+                closeGroupMenu();
+                schedule();
+            });
+            groupMenu.appendChild(btn);
+        }
+
+        var names = groupNames();
+        for (var i = 0; i < names.length; i++) {
+            (function (name) {
+                row(name, function () {
+                    assignGroup(id, name);
+                    toast('Movido a "' + name + '"', 'ok');
+                }, name === current);
+            })(names[i]);
+        }
+
+        row('+ Nueva carpeta...', function () {
+            var name = window.prompt('Nombre de la carpeta:', '');
+            if (name === null) return;
+            name = name.trim().slice(0, 32);
+            if (!name) { toast('Nombre de carpeta vacio', 'error'); return; }
+            assignGroup(id, name);
+            toast('Movido a "' + name + '"', 'ok');
+        }, false);
+
+        if (current) {
+            row('Quitar de "' + current + '"', function () {
+                assignGroup(id, '');
+                toast('Servidor sin carpeta', 'ok');
+            }, false);
+        }
+
+        document.body.appendChild(groupMenu);
+
+        var box = anchor.getBoundingClientRect();
+        var width = groupMenu.offsetWidth;
+        var left = Math.min(box.left, window.innerWidth - width - 8);
+        var top = box.bottom + 6;
+        if (top + groupMenu.offsetHeight > window.innerHeight - 8) {
+            top = Math.max(8, box.top - groupMenu.offsetHeight - 6);
+        }
+        groupMenu.style.left = Math.max(8, left) + 'px';
+        groupMenu.style.top = top + 'px';
+    }
+
+    /* Clase propia: el filtro de texto usa .waise-hidden y los dos filtros
+       deben poder actuar a la vez sin pisarse. */
+    function applyGroupFilter(cards) {
+        for (var i = 0; i < cards.length; i++) {
+            var id = cards[i].getAttribute('data-waise-server');
+            var name = groupOf(id);
+            var hit = !activeGroup ||
+                      (activeGroup === '\u0000none' ? !name : name === activeGroup);
+            cards[i].classList.toggle('waise-ghidden', !hit);
+        }
+    }
+
+    function renderGroupBar(bar, cards) {
+        bar.textContent = '';
+
+        var counts = {};
+        var loose = 0;
+        for (var i = 0; i < cards.length; i++) {
+            var name = groupOf(cards[i].getAttribute('data-waise-server'));
+            if (name) counts[name] = (counts[name] || 0) + 1;
+            else loose++;
+        }
+
+        function chip(label, value, disabled) {
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'waise-gchip' + (activeGroup === value ? ' waise-gchip--on' : '');
+            btn.textContent = label;
+            if (disabled) btn.classList.add('waise-gchip--empty');
+            btn.addEventListener('click', function () {
+                setActiveGroup(activeGroup === value ? '' : value);
+                schedule();
+            });
+            bar.appendChild(btn);
+        }
+
+        chip('Todos (' + cards.length + ')', '', false);
+        var names = groupNames();
+        for (var j = 0; j < names.length; j++) {
+            chip(names[j] + ' (' + (counts[names[j]] || 0) + ')', names[j], !counts[names[j]]);
+        }
+        if (loose && names.length) chip('Sin carpeta (' + loose + ')', '\u0000none', false);
+    }
+
+    function setupServerGroups(cards) {
+        if (!getPref('serverGroups')) return;
+        if (!cards.length) return;
+
+        for (var i = 0; i < cards.length; i++) {
+            var card = cards[i];
+            if (card.dataset[GROUP_FLAG]) continue;
+            card.dataset[GROUP_FLAG] = '1';
+            card.classList.add('waise-server-card');
+
+            var id = card.getAttribute('data-waise-server');
+            var btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'waise-folder-btn';
+            btn.title = 'Mover a una carpeta';
+            btn.setAttribute('aria-label', 'Mover a una carpeta');
+            btn.textContent = '\u25a4';
+
+            (function (button, serverId) {
+                button.addEventListener('click', function (ev) {
+                    /* La tarjeta entera es un enlace: sin esto se navegaria. */
+                    ev.preventDefault();
+                    ev.stopPropagation();
+                    openGroupMenu(button, serverId);
+                });
+            })(btn, id);
+
+            card.appendChild(btn);
+        }
+
+        var list = cards[0].parentElement;
+        if (list && list.parentElement && !list.dataset[GROUP_BAR_FLAG]) {
+            list.dataset[GROUP_BAR_FLAG] = '1';
+            var bar = document.createElement('div');
+            bar.className = 'waise-groups';
+            list.parentElement.insertBefore(bar, list);
+        }
+
+        var bars = document.querySelectorAll('.waise-groups');
+        for (var k = 0; k < bars.length; k++) renderGroupBar(bars[k], cards);
+        applyGroupFilter(cards);
+    }
+
+    /* ====================================================================
+       Editor de cuenta
+       ==================================================================== */
+
+    var ACCOUNT_FLAG = 'waiseAccount';
+    var METER_FLAG = 'waiseMeter';
+
+    function isAccountRoute() {
+        return window.location.pathname.indexOf('/account') === 0;
+    }
+
+    function scorePassword(value) {
+        if (!value) return 0;
+        var score = 0;
+        if (value.length >= 8) score++;
+        if (value.length >= 12) score++;
+        if (value.length >= 16) score++;
+        if (/[a-z]/.test(value) && /[A-Z]/.test(value)) score++;
+        if (/\d/.test(value)) score++;
+        if (/[^A-Za-z0-9]/.test(value)) score++;
+        if (/^(.)\1+$/.test(value)) score = 1;
+        return Math.min(score, 5);
+    }
+
+    var SCORE_LABELS = ['Muy debil', 'Muy debil', 'Debil', 'Aceptable', 'Fuerte', 'Excelente'];
+
+    function genPassword(length) {
+        var abc = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!@#$%*?-_';
+        var out = '';
+        var i;
+        if (window.crypto && window.crypto.getRandomValues) {
+            var buf = new Uint32Array(length);
+            window.crypto.getRandomValues(buf);
+            for (i = 0; i < length; i++) out += abc.charAt(buf[i] % abc.length);
+        } else {
+            for (i = 0; i < length; i++) out += abc.charAt(Math.floor(Math.random() * abc.length));
+        }
+        return out;
+    }
+
+    function fieldName(input) {
+        return (input.getAttribute('name') || input.getAttribute('id') || '').toLowerCase();
+    }
+
+    function passwordFields() {
+        var all = document.querySelectorAll('input[type="password"], input[data-waise-pass]');
+        var out = { next: null, confirm: null };
+        for (var i = 0; i < all.length; i++) {
+            var name = fieldName(all[i]);
+            if (name.indexOf('current') !== -1) continue;
+            if (name.indexOf('confirm') !== -1) { out.confirm = all[i]; continue; }
+            if (name.indexOf('password') !== -1 && !out.next) out.next = all[i];
+        }
+        /* Builds traducidas o sin atributo name: se cae al orden del DOM. */
+        if (!out.next && all.length >= 2) out.next = all[1];
+        if (!out.confirm && all.length >= 3) out.confirm = all[2];
+        return out;
+    }
+
+    function attachMeter(input, confirmInput) {
+        if (!input || input.dataset[METER_FLAG]) return;
+        input.dataset[METER_FLAG] = '1';
+        /* El type cambia con el boton "Ver": se marca para no perder el campo. */
+        input.setAttribute('data-waise-pass', '1');
+
+        var host = input.parentElement;
+        if (!host) return;
+
+        var meter = document.createElement('div');
+        meter.className = 'waise-meter';
+
+        var track = document.createElement('div');
+        track.className = 'waise-meter__track';
+        var fill = document.createElement('div');
+        fill.className = 'waise-meter__fill';
+        track.appendChild(fill);
+
+        var label = document.createElement('span');
+        label.className = 'waise-meter__label';
+
+        meter.appendChild(track);
+        meter.appendChild(label);
+        host.appendChild(meter);
+
+        function update() {
+            var value = input.value || '';
+            var score = scorePassword(value);
+            fill.style.width = (score * 20) + '%';
+            fill.setAttribute('data-score', String(score));
+            label.textContent = value ? SCORE_LABELS[score] + ' - ' + value.length + ' caracteres' : '';
+            if (confirmInput && confirmInput.value) {
+                var same = confirmInput.value === value;
+                confirmInput.classList.toggle('waise-mismatch', !same);
+            }
+        }
+
+        input.addEventListener('input', update);
+        if (confirmInput) confirmInput.addEventListener('input', update);
+        update();
+
+        var gen = document.createElement('button');
+        gen.type = 'button';
+        gen.className = 'waise-gen-btn';
+        gen.title = 'Generar contrasena segura de 20 caracteres';
+        gen.setAttribute('aria-label', 'Generar contrasena segura');
+        gen.textContent = 'Generar';
+        gen.addEventListener('click', function (ev) {
+            ev.preventDefault();
+            ev.stopPropagation();
+            var value = genPassword(20);
+            setInputValue(input, value);
+            if (confirmInput) setInputValue(confirmInput, value);
+            copyText(value).then(function () {
+                toast('Contrasena generada y copiada al portapapeles', 'ok');
+            }).catch(function () {
+                toast('Contrasena generada (no se pudo copiar)', 'ok');
+            });
+            update();
+        });
+        host.classList.add('waise-pass-host');
+        host.appendChild(gen);
+    }
+
+    function accountIdentity() {
+        var email = '';
+        var user = '';
+        var inputs = document.querySelectorAll('input');
+        for (var i = 0; i < inputs.length; i++) {
+            var name = fieldName(inputs[i]);
+            if (!email && (name.indexOf('email') !== -1 || inputs[i].type === 'email')) email = inputs[i].value || '';
+            if (!user && (name.indexOf('username') !== -1 || name === 'user')) user = inputs[i].value || '';
+        }
+        return { email: email.trim(), user: user.trim() };
+    }
+
+    function initials(text) {
+        var clean = (text || '').replace(/[^A-Za-z0-9]+/g, ' ').trim();
+        if (!clean) return '?';
+        var parts = clean.split(' ');
+        if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+        return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+
+    function buildAccountHeader(mount, id) {
+        var card = document.createElement('div');
+        card.className = 'waise-account-card';
+
+        var avatar = document.createElement('div');
+        avatar.className = 'waise-account-card__avatar';
+        avatar.textContent = initials(id.user || id.email);
+
+        var info = document.createElement('div');
+        info.className = 'waise-account-card__info';
+
+        var name = document.createElement('div');
+        name.className = 'waise-account-card__name';
+        name.textContent = id.user || 'Mi cuenta';
+
+        var mail = document.createElement('div');
+        mail.className = 'waise-account-card__mail';
+        mail.textContent = id.email || 'Sin correo detectado';
+
+        info.appendChild(name);
+        info.appendChild(mail);
+
+        var actions = document.createElement('div');
+        actions.className = 'waise-account-card__actions';
+
+        if (id.email) {
+            var copyBtn = document.createElement('button');
+            copyBtn.type = 'button';
+            copyBtn.className = 'waise-account-btn';
+            copyBtn.textContent = 'Copiar correo';
+            copyBtn.addEventListener('click', function () {
+                copyText(id.email).then(function () {
+                    toast('Correo copiado: ' + id.email, 'ok');
+                }).catch(function () {
+                    toast('No se pudo copiar al portapapeles', 'error');
+                });
+            });
+            actions.appendChild(copyBtn);
+        }
+
+        var links = [['Claves API', '/account/api'], ['Claves SSH', '/account/ssh'], ['Actividad', '/account/activity']];
+        for (var i = 0; i < links.length; i++) {
+            var a = document.createElement('a');
+            a.className = 'waise-account-btn';
+            a.href = links[i][1];
+            a.textContent = links[i][0];
+            actions.appendChild(a);
+        }
+
+        card.appendChild(avatar);
+        card.appendChild(info);
+        card.appendChild(actions);
+        mount.insertBefore(card, mount.firstChild);
+    }
+
+    function setupAccountPage() {
+        if (!getPref('accountTools')) {
+            document.documentElement.classList.remove('waise-account');
+            return;
+        }
+        if (!isAccountRoute()) {
+            document.documentElement.classList.remove('waise-account');
+            return;
+        }
+        document.documentElement.classList.add('waise-account');
+
+        var fields = passwordFields();
+        attachMeter(fields.next, fields.confirm);
+
+        var mount = document.querySelector('main') ||
+                    document.querySelector('[class*="ContentContainer"]');
+        if (!mount || mount.dataset[ACCOUNT_FLAG]) return;
+        var id = accountIdentity();
+        /* Sin correo el formulario aun no ha hidratado: se reintenta en el
+           siguiente ciclo del observador en vez de pintar una tarjeta vacia. */
+        if (!id.email && !id.user) return;
+        mount.dataset[ACCOUNT_FLAG] = '1';
+        buildAccountHeader(mount, id);
+    }
+
     function closeOverlays() {
-        return closePalette() || closeHelp() || closeConsoleFind();
+        return closePalette() || closeHelp() || closeConsoleFind() || closeGroupMenu();
     }
 
     /* ====================================================================
@@ -1520,12 +1983,14 @@
                 scanAddresses();
                 var cards = serverCards();
                 setupFavorites(cards);
+                setupServerGroups(cards);
                 setupServerFilter(cards);
                 setupBackToTop();
                 setupPasswordReveal();
                 setupSessionClock();
                 updatePageTitle();
                 trackRecent();
+                setupAccountPage();
             } catch (e) {
                 /* Una feature rota no debe dejar el panel a medias. */
             }
@@ -1548,6 +2013,9 @@
         schedule();
 
         document.addEventListener('click', onGuardClick, true);
+        document.addEventListener('mousedown', function (ev) {
+            if (groupMenu && !groupMenu.contains(ev.target)) closeGroupMenu();
+        });
         document.addEventListener('keydown', markDirty, true);
         document.addEventListener('click', clearDirty, true);
         window.addEventListener('beforeunload', onBeforeUnload);
@@ -1592,7 +2060,11 @@
         openConsoleFind: openConsoleFind,
         toggleDensity: toggleDensity,
         setZoom: applyZoom,
-        recentServers: function () { return recent.slice(); }
+        recentServers: function () { return recent.slice(); },
+        groups: function () { return JSON.parse(JSON.stringify(groups)); },
+        groupOf: groupOf,
+        assignGroup: assignGroup,
+        genPassword: genPassword
     };
 
     if (document.readyState === 'loading') {
