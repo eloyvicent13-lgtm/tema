@@ -54,31 +54,54 @@
     --waise-bg-0: #08090f;
     --waise-bg-1: #0d0f1c;
 
-    --waise-glass-1: rgba(20, 23, 38, 0.62);
-    --waise-glass-2: rgba(28, 32, 52, 0.52);
-    --waise-glass-3: rgba(40, 45, 70, 0.44);
-    --waise-glass-solid: rgba(14, 16, 28, 0.9);
+    /* Escala de superficies: cada nivel sube 6-8% de opacidad y baja de
+       desenfoque. Antes los tres niveles estaban a 0.62/0.52/0.44, muy juntos:
+       una tarjeta dentro de un panel no se distinguía del panel. */
+    --waise-glass-1: rgba(19, 22, 37, 0.68);
+    --waise-glass-2: rgba(29, 33, 54, 0.56);
+    --waise-glass-3: rgba(44, 49, 76, 0.46);
+    --waise-glass-solid: rgba(12, 14, 25, 0.93);
 
-    --waise-border: rgba(255, 255, 255, 0.08);
-    --waise-border-strong: rgba(255, 255, 255, 0.16);
+    --waise-border: rgba(255, 255, 255, 0.09);
+    --waise-border-strong: rgba(255, 255, 255, 0.18);
 
-    --waise-text: #e8eaf6;
-    --waise-text-dim: #a4aac6;
+    --waise-text: #eef0fb;
+    --waise-text-dim: #a8aed0;
 
-    --waise-radius: 14px;
+    /* Escala de radios coherente: sm para controles, base para tarjetas,
+       lg para modales. Antes convivían 4, 6, 8, 10, 12, 14, 18 y 20px. */
+    --waise-radius-xs: 6px;
     --waise-radius-sm: 10px;
-    --waise-blur: 14px;
-    --waise-shadow: 0 14px 34px -16px rgba(0, 0, 0, 0.75);
-    --waise-shadow-sm: 0 6px 18px -10px rgba(0, 0, 0, 0.6);
-    --waise-transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    --waise-radius: 14px;
+    --waise-radius-lg: 18px;
 
-    /* Variables usadas por el parche v1.5.0 */
+    --waise-blur: 14px;
+
+    /* Sombras en dos capas: uña de contacto + difusa. Una sola capa muy
+       difusa hacía que las tarjetas flotasen sin apoyarse en nada. */
+    --waise-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35), 0 6px 18px -10px rgba(0, 0, 0, 0.6);
+    --waise-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 14px 34px -16px rgba(0, 0, 0, 0.75);
+    --waise-shadow-lg: 0 2px 6px rgba(0, 0, 0, 0.45), 0 30px 70px -30px rgba(0, 0, 0, 0.95);
+
+    /* Realce interior: la línea de luz superior que define el "cristal". */
+    --waise-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.07);
+
+    --waise-transition: 180ms cubic-bezier(0.4, 0, 0.2, 1);
+    --waise-transition-slow: 280ms cubic-bezier(0.4, 0, 0.2, 1);
+
+    /* Alias de los parches v1.5.x, ahora derivados de los tokens base para que
+       un cambio de paleta se propague a TODO el tema en vez de a la mitad. */
     --waise-glass-bg:     rgba(255, 255, 255, 0.05);
-    --waise-glass-border: rgba(255, 255, 255, 0.10);
-    --waise-glass-blur:   14px;
+    --waise-glass-border: var(--waise-border);
+    --waise-glass-blur:   var(--waise-blur);
     --waise-accent-dim:   rgba(111, 92, 255, 0.28);
-    --waise-text-muted:   rgba(164, 170, 198, 0.65);
-    --waise-border-hover: rgba(255, 255, 255, 0.22);
+    --waise-text-muted:   rgba(168, 174, 208, 0.68);
+    --waise-border-hover: var(--waise-border-strong);
+
+    /* Colores semánticos: hasta ahora cada bloque inventaba su verde/rojo. */
+    --waise-ok:   #4ade80;
+    --waise-warn: #facc15;
+    --waise-err:  #f87171;
 }
 
 /* ---------------------------------------------------------------- Fondo -- */
@@ -1491,9 +1514,21 @@ small.text-muted {
 .text-neutral-900, .text-neutral-800, .text-neutral-700,
 .text-gray-900,    .text-gray-800,    .text-gray-700,
 .text-zinc-900,    .text-zinc-800,    .text-zinc-700,
-.text-black, .text-white { color: var(--waise-text) !important; }
+.text-black { color: var(--waise-text) !important; }
 h1,h2,h3,h4,h5,h6 { color: var(--waise-text) !important; }
-td,th,span,label,li { color: var(--waise-text) !important; }
+
+/* ANTES: `td,th,span,label,li { color: … !important }`.
+   Esa regla, por `!important` y por afectar a `span`, pisaba TODO color
+   semántico del panel: el verde de "online", el rojo de un error de validación,
+   el ámbar de "installing" y los `text-red-*` de Tailwind quedaban gris claro.
+   Ahora solo se recolorean los elementos que NO llevan una clase de color
+   propia, con especificidad normal, así que el panel recupera su semántica. */
+td:not([class*="text-"]),
+th:not([class*="text-"]),
+label:not([class*="text-"]),
+li:not([class*="text-"]) {
+    color: var(--waise-text);
+}
 
 /* Bordes claros de Tailwind */
 .border-neutral-200, .border-gray-200, .border-zinc-200,
@@ -2355,6 +2390,226 @@ a[href^="/admin/servers/view/"]:not(.waise-topbar-dock a) {
     html.waise-mainnav-ready .waise-main-nav a,
     html.waise-mainnav-ready .waise-main-nav button,
     html.waise-topbar-docked .waise-topbar-dock > * {
+        transition: none !important;
+        transform: none !important;
+    }
+}
+
+/* =========================================================================
+   v1.9.0 - CAPA DE UNIFICACIÓN
+   Va al final a propósito: no borra los bloques v1.5.x (romperían páginas que
+   no puedo probar), los ARMONIZA. Todo lo de aquí son valores que antes estaban
+   declarados con tres cifras distintas en tres sitios distintos.
+   ========================================================================= */
+
+/* --- Tipografía ---------------------------------------------------------
+   El panel no fijaba escala: los h1 de página y los h3 de widget acababan casi
+   del mismo tamaño y no se leía la jerarquía. */
+
+body {
+    font-feature-settings: "cv11", "ss01";
+    letter-spacing: -0.006em;
+}
+
+#app h1 { font-size: clamp(1.35rem, 1.1rem + 1.1vw, 1.75rem); font-weight: 650; letter-spacing: -0.02em; }
+#app h2 { font-size: clamp(1.1rem, 0.98rem + 0.6vw, 1.3rem);  font-weight: 620; letter-spacing: -0.015em; }
+#app h3 { font-size: 0.95rem; font-weight: 600; letter-spacing: -0.005em; }
+
+/* Cabeceras de sección tipo "CPU Load", "Memory": rótulo, no título. */
+#app h3.font-header,
+div:has(canvas[role="img"]):has(h3) h3 {
+    font-size: 0.72rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.1em !important;
+    text-transform: uppercase !important;
+    color: var(--waise-text-muted) !important;
+}
+
+/* Todo número que se actualiza en vivo, con cifras de ancho fijo: sin esto la
+   línea "12.4%" -> "9.1%" da un salto visible cada segundo. */
+#app :where(.font-mono, code, pre, [class*="InlineCode"]),
+div:has(canvas[role="img"]) :where(p, span) {
+    font-variant-numeric: tabular-nums;
+}
+
+/* --- Radios unificados --------------------------------------------------
+   Se normalizan los 4/6/8/12/18/20px sueltos de los parches v1.5.x. */
+
+[class*="TitledGreyBox"],
+[class*="GreyRowBox"],
+[class*="ContentBox___StyledDiv"],
+.box, .panel, .well,
+div:has(canvas[role="img"]):has(h3) {
+    border-radius: var(--waise-radius) !important;
+}
+
+[class*="TitledGreyBox"] > div:first-child,
+[class*="TitledGreyBox___StyledDiv2"] {
+    border-radius: var(--waise-radius) var(--waise-radius) 0 0 !important;
+}
+
+[class*="Modal___StyledDiv2"],
+[id^="headlessui-dialog-panel"],
+.modal-content {
+    border-radius: var(--waise-radius-lg) !important;
+    box-shadow: var(--waise-shadow-lg) !important;
+}
+
+.form-control,
+[class*="Input-sc"],
+[class*="Button__ButtonStyle"],
+.badge, .dropdown-item {
+    border-radius: var(--waise-radius-sm) !important;
+}
+
+/* --- Un solo color de foco ---------------------------------------------
+   Convivían tres moradas: var(--waise-accent) #6f5cff, rgba(139,92,246,.6) y
+   #8b5cf6. Ahora todo sale del token. */
+
+.form-control:focus,
+[class*="Input-sc"]:focus,
+input:focus, select:focus, textarea:focus {
+    border-color: var(--waise-accent) !important;
+    box-shadow: 0 0 0 3px var(--waise-accent-dim) !important;
+}
+
+[class*="PermissionRow___StyledCheckbox"],
+[class*="Switch__ToggleContainer"] input[type="checkbox"],
+input[type="checkbox"], input[type="radio"] {
+    accent-color: var(--waise-accent) !important;
+}
+
+[class*="Switch___StyledToggleContainer"] input[type="checkbox"]:checked + label {
+    background: var(--waise-accent) !important;
+    border-color: var(--waise-accent) !important;
+}
+
+/* --- Botones: jerarquía real -------------------------------------------
+   `[class*="Button__ButtonStyle"]` pintaba de morado TODOS los botones del
+   panel, incluidos "Cancelar" y los destructivos. Aquí el morado queda para el
+   primario y el resto recupera su peso visual. */
+
+[class*="Button__ButtonStyle"] {
+    background: linear-gradient(135deg, var(--waise-accent), #7f6dff) !important;
+    border: 1px solid rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 8px 22px -12px var(--waise-accent), var(--waise-sheen) !important;
+    font-weight: 550 !important;
+    padding-inline: 1rem !important;
+}
+
+[class*="Button__ButtonStyle"]:hover:not(:disabled) {
+    background: linear-gradient(135deg, #7f6dff, #8b7bff) !important;
+    box-shadow: 0 10px 26px -12px var(--waise-accent), var(--waise-sheen) !important;
+}
+
+/* Secundario / cancelar: el panel les pone isSecondary o color="grey". */
+[class*="Button__ButtonStyle"]:is([class*="econdary"], [class*="grey"], [class*="Grey"]) {
+    background: rgba(255, 255, 255, 0.07) !important;
+    border-color: var(--waise-border-strong) !important;
+    color: var(--waise-text) !important;
+    box-shadow: none !important;
+}
+
+[class*="Button__ButtonStyle"]:is([class*="econdary"], [class*="grey"], [class*="Grey"]):hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.12) !important;
+}
+
+/* Destructivo: rojo, no morado. Si un "Delete Server" sale morado, se pulsa. */
+[class*="Button__ButtonStyle"]:is([class*="red"], [class*="Red"], [class*="danger"], [class*="Danger"]) {
+    background: linear-gradient(135deg, #e5484d, #f0666a) !important;
+    border-color: rgba(255, 255, 255, 0.14) !important;
+    box-shadow: 0 8px 22px -12px rgba(229, 72, 77, 0.9), var(--waise-sheen) !important;
+}
+
+/* --- Profundidad coherente en superficies ------------------------------- */
+
+[class*="TitledGreyBox"],
+[class*="GreyRowBox"],
+[class*="ContentBox___StyledDiv"],
+div:has(canvas[role="img"]):has(h3) {
+    box-shadow: var(--waise-shadow-sm), var(--waise-sheen) !important;
+    transition: border-color var(--waise-transition), box-shadow var(--waise-transition);
+}
+
+/* Las filas de lista (bases de datos, subusuarios, tareas, backups) eran
+   estáticas mientras las tarjetas de servidor sí respondían: incoherente. */
+[class*="GreyRowBox"]:hover {
+    border-color: var(--waise-border-strong) !important;
+    box-shadow: var(--waise-shadow), var(--waise-sheen) !important;
+}
+
+/* Separación uniforme entre filas: convivían 8px y el mt-2 nativo. */
+[class*="GreyRowBox"] { margin-bottom: 10px !important; }
+
+/* --- Stat pills de la consola ------------------------------------------- */
+
+.bg-gray-600 {
+    box-shadow: var(--waise-shadow-sm), var(--waise-sheen) !important;
+    transition: border-color var(--waise-transition), transform var(--waise-transition);
+}
+
+.bg-gray-600:hover {
+    border-color: var(--waise-border-strong) !important;
+}
+
+/* --- Consola: contenedor propio ----------------------------------------
+   El terminal quedaba flotando sobre el fondo sin superficie que lo contuviera,
+   así que el texto competía con los degradados del body. */
+
+.terminal, .xterm {
+    padding: 10px 12px !important;
+    border-radius: var(--waise-radius) !important;
+    background-color: rgba(6, 8, 15, 0.55) !important;
+    border: 1px solid var(--waise-border) !important;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+    font-variant-ligatures: none;
+}
+
+/* --- Scrollbars: una sola definición ------------------------------------
+   Arriba había dos juegos (10px con degradado morado y 6px gris). El de 10px
+   con degradado saturaba cada panel con scroll. Gana el discreto. */
+
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.14);
+    border-radius: 99px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.26); background-clip: padding-box; }
+html { scrollbar-color: rgba(255, 255, 255, 0.18) transparent; }
+
+/* --- Badges semánticos --------------------------------------------------- */
+
+.badge-success, .badge-green { color: var(--waise-ok) !important; }
+.badge-danger,  .badge-red   { color: var(--waise-err) !important; }
+.badge-warning, .badge-yellow { color: var(--waise-warn) !important; }
+
+/* --- Densidad: el panel respira poco en escritorio ---------------------- */
+
+@media (min-width: 1024px) {
+    [class*="TitledGreyBox___StyledDiv3"],
+    [class*="ContentBox___StyledDiv"] > div:last-child {
+        padding: 18px 20px !important;
+    }
+}
+
+/* --- Contraste alto y sin desenfoque: la capa nueva también degrada ----- */
+
+@supports not ((-webkit-backdrop-filter: blur(2px)) or (backdrop-filter: blur(2px))) {
+    [class*="TitledGreyBox"],
+    [class*="GreyRowBox"],
+    [class*="ContentBox___StyledDiv"],
+    div:has(canvas[role="img"]):has(h3) {
+        background-color: rgba(22, 25, 40, 0.97) !important;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    [class*="TitledGreyBox"],
+    [class*="GreyRowBox"],
+    .bg-gray-600 {
         transition: none !important;
         transform: none !important;
     }
