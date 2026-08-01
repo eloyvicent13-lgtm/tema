@@ -20,6 +20,13 @@
     var SERVER_ROOTS = ['#sub-navigation', '[class*="SubNavigation"]', '[class*="ServerSubNav"]', '#app'];
     var MAIN_ROOTS   = ['#navigation', '[class*="NavigationBar"]', 'body > nav', '#app'];
 
+    /* Fila derecha de la barra superior (buscar, servidores, admin, cuenta,
+       salir). El sufijo de styled-components cambia en cada build del panel,
+       así que NUNCA se usa la clase con hash: solo la parte estable. */
+    var TOPBAR_SEL   = '[class*="RightNavigation"]';
+    var DOCK_CLASS   = 'waise-topbar-dock';
+    var DOCK_GATE    = 'waise-topbar-docked';
+
     var HOST_RESET = [
         ['background-color', 'transparent'],
         ['background-image', 'none'],
@@ -205,9 +212,8 @@
         return null;
     }
 
-    function labelize(target, kind) {
-        if (kind !== 'main') return;
-        var items = target.querySelectorAll('a[href], button');
+    function labelizeItems(scope) {
+        var items = scope.querySelectorAll('a[href], button');
         for (var i = 0; i < items.length; i++) {
             var el = items[i];
             if (el.textContent && el.textContent.trim() !== '') {
@@ -219,6 +225,32 @@
             if (el.getAttribute(LABEL_ATTR) !== label) el.setAttribute(LABEL_ATTR, label);
             if (labeled.indexOf(el) === -1) labeled.push(el);
         }
+    }
+
+    function labelize(target, kind) {
+        if (kind !== 'main') return;
+        labelizeItems(target);
+    }
+
+    /* Dentro de un servidor la columna la ocupa el menú del servidor, y la
+       barra superior se quedaba con sus cinco acciones duplicando navegación.
+       No se mueve el nodo: `NavigationBar` la renderiza React y sacarla de su
+       padre revienta con NotFoundError al desmontar. Se ancla por CSS al pie
+       de la columna, así que los handlers originales siguen intactos. */
+    function dockTopbar(kind) {
+        if (kind !== 'server') return;
+        var bar = document.querySelector(TOPBAR_SEL);
+        if (!bar || bar === applied.target || bar.contains(applied.target)) return;
+        bar.classList.add(DOCK_CLASS);
+        HTML.classList.add(DOCK_GATE);
+        labelizeItems(bar);
+    }
+
+    function undockTopbar() {
+        HTML.classList.remove(DOCK_GATE);
+        document.querySelectorAll('.' + DOCK_CLASS).forEach(function (el) {
+            el.classList.remove(DOCK_CLASS);
+        });
     }
 
     function verifyPosition(el) {
@@ -256,6 +288,7 @@
             child = parent; parent = parent.parentElement;
         }
         labelize(target, kind);
+        dockTopbar(kind);
         if (!verify) return;
         if (verifyPosition(target)) return;
         clearAllAncestors(target);
@@ -266,6 +299,7 @@
 
     function revert() {
         HTML.classList.remove(GATE.server, GATE.main);
+        undockTopbar();
         if (applied.target) applied.target.classList.remove(NAV_CLASS.server, NAV_CLASS.main);
         document.querySelectorAll('.' + HOST_CLASS + ', .' + CLEAR_CLASS).forEach(function (el) {
             el.classList.remove(HOST_CLASS, CLEAR_CLASS);
