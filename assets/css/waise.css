@@ -1528,3 +1528,68 @@ td,th,span,label,li { color: var(--waise-text) !important; }
   background: rgba(111,92,255,.45) !important;
   color: #fff !important;
 }
+
+/* =====================================================================
+   v1.5.4 — Stat pills de servidor y campos grises (address, uptime, disk…)
+   Clase exacta del DOM: bg-gray-600 (wrapper), bg-gray-700 (icono bg)
+   ===================================================================== */
+
+/* Wrapper de la stat pill */
+.bg-gray-600 {
+    background-color: rgba(255, 255, 255, 0.05) !important;
+    backdrop-filter: blur(14px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border-radius: 10px !important;
+}
+
+/* Fondo del icono dentro de la pill */
+.bg-gray-700 {
+    background-color: rgba(111, 92, 255, 0.18) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid rgba(111, 92, 255, 0.25) !important;
+    border-radius: 8px !important;
+}
+
+/* Texto dentro de las pills: label y valor */
+.text-gray-200 {
+    color: var(--waise-text-dim) !important;
+}
+
+.text-gray-50,
+.text-gray-100 {
+    color: var(--waise-text) !important;
+}
+
+/* Icono SVG dentro de la pill */
+.text-gray-100 svg,
+.text-gray-100 path,
+svg.text-gray-100 {
+    color: #e8eaf6 !important;
+    fill: currentColor;
+}
+
+/* Cobertura de bg-gray-400 a bg-gray-900 que no estaban en glass */
+.bg-gray-400,
+.bg-gray-500 {
+    background-color: rgba(255, 255, 255, 0.07) !important;
+    border: 1px solid rgba(255, 255, 255, 0.10) !important;
+    border-radius: 10px !important;
+}
+
+.bg-gray-800,
+.bg-gray-900 {
+    background-color: rgba(20, 23, 38, 0.62) !important;
+    backdrop-filter: blur(14px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(14px) saturate(140%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 10px !important;
+}
+
+/* Ajustes de cuenta: los campos de info usan la misma estructura */
+.bg-gray-600 p,
+.bg-gray-600 div,
+.bg-gray-600 span {
+    color: var(--waise-text) !important;
+}
