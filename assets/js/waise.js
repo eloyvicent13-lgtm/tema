@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Waise Theme v1.5.14 - assets/js/waise.js
+   Waise Theme v1.5.15 - assets/js/waise.js
    ========================================================================== */
 (function () {
     'use strict';
@@ -243,6 +243,12 @@
         if (!bar || bar === applied.target || bar.contains(applied.target)) return;
         bar.classList.add(DOCK_CLASS);
         HTML.classList.add(DOCK_GATE);
+        /* `NavigationBar` cuelga de otro subárbol que el menú del servidor, así
+           que sus ancestros nunca pasaron por CB_RESET. Si alguno tiene
+           transform/filter/contain se vuelve el bloque contenedor del elemento
+           fijo y el anclaje se resuelve contra él, no contra la ventana: la
+           fila reaparecía arriba a la derecha. */
+        clearAllAncestors(bar);
         labelizeItems(bar);
     }
 
