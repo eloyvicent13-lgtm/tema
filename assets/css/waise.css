@@ -131,6 +131,21 @@ body::before {
     box-shadow: var(--waise-shadow);
 }
 
+/* Pterodactyl pone `bg-neutral-800` en el propio <body>. Un `backdrop-filter`
+   distinto de `none` convierte al elemento en bloque contenedor de sus
+   descendientes `position: fixed`, así que la barra anclada dejaba de medir
+   `bottom: 0` contra la ventana y lo hacía contra el alto del body (1117px en
+   Console frente a 790 de viewport), quedando fuera de pantalla. En el body el
+   difuminado no aporta nada -- no hay nada detrás -- y solo cuesta compositing. */
+body.bg-neutral-900,
+body.bg-neutral-800 {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+}
+
 .bg-neutral-700 {
     background-color: var(--waise-glass-2) !important;
     border-radius: var(--waise-radius-sm);
