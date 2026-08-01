@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # ---------------------------------------------------------------------------
 # Waise Theme - CLI
 #   waise install [opciones]    instala o reinstala el tema

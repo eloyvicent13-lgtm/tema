@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 # ---------------------------------------------------------------------------
 # Waise Theme - funciones comunes compartidas por install.sh / uninstall.sh
 # ---------------------------------------------------------------------------
