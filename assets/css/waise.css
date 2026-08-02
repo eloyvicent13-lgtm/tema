@@ -1375,6 +1375,21 @@ small.text-muted {
 .progress-bar-warning { background: linear-gradient(90deg, #facc15, #f59e0b) !important; }
 .progress-bar-danger  { background: linear-gradient(90deg, #f87171, #ef4444) !important; }
 
+/* Tooltips de la navegación rotulada. Los items de la barra ya muestran su
+   nombre en español vía data-waise-label, así que el tooltip del panel repetía
+   el texto en inglés flotando bajo el cursor. Se oculta solo dentro de las
+   barras que rotula el tema; los tooltips del resto del panel siguen activos.
+   Se cubren las dos convenciones posibles porque el build del panel no está en
+   este repo: rol ARIA estándar y la clase de Bootstrap/Popper. */
+html.waise-mainnav-ready .waise-main-nav [role="tooltip"],
+html.waise-mainnav-ready .waise-main-nav .tooltip,
+html.waise-sidebar-ready .waise-server-nav [role="tooltip"],
+html.waise-sidebar-ready .waise-server-nav .tooltip,
+html.waise-topbar-docked .waise-topbar-dock [role="tooltip"],
+html.waise-topbar-docked .waise-topbar-dock .tooltip {
+    display: none !important;
+}
+
 /* --- Tooltips --- */
 .tooltip-inner {
     background: rgba(20,20,30,0.92) !important;
