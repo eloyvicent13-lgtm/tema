@@ -68,6 +68,16 @@
        loader que acompanan al nombre del jar (loader.0.16.5, -389). */
     var MC_VERSION_RE = /(?:^|[^\d.])(1\.\d{1,2}(?:\.\d{1,2})?)(?![\d.])/;
 
+    /* El jar de servidor de Fabric y Quilt marca la version de Minecraft con el
+       prefijo 'mc' y la separa con un punto:
+
+         fabric-server-mc.1.21.1-loader.0.16.5-launcher.1.1.0.jar
+
+       Ese punto la deja fuera de MC_VERSION_RE, que prohibe el punto delante
+       justo para no confundir 'loader.0.16.5' con una version. Por eso el
+       marcador explicito se busca primero y la regla general queda de respaldo. */
+    var MC_VERSION_HINT_RE = /\bmc[.\-_]?(1\.\d{1,2}(?:\.\d{1,2})?)(?!\d|\.\d)/i;
+
     var state = {
         serverId: null,
         dir: null,          // '/mods' o '/plugins'
@@ -341,7 +351,10 @@
     }
 
     function matchVersion(text) {
-        var m = String(text).match(MC_VERSION_RE);
+        var str = String(text);
+        var hint = str.match(MC_VERSION_HINT_RE);
+        if (hint) return hint[1];
+        var m = str.match(MC_VERSION_RE);
         return m ? m[1] : '';
     }
 
