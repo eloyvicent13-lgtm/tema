@@ -175,6 +175,31 @@ else
     waise_warn "Asistente IA sin configurar: ${AI_KEY_FILE} esta vacio."
 fi
 chmod 640 "$AI_KEY_FILE"
+
+# Endpoint y modelo. Se siembran con los valores por defecto SOLO si el
+# archivo falta o esta vacio: una config propia del administrador sobrevive a
+# `waise upgrade`, igual que la key y el token.
+AI_URL_FILE="${STORAGE_DIR}/ai.url"
+AI_MODEL_FILE="${STORAGE_DIR}/ai.model"
+WAISE_DEFAULT_AI_URL="https://ai.luminlabs.es/api/chat"
+WAISE_DEFAULT_AI_MODEL="lumin-vera-3"
+
+if [[ -s "$AI_URL_FILE" ]]; then
+    waise_log "Endpoint del asistente IA conservado: $(tr -d '\r\n' < "$AI_URL_FILE")"
+else
+    printf '%s' "$WAISE_DEFAULT_AI_URL" > "$AI_URL_FILE"
+    waise_ok "Endpoint del asistente IA configurado: ${WAISE_DEFAULT_AI_URL}"
+fi
+chmod 640 "$AI_URL_FILE"
+
+if [[ -s "$AI_MODEL_FILE" ]]; then
+    waise_log "Modelo del asistente IA conservado: $(tr -d '\r\n' < "$AI_MODEL_FILE")"
+else
+    printf '%s' "$WAISE_DEFAULT_AI_MODEL" > "$AI_MODEL_FILE"
+    waise_ok "Modelo del asistente IA configurado: ${WAISE_DEFAULT_AI_MODEL}"
+fi
+chmod 640 "$AI_MODEL_FILE"
+
 mkdir -p "${STORAGE_DIR}/ai-rate"
 chmod 750 "${STORAGE_DIR}/ai-rate"
 
@@ -287,6 +312,7 @@ chown -R "${WEB_USER}:${WEB_GROUP}" "$STORAGE_DIR" 2>/dev/null || \
     waise_warn "No se pudo cambiar el propietario de ${STORAGE_DIR}"
 chmod 750 "$STORAGE_DIR" 2>/dev/null || true
 chmod 640 "$TOKEN_FILE" 2>/dev/null || true
+chmod 640 "$AI_KEY_FILE" "$AI_URL_FILE" "$AI_MODEL_FILE" 2>/dev/null || true
 find "$PUBLIC_DIR" -type d -exec chmod 755 {} + 2>/dev/null || true
 find "$PUBLIC_DIR" -type f -exec chmod 644 {} + 2>/dev/null || true
 waise_ok "Permisos aplicados."

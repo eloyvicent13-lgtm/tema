@@ -120,17 +120,24 @@
             'Nada de texto fuera del bloque cuando pidas una herramienta. Una sola por',
             'mensaje. Recibiras el resultado y podras pedir otra o responder al usuario.',
             '',
-            'Disponibles:',
-            '- list_dir    {"path":"/"}                      lista una carpeta',
-            '- read_file   {"path":"/server.properties"}     lee un archivo de texto',
-            '- read_log    {}                                lee el log mas reciente',
-            '- server_info {}                                estado, CPU, RAM, disco',
-            '- write_file  {"path":"...","contents":"..."}   escribe (requiere confirmacion)',
-            '- create_folder {"path":"/plugins"}             crea carpeta (confirmacion)',
-            '- rename_file {"from":"/a.txt","to":"/b.txt"}   renombra/mueve (confirmacion)',
-            '- delete_file {"path":"/x.jar"}                 borra (confirmacion)',
-            '- send_command {"command":"say hola"}           consola (confirmacion)',
-            '- power       {"signal":"restart"}              start|stop|restart|kill (confirmacion)',
+            'El objeto SIEMPRE tiene exactamente dos claves: "tool" (texto) y',
+            '"args" (objeto). Si la herramienta no lleva argumentos, "args" es un',
+            'objeto vacio, pero la clave NO se puede omitir. Ejemplo correcto:',
+            '{"tool":"read_log","args":{}}',
+            'Ejemplo INCORRECTO (JSON invalido, no lo generes nunca):',
+            '{"tool":"read_log",{}}',
+            '',
+            'Disponibles (se muestra la llamada completa tal cual hay que enviarla):',
+            '- {"tool":"list_dir","args":{"path":"/"}}                         lista una carpeta',
+            '- {"tool":"read_file","args":{"path":"/server.properties"}}       lee un archivo de texto',
+            '- {"tool":"read_log","args":{}}                                   lee el log mas reciente',
+            '- {"tool":"server_info","args":{}}                                estado, CPU, RAM, disco',
+            '- {"tool":"write_file","args":{"path":"...","contents":"..."}}    escribe (confirmacion)',
+            '- {"tool":"create_folder","args":{"path":"/plugins"}}             crea carpeta (confirmacion)',
+            '- {"tool":"rename_file","args":{"from":"/a.txt","to":"/b.txt"}}   renombra/mueve (confirmacion)',
+            '- {"tool":"delete_file","args":{"path":"/x.jar"}}                 borra (confirmacion)',
+            '- {"tool":"send_command","args":{"command":"say hola"}}           consola (confirmacion)',
+            '- {"tool":"power","args":{"signal":"restart"}}                    start|stop|restart|kill (confirmacion)',
             '',
             'REGLAS:',
             '1. No inventes el contenido de un archivo ni lineas de un log: leelos antes.',
@@ -195,6 +202,24 @@
     /* Se acepta el bloque etiquetado y, como respaldo, un objeto JSON suelto
        con la forma esperada: los modelos olvidan la etiqueta de vez en cuando
        y no compensa perder el turno por eso. */
+    /* Reparaciones de los fallos que cometen los modelos al serializar la
+       llamada. El caso real observado es {"tool":"read_log",{}}: tras la coma
+       va un valor sin clave, asi que JSON.parse revienta y el turno moria en
+       silencio. Se reconstruye la clave "args" en vez de perder el turno. */
+    function repairToolJson(text) {
+        var fixed = text;
+
+        /* {"tool":"x",{...}}  ->  {"tool":"x","args":{...}} */
+        fixed = fixed.replace(/("tool"\s*:\s*"[^"]*"\s*,\s*)\{/, '$1"args":{');
+
+        /* Comas colgando antes de cerrar objeto o array. */
+        fixed = fixed.replace(/,\s*([}\]])/g, '$1');
+
+        return fixed;
+    }
+
+    /* Devuelve la llamada, null si el texto no pretendia ser una herramienta,
+       o {malformed:true} si lo pretendia pero no se pudo interpretar. */
     function parseTool(reply) {
         var fence = reply.match(FENCE_RE);
         var candidate = fence ? fence[1] : null;
@@ -207,11 +232,24 @@
         }
         if (!candidate) return null;
 
-        var parsed;
-        try { parsed = JSON.parse(candidate.trim()); }
-        catch (e) { return null; }
+        candidate = candidate.trim();
 
-        if (!parsed || typeof parsed.tool !== 'string') return null;
+        var parsed = null;
+        try { parsed = JSON.parse(candidate); }
+        catch (e) {
+            try { parsed = JSON.parse(repairToolJson(candidate)); }
+            catch (e2) { parsed = null; }
+        }
+
+        if (!parsed || typeof parsed.tool !== 'string') {
+            /* Si menciona "tool" era un intento de llamada: hay que avisar al
+               modelo para que reintente, no tragarselo. */
+            if (/"tool"\s*:/.test(candidate)) {
+                return { malformed: true, raw: clip(candidate, 400) };
+            }
+            return null;
+        }
+
         return {
             tool: parsed.tool,
             args: (parsed.args && typeof parsed.args === 'object') ? parsed.args : {}
@@ -559,6 +597,18 @@
             if (!call) {
                 addMessage('bot', reply);
                 setBusy(false);
+                return;
+            }
+
+            /* Llamada ilegible: se devuelve el error al modelo y se reintenta
+               dentro del presupuesto de pasos, en vez de quedarse colgado. */
+            if (call.malformed) {
+                pushHistory('user', 'ERROR DE FORMATO: tu ultima llamada de herramienta no era ' +
+                    'JSON valido y no se ha ejecutado nada. Recibido:\n' + call.raw + '\n\n' +
+                    'Vuelve a emitirla con la forma exacta {"tool":"nombre","args":{...}}, ' +
+                    'con la clave "args" siempre presente (objeto vacio si no lleva argumentos), ' +
+                    'y sin ningun texto fuera del bloque.');
+                handleTurn(step + 1);
                 return;
             }
 
