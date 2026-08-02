@@ -17,6 +17,14 @@
 
     var FILE = '/server.properties';
 
+    /* Icono de la entrada lateral: trazo con currentColor para heredar el
+       color de la nav, como los SVG nativos del panel. */
+    var NAV_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M4 6h9"/><path d="M19 6h1"/><circle cx="16" cy="6" r="2"/>' +
+        '<path d="M4 12h3"/><path d="M13 12h7"/><circle cx="10" cy="12" r="2"/>' +
+        '<path d="M4 18h9"/><path d="M19 18h1"/><circle cx="16" cy="18" r="2"/></svg>';
+
     function api() {
         return window.WaiseApi || null;
     }
@@ -768,6 +776,7 @@
             id: 'properties',
             label: 'Propiedades',
             title: 'Editar server.properties',
+            icon: NAV_ICON,
             visible: function () { return navVisible; },
             onClick: openEditor
         });

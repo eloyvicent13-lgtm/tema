@@ -41,6 +41,33 @@
         folia: 'Folia'
     };
 
+    /* Icono de la entrada lateral. Trazo con currentColor para que herede el
+       color de la nav igual que los SVG nativos del panel. */
+    var NAV_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M21 16V8l-9-5-9 5v8l9 5 9-5Z"/>' +
+        '<path d="M3.3 7.5 12 12.5l8.7-5"/>' +
+        '<path d="M12 21.5v-9"/></svg>';
+
+    /* Orden intencionado: 'neoforge' antes que 'forge', y 'purpur'/'folia'
+       antes que 'paper', porque el nombre del jar de un fork casi siempre
+       contiene tambien el del proyecto del que deriva. */
+    var LOADER_PATTERNS = [
+        [/neoforge/i, 'neoforge'],
+        [/quilt/i, 'quilt'],
+        [/fabric/i, 'fabric'],
+        [/forge/i, 'forge'],
+        [/purpur/i, 'purpur'],
+        [/folia/i, 'folia'],
+        [/paper/i, 'paper'],
+        [/spigot/i, 'spigot'],
+        [/bukkit/i, 'bukkit']
+    ];
+
+    /* Solo versiones con forma 1.x o 1.x.y: descarta los numeros de build y de
+       loader que acompanan al nombre del jar (loader.0.16.5, -389). */
+    var MC_VERSION_RE = /(?:^|[^\d.])(1\.\d{1,2}(?:\.\d{1,2})?)(?![\d.])/;
+
     var state = {
         serverId: null,
         dir: null,          // '/mods' o '/plugins'
@@ -59,6 +86,7 @@
     var overlay = null;
     var el = {};
     var detected = {};
+    var detectedEnv = {};
     var searchTimer = null;
     var searchSeq = 0;
 
@@ -298,6 +326,121 @@
         });
     }
 
+    /* --- Deteccion de loader y version ------------------------------------ */
+
+    /* Ninguna de estas fuentes es infalible: si el admin renombro el jar a
+       server.jar y el fork no escribe version_history.json no se detecta nada
+       y los dos selectores se quedan como estaban. Por eso lo detectado NUNCA
+       pisa lo que el usuario haya elegido a mano (savePrefs manda). */
+
+    function matchLoader(text) {
+        for (var i = 0; i < LOADER_PATTERNS.length; i++) {
+            if (LOADER_PATTERNS[i][0].test(text)) return LOADER_PATTERNS[i][1];
+        }
+        return '';
+    }
+
+    function matchVersion(text) {
+        var m = String(text).match(MC_VERSION_RE);
+        return m ? m[1] : '';
+    }
+
+    function detectFromRoot(names) {
+        var out = { loader: '', version: '' };
+        for (var i = 0; i < names.length; i++) {
+            var name = names[i];
+            if (!/\.jar$/i.test(name)) continue;
+            var loader = matchLoader(name);
+            var version = matchVersion(name);
+            /* El jar que identifica el loader manda tambien en la version: en
+               la raiz puede haber otros jars sueltos (instaladores, backups). */
+            if (loader && !out.loader) {
+                out.loader = loader;
+                if (version) out.version = version;
+            }
+            if (version && !out.version) out.version = version;
+        }
+        if (!out.loader) {
+            if (names.indexOf('.fabric') !== -1) out.loader = 'fabric';
+            else if (names.indexOf('.quilt') !== -1) out.loader = 'quilt';
+        }
+        return out;
+    }
+
+    /* Paper, Purpur y Folia escriben version_history.json en la raiz con la
+       version exacta: es la fuente mas fiable de las tres cuando existe. */
+    function detectFromHistory(raw) {
+        var data = raw;
+        if (typeof data === 'string') {
+            try { data = JSON.parse(data); } catch (err) { return null; }
+        }
+        if (!data || typeof data !== 'object') return null;
+        var text = String(data.currentVersion || '');
+        if (!text) return null;
+        var mc = text.match(/MC:\s*([\d.]+)/i);
+        return { loader: matchLoader(text), version: mc ? mc[1] : matchVersion(text) };
+    }
+
+    function detectEnv(serverId) {
+        if (detectedEnv[serverId] !== undefined) {
+            return Promise.resolve(detectedEnv[serverId] || null);
+        }
+        var client = api();
+        if (!client || typeof client.listFiles !== 'function') return Promise.resolve(null);
+
+        return client.listFiles(serverId, '/').then(function (list) {
+            var items = Array.isArray(list) ? list : (list && list.data) || [];
+            var names = [];
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                var name = item && (item.name || (item.attributes && item.attributes.name));
+                if (name) names.push(String(name).toLowerCase());
+            }
+
+            var fromNames = detectFromRoot(names);
+            if (names.indexOf('version_history.json') === -1) return fromNames;
+
+            return client.readFile(serverId, '/version_history.json').then(function (raw) {
+                var hist = detectFromHistory(raw);
+                if (!hist) return fromNames;
+                /* El historial gana en lo que sepa; el nombre del jar rellena
+                   lo que falte (Purpur no siempre se nombra en currentVersion). */
+                return {
+                    loader: hist.loader || fromNames.loader,
+                    version: hist.version || fromNames.version
+                };
+            }, function () {
+                return fromNames;
+            });
+        }).then(function (found) {
+            var ok = found && (found.loader || found.version) ? found : false;
+            detectedEnv[serverId] = ok;
+            return ok || null;
+        }, function () {
+            detectedEnv[serverId] = false;
+            return null;
+        });
+    }
+
+    /* Devuelve lo que se ha podido usar de verdad, no lo que se ha leido: un
+       loader que no case con el tipo de carpeta o una version que Modrinth no
+       conozca darian cero resultados y pareceria que el buscador esta roto. */
+    function applyDetection(found) {
+        var used = { loader: '', version: '' };
+        if (!found) return used;
+
+        var list = state.kind === 'plugin' ? PLUGIN_LOADERS : MOD_LOADERS;
+        if (found.loader && list.indexOf(found.loader) !== -1) {
+            used.loader = found.loader;
+            if (!state.loader) state.loader = found.loader;
+        }
+        if (found.version && state.gameVersions.indexOf(found.version) !== -1) {
+            used.version = found.version;
+            if (!state.version) state.version = found.version;
+        }
+        return used;
+    }
+
     /* --- Interfaz ---------------------------------------------------------- */
 
     function renderError(message) {
@@ -410,6 +553,10 @@
         closePanel();
 
         state.serverId = serverId;
+        /* Se limpia antes de leer las preferencias: el estado es de modulo y
+           sin esto el loader del servidor anterior se arrastraba al siguiente. */
+        state.loader = '';
+        state.version = '';
         var prefs = loadPrefs(serverId);
         if (prefs.loader) state.loader = prefs.loader;
         if (prefs.version) state.version = prefs.version;
@@ -452,6 +599,7 @@
         el.searchBox = overlay.querySelector('.wmods-search');
         el.loaderBox = overlay.querySelector('.wmods-loader');
         el.versionBox = overlay.querySelector('.wmods-version');
+        el.target = overlay.querySelector('.wmods-target');
 
         overlay.addEventListener('mousedown', function (ev) {
             if (ev.target === overlay) closePanel();
@@ -495,10 +643,22 @@
             install(btn.getAttribute('data-project'), btn.getAttribute('data-title'), btn);
         });
 
-        el.results.innerHTML = '<p class="wmods-msg">Cargando versiones de Minecraft...</p>';
+        el.results.innerHTML = '<p class="wmods-msg">Detectando loader y version del servidor...</p>';
 
+        /* El orden importa: las versiones de Modrinth se cargan primero porque
+           applyDetection descarta cualquier version que no este en esa lista. */
         loadGameVersions().then(function () {
-            if (!overlay) return;
+            if (!overlay) return null;
+            return detectEnv(state.serverId);
+        }).then(function (found) {
+            if (!overlay) return null;
+            var used = applyDetection(found);
+            if (el.target && (used.loader || used.version)) {
+                el.target.textContent = state.dir + ' \u00b7 ' +
+                    ((LOADER_LABEL[used.loader] || '') + ' ' + used.version).trim();
+                el.target.title = 'Detectado automaticamente; puedes cambiarlo abajo.';
+            }
+            el.loaderBox.innerHTML = loaderOptions();
             el.versionBox.innerHTML = versionOptions();
             return refreshInstalled();
         }).then(function () {
@@ -537,6 +697,7 @@
             id: 'mods',
             label: navLabel,
             title: navTitle,
+            icon: NAV_ICON,
             visible: function () { return navVisible; },
             onClick: openPanel
         });

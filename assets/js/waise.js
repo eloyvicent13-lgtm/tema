@@ -409,7 +409,13 @@
                 el.type = 'button';
                 el.className = NAV_EXTRA_CLASS;
                 el.setAttribute(NAV_ID_ATTR, item.id);
-                el.appendChild(document.createElement('span'));
+                var iconBox = document.createElement('span');
+                iconBox.className = NAV_EXTRA_CLASS + '__icon';
+                iconBox.setAttribute('aria-hidden', 'true');
+                var labelBox = document.createElement('span');
+                labelBox.className = NAV_EXTRA_CLASS + '__label';
+                el.appendChild(iconBox);
+                el.appendChild(labelBox);
                 el.addEventListener('click', (function (handler) {
                     return function (ev) {
                         ev.preventDefault();
@@ -419,9 +425,20 @@
                 host.appendChild(el);
             }
 
+            /* El SVG lo aporta un modulo del propio tema, nunca el panel ni el
+               servidor: no hay entrada de usuario en esta cadena. Se cachea en
+               el nodo para no reescribir innerHTML en cada ciclo, que es lo que
+               dispararia otra vuelta del MutationObserver. */
+            var icon = navValue(item.icon) || '';
+            var iconSpan = el.querySelector('.' + NAV_EXTRA_CLASS + '__icon');
+            if (iconSpan && el.waiseIcon !== icon) {
+                el.waiseIcon = icon;
+                iconSpan.innerHTML = icon;
+            }
+
             var label = navValue(item.label) || '';
-            var span  = el.firstChild;
-            if (span.textContent !== label) span.textContent = label;
+            var span  = el.querySelector('.' + NAV_EXTRA_CLASS + '__label');
+            if (span && span.textContent !== label) span.textContent = label;
 
             var title = navValue(item.title) || label;
             if (el.getAttribute('title') !== title) el.setAttribute('title', title);
