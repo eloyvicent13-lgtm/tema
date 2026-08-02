@@ -402,10 +402,14 @@
 }
 
 /* El clon hereda las clases del panel, que pintan un pseudo-elemento delante
-   del contenido. innerHTML no lo elimina, hay que anularlo aqui. */
-.waise-ai-navlink::before,
-.waise-ai-navlink::after {
+   del contenido. innerHTML no lo elimina, hay que anularlo aqui.
+   El selector se repite a proposito: las reglas del panel son del tipo
+   ".contenedor .enlace::before" (0,2,0) y ganarian a un ".waise-ai-navlink"
+   simple. Duplicar el atributo sube la especificidad sin usar !important. */
+a[data-waise-ai-nav][data-waise-ai-nav]::before,
+a[data-waise-ai-nav][data-waise-ai-nav]::after {
     content: none;
+    display: none;
 }
 
 /* --- Responsive ----------------------------------------------------------- */
