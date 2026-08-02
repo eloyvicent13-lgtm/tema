@@ -25,8 +25,10 @@ error_reporting(E_ALL);
 define('WAISE_PANEL_DIR', dirname(__DIR__, 3));
 define('WAISE_STORAGE_DIR', WAISE_PANEL_DIR . '/storage/waise');
 
-const WAISE_DEFAULT_BASE  = 'https://api.luminlabs.ai/v1/chat/completions';
-const WAISE_DEFAULT_MODEL = 'lumin-vera-3';
+/* No hay endpoint por defecto a proposito: apuntar a un dominio inexistente
+   produce un 502 opaco. Si falta storage/waise/ai.url se responde 503 con un
+   mensaje claro. El modelo si tiene default porque depende del proveedor. */
+const WAISE_DEFAULT_MODEL = '';
 const WAISE_MAX_BODY      = 400000;   // bytes del POST entrante
 const WAISE_MAX_MESSAGES  = 40;
 const WAISE_TIMEOUT       = 120;      // segundos de la llamada upstream
@@ -183,8 +185,15 @@ if ($apiKey === null) {
     waise_fail(503, 'El asistente no esta configurado: falta la API key en storage/waise/ai.key.');
 }
 
-$endpoint = waise_read_setting('ai.url') ?? WAISE_DEFAULT_BASE;
-$model    = waise_read_setting('ai.model') ?? WAISE_DEFAULT_MODEL;
+$endpoint = waise_read_setting('ai.url');
+if ($endpoint === null) {
+    waise_fail(503, 'El asistente no esta configurado: falta el endpoint en storage/waise/ai.url.');
+}
+
+$model = waise_read_setting('ai.model') ?? WAISE_DEFAULT_MODEL;
+if ($model === '') {
+    waise_fail(503, 'El asistente no esta configurado: falta el modelo en storage/waise/ai.model.');
+}
 
 if (!filter_var($endpoint, FILTER_VALIDATE_URL) || stripos($endpoint, 'https://') !== 0) {
     waise_fail(500, 'El endpoint configurado en storage/waise/ai.url no es una URL https valida.');
