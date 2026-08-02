@@ -95,11 +95,16 @@ if (is_file($autoload) && is_file($bootstrap)) {
         require_once $autoload;
         /** @var \Illuminate\Contracts\Foundation\Application $app */
         $app = require $bootstrap;
-        $kernel = $app->make(\Illuminate\Contracts\Http\Kernel::class);
-        $kernel->bootstrap();
 
+        /* El request DEBE estar enlazado ANTES de bootstrap(): el
+           RoutingServiceProvider construye el UrlGenerator en ese momento y
+           exige un Illuminate\Http\Request, no null. public/index.php lo hace
+           via $kernel->handle($request); aqui hay que enlazarlo a mano. */
         $request = \Illuminate\Http\Request::capture();
         $app->instance('request', $request);
+
+        $kernel = $app->make(\Illuminate\Contracts\Http\Kernel::class);
+        $kernel->bootstrap();
 
         /* Orden obligatorio: la cookie de sesion viaja CIFRADA, asi que
            EncryptCookies tiene que descifrarla antes de que StartSession la

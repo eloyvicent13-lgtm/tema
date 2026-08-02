@@ -62,6 +62,12 @@ try {
     require_once $autoload;
     /** @var \Illuminate\Contracts\Foundation\Application $app */
     $app = require $bootstrap;
+
+    /* El request DEBE estar en el contenedor antes de bootstrap(): el
+       RoutingServiceProvider construye el UrlGenerator y lo exige. */
+    $request = \Illuminate\Http\Request::capture();
+    $app->instance('request', $request);
+
     $kernel = $app->make(\Illuminate\Contracts\Http\Kernel::class);
     $kernel->bootstrap();
     step('bootstrap Laravel', 'OK');
@@ -98,9 +104,6 @@ $encryptCookies = class_exists(\Pterodactyl\Http\Middleware\EncryptCookies::clas
 step('clase EncryptCookies', $encryptCookies);
 
 try {
-    $request = \Illuminate\Http\Request::capture();
-    $app->instance('request', $request);
-
     $pipeline = new \Illuminate\Pipeline\Pipeline($app);
     $pipeline->send($request)
         ->through([
