@@ -37,9 +37,7 @@
 
     var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
         'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
-        '<path d="M12 3a3 3 0 0 1 3 3v1h1a3 3 0 0 1 3 3v1h1a2 2 0 0 1 0 4h-1v1a3 3 0 0 1-3 3h-1v1a3 3 0 0 1-6 0v-1H8a3 3 0 0 1-3-3v-1H4a2 2 0 0 1 0-4h1v-1a3 3 0 0 1 3-3h1V6a3 3 0 0 1 3-3Z"/>' +
-        '<path d="M9.5 10.5h.01M14.5 10.5h.01"/>' +
-        '<path d="M9.5 15c1.6 1.2 3.4 1.2 5 0"/></svg>';
+        '<path d="M12 3c0 3.6 2.4 6 6 6-3.6 0-6 2.4-6 6 0-3.6-2.4-6-6-6 3.6 0 6-2.4 6-6Z"/></svg>';
 
     var ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
         'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
