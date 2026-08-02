@@ -96,17 +96,35 @@ if (is_file($autoload) && is_file($bootstrap)) {
         /** @var \Illuminate\Contracts\Foundation\Application $app */
         $app = require $bootstrap;
         $kernel = $app->make(\Illuminate\Contracts\Http\Kernel::class);
-        $request = \Illuminate\Http\Request::capture();
         $kernel->bootstrap();
+
+        $request = \Illuminate\Http\Request::capture();
         $app->instance('request', $request);
 
-        $app->make(\Illuminate\Session\Middleware\StartSession::class)
-            ->handle($request, static function ($req) use (&$authenticated) {
-                $authenticated = \Illuminate\Support\Facades\Auth::check();
+        /* Orden obligatorio: la cookie de sesion viaja CIFRADA, asi que
+           EncryptCookies tiene que descifrarla antes de que StartSession la
+           lea. Sin ese paso StartSession abre una sesion nueva vacia y
+           Auth::check() devuelve false aunque el usuario tenga sesion valida.
+           Se prefiere el EncryptCookies del panel (puede llevar excepciones
+           propias) y se cae al de Illuminate si no existe. */
+        $encryptCookies = class_exists(\Pterodactyl\Http\Middleware\EncryptCookies::class)
+            ? \Pterodactyl\Http\Middleware\EncryptCookies::class
+            : \Illuminate\Cookie\Middleware\EncryptCookies::class;
+
+        $pipeline = new \Illuminate\Pipeline\Pipeline($app);
+        $pipeline->send($request)
+            ->through([
+                $encryptCookies,
+                \Illuminate\Session\Middleware\StartSession::class,
+            ])
+            ->then(static function (\Illuminate\Http\Request $req) use ($app, &$authenticated) {
+                $app->instance('request', $req);
+                $authenticated = $app->make('auth')->guard('web')->check();
 
                 return new \Illuminate\Http\Response('');
             });
     } catch (\Throwable $e) {
+        error_log('[waise-ai] bootstrap sesion: ' . $e->getMessage());
         $authenticated = false;
     }
 }
