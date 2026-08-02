@@ -401,6 +401,13 @@
     flex-shrink: 0;
 }
 
+/* El clon hereda las clases del panel, que pintan un pseudo-elemento delante
+   del contenido. innerHTML no lo elimina, hay que anularlo aqui. */
+.waise-ai-navlink::before,
+.waise-ai-navlink::after {
+    content: none;
+}
+
 /* --- Responsive ----------------------------------------------------------- */
 
 @media (max-width: 640px) {
