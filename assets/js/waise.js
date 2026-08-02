@@ -209,6 +209,12 @@
             var el = parent.children[i];
             if (el === child || el === applied.target) continue;
             if (el.tagName === 'SCRIPT' || el.tagName === 'STYLE') continue;
+            /* Las entradas propias del tema jamas son "strays": cumplen el
+               criterio de tamano (poco alto, pocos nodos) y quedaban apagadas
+               con display:none !important de forma permanente, porque
+               renderNavItems reutiliza el nodo y nunca reescribe su display.
+               De ahi que a veces saliera Dividir y a veces Mods/Plugins. */
+            if (el.classList.contains(NAV_EXTRA_CLASS)) continue;
             if (el.getBoundingClientRect().height > 160) continue;
             if (el.querySelectorAll('*').length > 40) continue;
             setImportant(el, 'display', 'none');
@@ -453,6 +459,10 @@
                servidor: no hay entrada de usuario en esta cadena. Se cachea en
                el nodo para no reescribir innerHTML en cada ciclo, que es lo que
                dispararia otra vuelta del MutationObserver. */
+            /* Si un ciclo anterior lo apago (ver hideStrays), hay que
+               revertirlo aqui: el nodo se reutiliza y nadie mas toca display. */
+            if (el.style.display === 'none') el.style.removeProperty('display');
+
             var icon = navValue(item.icon) || '';
             var iconSpan = el.querySelector('.' + NAV_EXTRA_CLASS + '__icon');
             if (iconSpan && el.waiseIcon !== icon) {
@@ -476,6 +486,16 @@
             if (navItems[i].id === item.id) { navItems[i] = item; renderNavItems(); return; }
         }
         navItems.push(item);
+        /* Orden fijo por `order` (y por id a igualdad): el momento de registro
+           varia entre recargas -- el splitter se registra al evaluarse su
+           <script> y waise-mods.js en DOMContentLoaded -- y sin esto los
+           botones cambiaban de sitio de una carga a otra. */
+        navItems.sort(function (a, b) {
+            var oa = typeof a.order === 'number' ? a.order : 100;
+            var ob = typeof b.order === 'number' ? b.order : 100;
+            if (oa !== ob) return oa - ob;
+            return a.id < b.id ? -1 : (a.id > b.id ? 1 : 0);
+        });
         renderNavItems();
     }
 

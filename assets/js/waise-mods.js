@@ -842,7 +842,10 @@
         if (!serverId || !api()) { refreshNav(); return; }
 
         var cached = detected[serverId];
-        if (cached === 'pending') return;
+        /* Antes se salia sin repintar: una navegacion que caia mientras la
+           deteccion estaba en vuelo perdia su ciclo de render y las entradas
+           no volvian a aparecer hasta la navegacion siguiente. */
+        if (cached === 'pending') { refreshNav(); return; }
         if (cached !== undefined) { refreshNav(); return; }
 
         refreshNav();
