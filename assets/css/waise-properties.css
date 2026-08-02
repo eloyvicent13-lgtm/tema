@@ -338,29 +338,8 @@
     filter: brightness(1.08);
 }
 
-/* Boton flotante: se apila sobre el de la papelera en lugar de solaparse. */
-.waise-props-fab {
-    position: fixed;
-    right: 20px;
-    bottom: 76px;
-    z-index: 9400;
-    padding: 10px 16px;
-    border: 1px solid var(--waise-border, #27303f);
-    border-radius: 999px;
-    background: var(--waise-surface, #111827);
-    color: var(--waise-text, #e5e7eb);
-    font: inherit;
-    font-size: 0.86rem;
-    font-weight: 600;
-    cursor: pointer;
-    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.4);
-}
-
-.waise-props-fab:hover,
-.waise-props-fab:focus-visible {
-    border-color: var(--waise-accent, #6366f1);
-    transform: translateY(-1px);
-}
+/* El acceso al editor ya no es un boton flotante: vive en la columna lateral
+   como entrada de navegacion (WaiseNav, en waise.js). */
 
 @media (max-width: 640px) {
     .waise-props {
@@ -382,17 +361,11 @@
     .waise-props__field {
         justify-content: flex-start;
     }
-
-    .waise-props-fab {
-        right: 12px;
-        bottom: 70px;
-    }
 }
 
 @media (prefers-reduced-motion: reduce) {
     .waise-props__track,
-    .waise-props__track::after,
-    .waise-props-fab {
+    .waise-props__track::after {
         transition: none;
     }
 }

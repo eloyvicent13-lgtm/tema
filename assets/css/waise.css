@@ -879,6 +879,54 @@ html.waise-mainnav-ready {
         height: 18px;
     }
 
+    /* Entradas inyectadas por los modulos (mods, propiedades). Son <button>,
+       que en la columna de servidor no entraba en las reglas de enlace, asi
+       que se replica la misma pastilla para que no desentonen. */
+    html.waise-sidebar-ready .waise-server-nav .waise-nav-extra {
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+        gap: 10px;
+        width: 100%;
+        min-height: 42px;
+        margin: 0;
+        padding: 0 14px;
+        border: 0 !important;
+        border-radius: var(--waise-radius-sm);
+        background-color: transparent !important;
+        background-image: none !important;
+        box-shadow: none !important;
+        color: var(--waise-text-dim);
+        font: inherit;
+        font-size: 0.92rem;
+        line-height: 1.2;
+        text-align: start;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        cursor: pointer;
+    }
+
+    html.waise-sidebar-ready .waise-server-nav .waise-nav-extra > span {
+        min-width: 0;
+        overflow: hidden;
+        color: inherit;
+        font-size: inherit;
+        line-height: inherit;
+        text-overflow: ellipsis;
+    }
+
+    html.waise-sidebar-ready .waise-server-nav .waise-nav-extra::after {
+        content: none !important;
+    }
+
+    html.waise-sidebar-ready .waise-server-nav .waise-nav-extra:hover,
+    html.waise-sidebar-ready .waise-server-nav .waise-nav-extra:focus-visible {
+        color: #fff;
+        background-color: rgba(255, 255, 255, 0.06) !important;
+        outline: none;
+    }
+
     html.waise-sidebar-ready .waise-server-nav a:hover,
     html.waise-sidebar-ready .waise-server-nav a:focus-visible,
     html.waise-mainnav-ready .waise-main-nav a:hover,

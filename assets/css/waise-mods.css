@@ -4,32 +4,8 @@
    colores que el admin haya elegido en el Theme Editor.
    --------------------------------------------------------------------------- */
 
-.wmods-fab {
-    position: fixed;
-    right: 18px;
-    bottom: 150px;
-    z-index: 9040;
-    padding: 10px 16px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 999px;
-    background: linear-gradient(135deg, var(--waise-accent, #6f5cff), var(--waise-accent-2, #17c9c9));
-    color: #fff;
-    font: 600 13px/1 system-ui, sans-serif;
-    cursor: pointer;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-    transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-
-.wmods-fab:hover,
-.wmods-fab:focus-visible {
-    transform: translateY(-2px);
-    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
-    outline: none;
-}
-
-.wmods-fab:active {
-    transform: translateY(0);
-}
+/* El acceso al instalador ya no es un boton flotante: vive en la columna
+   lateral como entrada de navegacion (WaiseNav, en waise.js). */
 
 body.wmods-lock {
     overflow: hidden;
@@ -313,10 +289,5 @@ body.wmods-lock {
 
     .wmods-install {
         width: 100%;
-    }
-
-    .wmods-fab {
-        bottom: 132px;
-        right: 12px;
     }
 }

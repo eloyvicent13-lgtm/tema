@@ -753,32 +753,40 @@
         return /^\/server\/[^/]+\/files/.test(window.location.pathname);
     }
 
-    function removeButton() {
-        var existing = document.querySelector('.waise-props-fab');
-        if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+    /* La entrada vive en la columna lateral (waise.js). Aqui solo se declara
+       cuando debe verse: el pintado lo hace WaiseNav. */
+    var navVisible = false;
+
+    function registerNav() {
+        if (!window.WaiseNav) {
+            if (window.console) {
+                window.console.warn('[waise-properties] WaiseNav no disponible; entrada lateral desactivada.');
+            }
+            return;
+        }
+        window.WaiseNav.register({
+            id: 'properties',
+            label: 'Propiedades',
+            title: 'Editar server.properties',
+            visible: function () { return navVisible; },
+            onClick: openEditor
+        });
     }
 
-    function addButton() {
-        if (document.querySelector('.waise-props-fab')) return;
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'waise-props-fab';
-        btn.title = 'Editar server.properties';
-        btn.setAttribute('aria-label', 'Editar las propiedades del servidor');
-        btn.textContent = 'Propiedades';
-        btn.addEventListener('click', openEditor);
-        document.body.appendChild(btn);
+    function setNavVisible(value) {
+        navVisible = !!value;
+        if (window.WaiseNav) window.WaiseNav.refresh();
     }
 
     /* La deteccion se cachea por servidor: sin esto se listaria la raiz en
        cada navegacion y el panel devuelve 429 con facilidad. */
     function syncButton() {
-        if (!enabled() || !isFilesRoute()) { removeButton(); return; }
+        if (!enabled() || !isFilesRoute()) { setNavVisible(false); return; }
         var serverId = window.Waise ? window.Waise.currentServerId() : null;
-        if (!serverId) { removeButton(); return; }
+        if (!serverId) { setNavVisible(false); return; }
 
-        if (detected[serverId] === true) { addButton(); return; }
-        if (detected[serverId] === false) { removeButton(); return; }
+        if (detected[serverId] === true) { setNavVisible(true); return; }
+        if (detected[serverId] === false) { setNavVisible(false); return; }
         if (detected[serverId] === 'pending') return;
 
         detected[serverId] = 'pending';
@@ -787,7 +795,7 @@
             syncButton();
         }, function () {
             detected[serverId] = false;
-            removeButton();
+            setNavVisible(false);
         });
     }
 
@@ -797,6 +805,7 @@
             return;
         }
 
+        registerNav();
         syncButton();
         window.addEventListener('popstate', syncButton);
         document.addEventListener('keydown', function (ev) {

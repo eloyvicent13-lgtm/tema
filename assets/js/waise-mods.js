@@ -513,21 +513,38 @@
         return /^\/server\/[^/]+/.test(window.location.pathname);
     }
 
-    function removeButton() {
-        var existing = document.querySelector('.wmods-fab');
-        if (existing && existing.parentNode) existing.parentNode.removeChild(existing);
+    /* La entrada vive en la columna lateral (waise.js). Aqui solo se declara
+       cuando debe verse y con que rotulo: el pintado y el re-pintado tras cada
+       re-montaje de React los hace WaiseNav. */
+    var navVisible = false;
+
+    function navLabel() {
+        return state.kind === 'plugin' ? 'Plugins' : 'Mods';
     }
 
-    function addButton() {
-        if (document.querySelector('.wmods-fab')) return;
-        var btn = document.createElement('button');
-        btn.type = 'button';
-        btn.className = 'wmods-fab';
-        btn.title = state.kind === 'plugin' ? 'Instalar plugins' : 'Instalar mods';
-        btn.setAttribute('aria-label', 'Abrir el instalador de mods');
-        btn.textContent = state.kind === 'plugin' ? 'Plugins' : 'Mods';
-        btn.addEventListener('click', openPanel);
-        document.body.appendChild(btn);
+    function navTitle() {
+        return state.kind === 'plugin' ? 'Instalar plugins' : 'Instalar mods';
+    }
+
+    function registerNav() {
+        if (!window.WaiseNav) {
+            if (window.console) {
+                window.console.warn('[waise-mods] WaiseNav no disponible; entrada lateral desactivada.');
+            }
+            return;
+        }
+        window.WaiseNav.register({
+            id: 'mods',
+            label: navLabel,
+            title: navTitle,
+            visible: function () { return navVisible; },
+            onClick: openPanel
+        });
+    }
+
+    function setNavVisible(value) {
+        navVisible = !!value;
+        if (window.WaiseNav) window.WaiseNav.refresh();
     }
 
     /* La deteccion se cachea por servidor: sin esto se consultaria la raiz en
@@ -551,22 +568,22 @@
     }
 
     function syncButton() {
-        if (!enabled() || !isServerRoute()) { removeButton(); return; }
+        if (!enabled() || !isServerRoute()) { setNavVisible(false); return; }
         var serverId = currentServerId();
-        if (!serverId || !api()) { removeButton(); return; }
+        if (!serverId || !api()) { setNavVisible(false); return; }
 
         var cached = detected[serverId];
         if (cached === 'pending') return;
-        if (cached === false) { removeButton(); return; }
+        if (cached === false) { setNavVisible(false); return; }
         if (cached && typeof cached === 'object') {
             state.serverId = serverId;
             state.dir = cached.dir;
             state.kind = cached.kind;
-            addButton();
+            setNavVisible(true);
             return;
         }
 
-        removeButton();
+        setNavVisible(false);
         detect(serverId).then(function () { syncButton(); });
     }
 
@@ -578,6 +595,7 @@
             return;
         }
 
+        registerNav();
         syncButton();
         window.addEventListener('popstate', syncButton);
         document.addEventListener('keydown', function (ev) {

@@ -16,6 +16,11 @@
     var HOST_CLASS  = 'waise-nav-host';
     var CLEAR_CLASS = 'waise-nav-clear';
     var LABEL_ATTR  = 'data-waise-label';
+    /* Entradas inyectadas por otros modulos (mods, propiedades...). Se marcan
+       para poder excluirlas de la heuristica de deteccion: cuentan como hijos
+       de la fila y sin esto falsearian directLinkCount en el ciclo siguiente. */
+    var NAV_EXTRA_CLASS = 'waise-nav-extra';
+    var NAV_ID_ATTR     = 'data-waise-nav';
 
     var SERVER_ROOTS = ['#sub-navigation', '[class*="SubNavigation"]', '[class*="ServerSubNav"]', '#app'];
     var MAIN_ROOTS   = ['#navigation', '[class*="NavigationBar"]', 'body > nav', '#app'];
@@ -112,6 +117,7 @@
         var n = 0;
         for (var i = 0; i < el.children.length; i++) {
             var c = el.children[i];
+            if (c.classList && c.classList.contains(NAV_EXTRA_CLASS)) { continue; }
             if (c.tagName === 'A' || c.tagName === 'BUTTON') { n++; }
             else if (c.querySelector && c.querySelector('a[href], button')) { n++; }
         }
@@ -347,8 +353,96 @@
         });
         for (var i = 0; i < labeled.length; i++) labeled[i].removeAttribute(LABEL_ATTR);
         labeled = [];
+        removeNavItems(null);
         restoreStyles();
         applied = { target: null, kind: null, root: null };
+    }
+
+    /* ====================================================================
+       Registro de entradas de la columna
+       ====================================================================
+       Un unico punto escribe en la nav. Los modulos (waise-mods,
+       waise-properties...) solo declaran id, rotulo y cuando deben verse; el
+       pintado y el re-pintado tras cada re-montaje de React se hacen aqui,
+       dentro del mismo ciclo que ya reconcilia la columna. */
+
+    var navItems = [];
+
+    function navHost() {
+        if (applied.kind !== 'server') return null;
+        if (!applied.target || !applied.target.isConnected) return null;
+        return applied.target;
+    }
+
+    function removeNavItems(keepHost) {
+        document.querySelectorAll('.' + NAV_EXTRA_CLASS).forEach(function (el) {
+            if (keepHost && el.parentNode === keepHost) return;
+            if (el.parentNode) el.parentNode.removeChild(el);
+        });
+    }
+
+    function navValue(value) {
+        return typeof value === 'function' ? value() : value;
+    }
+
+    /* Idempotente a proposito: la insercion dispara el MutationObserver, que
+       vuelve a llamar aqui. Si en la segunda pasada se reordenara o se
+       reinsertara algo, el ciclo no cerraria nunca. */
+    function renderNavItems() {
+        var host = navHost();
+        if (!host) { removeNavItems(null); return; }
+        removeNavItems(host);
+
+        for (var i = 0; i < navItems.length; i++) {
+            var item = navItems[i];
+            var visible;
+            try { visible = item.visible ? !!item.visible() : true; } catch (e) { visible = false; }
+
+            var el = host.querySelector('[' + NAV_ID_ATTR + '="' + item.id + '"]');
+            if (!visible) {
+                if (el && el.parentNode) el.parentNode.removeChild(el);
+                continue;
+            }
+
+            if (!el) {
+                el = document.createElement('button');
+                el.type = 'button';
+                el.className = NAV_EXTRA_CLASS;
+                el.setAttribute(NAV_ID_ATTR, item.id);
+                el.appendChild(document.createElement('span'));
+                el.addEventListener('click', (function (handler) {
+                    return function (ev) {
+                        ev.preventDefault();
+                        try { handler(); } catch (e) { /* un modulo roto no tumba la nav */ }
+                    };
+                })(item.onClick));
+                host.appendChild(el);
+            }
+
+            var label = navValue(item.label) || '';
+            var span  = el.firstChild;
+            if (span.textContent !== label) span.textContent = label;
+
+            var title = navValue(item.title) || label;
+            if (el.getAttribute('title') !== title) el.setAttribute('title', title);
+            if (el.getAttribute('aria-label') !== title) el.setAttribute('aria-label', title);
+        }
+    }
+
+    function registerNavItem(item) {
+        if (!item || !item.id || typeof item.onClick !== 'function') return;
+        for (var i = 0; i < navItems.length; i++) {
+            if (navItems[i].id === item.id) { navItems[i] = item; renderNavItems(); return; }
+        }
+        navItems.push(item);
+        renderNavItems();
+    }
+
+    function unregisterNavItem(id) {
+        for (var i = 0; i < navItems.length; i++) {
+            if (navItems[i].id === id) { navItems.splice(i, 1); break; }
+        }
+        renderNavItems();
     }
 
     /* El anclaje se reconcilia SIEMPRE al final del ciclo, nunca dentro de
@@ -359,11 +453,13 @@
     function refreshSidebar() {
         if (window.innerWidth < MIN_VIEWPORT) {
             if (applied.target) revert(); else undockTopbar();
+            renderNavItems();
             return;
         }
         var found = locate();
         if (!found || rejected.has(found.target)) {
             if (applied.target) revert(); else undockTopbar();
+            renderNavItems();
             return;
         }
         if (applied.target === found.target && applied.kind === found.kind && found.target.isConnected) {
@@ -373,6 +469,7 @@
             mark(found, true);
         }
         if (applied.kind) dockTopbar(applied.kind); else undockTopbar();
+        renderNavItems();
     }
 
     /* ====================================================================
@@ -636,6 +733,14 @@
             };
         });
     }
+
+    /* Publicado de forma sincrona al evaluar el script: los modulos que se
+       cargan despues pueden registrarse sin esperar a DOMContentLoaded. */
+    window.WaiseNav = {
+        register: registerNavItem,
+        unregister: unregisterNavItem,
+        refresh: renderNavItems
+    };
 
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', init);

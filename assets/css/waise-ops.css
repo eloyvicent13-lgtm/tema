@@ -6,7 +6,7 @@
 .wops-fab {
     position: fixed;
     right: 20px;
-    bottom: 188px;               /* encima de la pila existente de FABs */
+    bottom: 186px;               /* encima de la consola (124px + 52px de alto) */
     z-index: 9200;
     width: 48px;
     height: 48px;

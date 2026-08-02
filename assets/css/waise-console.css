@@ -3,12 +3,13 @@
    Estilos de la consola avanzada (waise-console.js).
    --------------------------------------------------------------------------- */
 
-/* Pila de FAB en right:20px -> papelera (20px), features (72px),
-   propiedades (76px, alto ~40px => llega a ~116px). Este va encima de todos. */
+/* Pila de FAB en right:20px -> papelera (20px), features (72px). Mods y
+   propiedades salieron de la pila (ahora son entradas de la columna), asi
+   que este sube a ocupar el hueco que dejaron. */
 .wcon-fab {
     position: fixed;
     right: 20px;
-    bottom: 132px;
+    bottom: 124px;
     z-index: 9000;
     width: 52px;
     height: 52px;
