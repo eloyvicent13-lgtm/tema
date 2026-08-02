@@ -803,7 +803,11 @@
             detected[serverId] = !!(found && found.is_file !== false);
             syncButton();
         }, function () {
-            detected[serverId] = false;
+            /* Un fallo de deteccion (429, red, servidor suspendido) NO es un
+               "no existe server.properties": cachear false ocultaba la entrada
+               para el resto de la sesion. Se borra para que el siguiente
+               syncButton reintente. */
+            delete detected[serverId];
             setNavVisible(false);
         });
     }

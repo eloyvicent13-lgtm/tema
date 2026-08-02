@@ -831,7 +831,11 @@
             detected[serverId] = result || false;
             return result;
         }, function () {
-            detected[serverId] = false;
+            /* Un fallo de deteccion (429, red, servidor suspendido) NO es un
+               "no hay carpetas": cachear false dejaba las entradas ocultas para
+               el resto de la sesion, sin recuperacion posible salvo recarga.
+               Se borra la entrada para que el siguiente syncButton reintente. */
+            delete detected[serverId];
             return null;
         });
     }
