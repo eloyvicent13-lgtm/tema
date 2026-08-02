@@ -121,6 +121,9 @@ cp -f "${SCRIPT_DIR}/assets/js/waise-ai.js"         "${PUBLIC_DIR}/js/waise-ai.j
 mkdir -p "${PUBLIC_DIR}/api"
 cp -f "${SCRIPT_DIR}/assets/php/theme.php"          "${PUBLIC_DIR}/api/theme.php"
 cp -f "${SCRIPT_DIR}/assets/php/ai.php"             "${PUBLIC_DIR}/api/ai.php"
+# Diagnostico TEMPORAL de la sesion del proxy IA. Borrar de public/ y de aqui
+# en cuanto se cierre el 401: expone driver de sesion y nombres de cookies.
+cp -f "${SCRIPT_DIR}/assets/php/ai-diag.php"        "${PUBLIC_DIR}/api/ai-diag.php"
 
 cat > "${PUBLIC_DIR}/css/waise-overrides.css" <<EOF
 /* -------------------------------------------------------------------------
