@@ -16,6 +16,10 @@
     var HOST_CLASS  = 'waise-nav-host';
     var CLEAR_CLASS = 'waise-nav-clear';
     var LABEL_ATTR  = 'data-waise-label';
+    /* El title nativo de Pterodactyl viene en ingles y el navegador lo pinta
+       encima del rotulo traducido al pasar el raton. Se retira del nodo y se
+       guarda aqui para poder devolverlo intacto al desmontar el tema. */
+    var TITLE_ATTR  = 'data-waise-title';
     /* Entradas inyectadas por otros modulos (mods, propiedades...). Se marcan
        para poder excluirlas de la heuristica de deteccion: cuentan como hijos
        de la fila y sin esto falsearian directLinkCount en el ciclo siguiente. */
@@ -212,7 +216,9 @@
     }
 
     function accessibleName(el) {
-        var v = el.getAttribute('aria-label') || el.getAttribute('title');
+        /* TITLE_ATTR primero: en ciclos posteriores el title ya no esta en el
+           nodo porque lo retiro labelizeItems. */
+        var v = el.getAttribute(TITLE_ATTR) || el.getAttribute('aria-label') || el.getAttribute('title');
         if (v && v.trim()) return v.trim();
         var svgTitle = el.querySelector('svg > title');
         if (svgTitle && svgTitle.textContent.trim()) return svgTitle.textContent.trim();
@@ -258,6 +264,15 @@
             var label = accessibleName(el);
             if (!label) continue;
             if (el.getAttribute(LABEL_ATTR) !== label) el.setAttribute(LABEL_ATTR, label);
+            /* Se guarda el title original una sola vez (cadena vacia = no tenia)
+               y se retira, para que el tooltip nativo no muestre el texto en
+               ingles junto al rotulo del tema. El aria-label pasa al rotulo
+               traducido para que el lector de pantalla diga lo mismo que se ve. */
+            if (!el.hasAttribute(TITLE_ATTR)) {
+                el.setAttribute(TITLE_ATTR, el.getAttribute('title') || '');
+            }
+            if (el.hasAttribute('title')) el.removeAttribute('title');
+            if (el.getAttribute('aria-label') !== label) el.setAttribute('aria-label', label);
             if (labeled.indexOf(el) === -1) labeled.push(el);
         }
     }
@@ -351,7 +366,16 @@
         document.querySelectorAll('.' + HOST_CLASS + ', .' + CLEAR_CLASS).forEach(function (el) {
             el.classList.remove(HOST_CLASS, CLEAR_CLASS);
         });
-        for (var i = 0; i < labeled.length; i++) labeled[i].removeAttribute(LABEL_ATTR);
+        for (var i = 0; i < labeled.length; i++) {
+            var lab = labeled[i];
+            lab.removeAttribute(LABEL_ATTR);
+            if (lab.hasAttribute(TITLE_ATTR)) {
+                var orig = lab.getAttribute(TITLE_ATTR);
+                if (orig) { lab.setAttribute('title', orig); }
+                else { lab.removeAttribute('title'); }
+                lab.removeAttribute(TITLE_ATTR);
+            }
+        }
         labeled = [];
         removeNavItems(null);
         restoreStyles();
