@@ -35,18 +35,21 @@
        sobrevive a ninguna herramienta que trocee por bloques de codigo. */
     var FENCE = '`' + '`' + '`';
 
-    var ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    /* Los iconos llevan width/height como atributos para no quedar sin tamano
+       si waise-ai.css no ha cargado todavia: un <svg> sin dimensiones se pinta
+       como un bloque gris. Las reglas del CSS ganan a estos atributos. */
+    var ICON = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" ' +
         'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M12 3c0 3.6 2.4 6 6 6-3.6 0-6 2.4-6 6 0-3.6-2.4-6-6-6 3.6 0 6-2.4 6-6Z"/></svg>';
 
-    var ICON_SEND = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    var ICON_SEND = '<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" ' +
         'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M22 2 11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7Z"/></svg>';
 
-    var ICON_CLOSE = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    var ICON_CLOSE = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" ' +
         'stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>';
 
-    var ICON_RESET = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    var ICON_RESET = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" ' +
         'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg>';
 
