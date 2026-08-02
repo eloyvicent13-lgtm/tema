@@ -1,6 +1,14 @@
 /* ---------------------------------------------------------------------------
    Waise Theme - assets/css/waise-console.css
    Estilos de la consola avanzada (waise-console.js).
+
+   v1.5.x: los colores pasan a los tokens de waise.css (:root). Este archivo
+   era el mas desviado del tema: traia una paleta azul-gris propia (#1f2933,
+   #10161d, #151d26, #0b1016, acento #4a90d9) que no aparecia en ningun otro
+   sitio, asi que la consola parecia de otra aplicacion. El area de salida
+   conserva un fondo mas oscuro a proposito: es texto monoespaciado y necesita
+   mas contraste que un panel normal. Cada var() mantiene su hex previo como
+   respaldo.
    --------------------------------------------------------------------------- */
 
 /* Pila de FAB en right:20px -> papelera (20px), features (72px). Mods y
@@ -13,19 +21,25 @@
     z-index: 9000;
     width: 52px;
     height: 52px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
+    border: 1px solid var(--waise-border-strong, rgba(255, 255, 255, 0.14));
     border-radius: 50%;
-    background: #1f2933;
-    color: #e6edf3;
+    background: var(--waise-glass-solid, #1f2933);
+    color: var(--waise-text, #e6edf3);
     font: 600 15px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     cursor: pointer;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-    transition: transform 0.15s ease, background 0.15s ease;
+    box-shadow: var(--waise-shadow, 0 6px 20px rgba(0, 0, 0, 0.35)),
+                var(--waise-sheen, inset 0 1px 0 rgba(255, 255, 255, 0.07));
+    backdrop-filter: blur(var(--waise-blur, 14px));
+    -webkit-backdrop-filter: blur(var(--waise-blur, 14px));
+    transition: transform var(--waise-transition, 150ms ease),
+                background-color var(--waise-transition, 150ms ease),
+                border-color var(--waise-transition, 150ms ease);
 }
 
 .wcon-fab:hover,
 .wcon-fab:focus-visible {
-    background: #2b3947;
+    background: var(--waise-glass-2, #2b3947);
+    border-color: var(--waise-accent, #6f5cff);
     transform: translateY(-2px);
     outline: none;
 }
@@ -46,7 +60,12 @@ body.wcon-lock {
     align-items: center;
     justify-content: center;
     padding: 24px;
-    background: rgba(3, 7, 12, 0.72);
+    background: radial-gradient(120% 90% at 50% 0%,
+                    color-mix(in srgb, var(--waise-accent, #6f5cff) 14%, transparent) 0%,
+                    rgba(3, 7, 12, 0.78) 55%,
+                    rgba(3, 7, 12, 0.86) 100%);
+    backdrop-filter: blur(var(--waise-blur, 14px)) saturate(1.2);
+    -webkit-backdrop-filter: blur(var(--waise-blur, 14px)) saturate(1.2);
 }
 
 .wcon-overlay[hidden] {
@@ -54,16 +73,34 @@ body.wcon-lock {
 }
 
 .wcon-panel {
+    position: relative;
     display: flex;
     flex-direction: column;
     width: min(1100px, 100%);
     height: min(760px, 100%);
     overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
-    background: #10161d;
-    color: #d7e0ea;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    border: 1px solid var(--waise-border-strong, rgba(255, 255, 255, 0.12));
+    border-radius: var(--waise-radius-lg, 12px);
+    background: var(--waise-bg-1, #10161d);
+    color: var(--waise-text, #d7e0ea);
+    box-shadow: var(--waise-shadow-lg, 0 24px 60px rgba(0, 0, 0, 0.55)),
+                var(--waise-sheen, inset 0 1px 0 rgba(255, 255, 255, 0.07));
+}
+
+/* Linea de acento superior, igual que en el resto de modales del tema. */
+.wcon-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 2;
+    background: linear-gradient(90deg,
+                    transparent 0%,
+                    var(--waise-accent, #6f5cff) 25%,
+                    var(--waise-accent-2, #17c9c9) 75%,
+                    transparent 100%);
 }
 
 .wcon-head {
@@ -71,23 +108,26 @@ body.wcon-lock {
     align-items: center;
     gap: 12px;
     padding: 12px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
-    background: #151d26;
+    border-bottom: 1px solid var(--waise-border, rgba(255, 255, 255, 0.09));
+    background: var(--waise-glass-solid, #151d26);
 }
 
 .wcon-title {
     flex: 1 1 auto;
     margin: 0;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 650;
+    letter-spacing: .2px;
 }
 
 .wcon-status {
     padding: 3px 10px;
     border-radius: 999px;
     font-size: 12px;
+    font-weight: 600;
     white-space: nowrap;
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--waise-glass-3, rgba(255, 255, 255, 0.08));
+    color: var(--waise-text-dim, #9fb0c0);
 }
 
 .wcon-status-ok {
@@ -110,19 +150,25 @@ body.wcon-lock {
     width: 30px;
     height: 30px;
     border: 0;
-    border-radius: 6px;
+    border-radius: var(--waise-radius-xs, 6px);
     background: transparent;
-    color: #9fb0c0;
+    color: var(--waise-text-dim, #9fb0c0);
     font-size: 22px;
     line-height: 1;
     cursor: pointer;
+    transition: background-color var(--waise-transition, 150ms ease),
+                color var(--waise-transition, 150ms ease);
 }
 
 .wcon-close:hover,
 .wcon-close:focus-visible {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    background: var(--waise-glass-3, rgba(255, 255, 255, 0.1));
+    color: var(--waise-text, #fff);
     outline: none;
+}
+
+.wcon-close:focus-visible {
+    box-shadow: 0 0 0 2px var(--waise-accent, #6f5cff);
 }
 
 .wcon-tools {
@@ -131,22 +177,31 @@ body.wcon-lock {
     align-items: center;
     gap: 8px;
     padding: 10px 16px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    border-bottom: 1px solid var(--waise-border, rgba(255, 255, 255, 0.07));
+    background: var(--waise-glass-1, transparent);
 }
 
 .wcon-search {
     flex: 1 1 220px;
     min-width: 0;
     padding: 7px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 6px;
-    background: #0b1016;
+    border: 1px solid var(--waise-border, rgba(255, 255, 255, 0.14));
+    border-radius: var(--waise-radius-xs, 6px);
+    background: var(--waise-bg-0, #0b1016);
     color: inherit;
     font-size: 13px;
+    transition: border-color var(--waise-transition, 150ms ease),
+                box-shadow var(--waise-transition, 150ms ease);
+}
+
+.wcon-search::placeholder {
+    color: var(--waise-text-dim, #9fb0c0);
+    opacity: .6;
 }
 
 .wcon-search:focus {
-    border-color: #4a90d9;
+    border-color: var(--waise-accent, #6f5cff);
+    box-shadow: 0 0 0 3px rgba(111, 92, 255, .24);
     outline: none;
 }
 
@@ -158,42 +213,48 @@ body.wcon-lock {
 .wcon-chip,
 .wcon-btn {
     padding: 6px 11px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 6px;
+    border: 1px solid var(--waise-border, rgba(255, 255, 255, 0.14));
+    border-radius: var(--waise-radius-xs, 6px);
     background: transparent;
-    color: #9fb0c0;
+    color: var(--waise-text-dim, #9fb0c0);
     font-size: 12px;
+    font-weight: 600;
     cursor: pointer;
-    transition: background 0.12s ease, color 0.12s ease;
+    transition: background-color var(--waise-transition, 120ms ease),
+                color var(--waise-transition, 120ms ease),
+                border-color var(--waise-transition, 120ms ease);
 }
 
 .wcon-chip:hover,
 .wcon-btn:hover,
 .wcon-chip:focus-visible,
 .wcon-btn:focus-visible {
-    background: rgba(255, 255, 255, 0.09);
-    color: #e6edf3;
+    background: var(--waise-glass-3, rgba(255, 255, 255, 0.09));
+    color: var(--waise-text, #e6edf3);
+    border-color: var(--waise-border-strong, rgba(255, 255, 255, 0.18));
     outline: none;
 }
 
 .wcon-chip.is-on,
 .wcon-btn.is-on {
-    border-color: rgba(74, 144, 217, 0.6);
-    background: rgba(74, 144, 217, 0.18);
-    color: #cfe3fa;
+    border-color: color-mix(in srgb, var(--waise-accent, #6f5cff) 60%, transparent);
+    background: color-mix(in srgb, var(--waise-accent, #6f5cff) 18%, transparent);
+    color: var(--waise-text, #cfe3fa);
 }
 
 .wcon-output {
     flex: 1 1 auto;
     overflow: auto;
     padding: 10px 14px;
-    background: #0b1016;
+    /* Mas oscuro que el panel a proposito: es texto monoespaciado denso y
+       necesita mas contraste que una superficie de cristal. */
+    background: var(--waise-bg-0, #0b1016);
     font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     overflow-wrap: anywhere;
 }
 
 .wcon-output:focus-visible {
-    outline: 1px solid rgba(74, 144, 217, 0.5);
+    outline: 1px solid color-mix(in srgb, var(--waise-accent, #6f5cff) 55%, transparent);
     outline-offset: -1px;
 }
 
@@ -201,11 +262,19 @@ body.wcon-lock {
     display: flex;
     gap: 10px;
     padding: 1px 0;
+    border-radius: 3px;
+}
+
+/* Realce de la linea bajo el cursor: en volcados largos ayuda a no perder
+   el renglon que se esta leyendo. */
+.wcon-line:hover {
+    background: rgba(255, 255, 255, 0.04);
 }
 
 .wcon-time {
     flex: 0 0 auto;
     color: #5b6b7c;
+    font-variant-numeric: tabular-nums;
     user-select: none;
 }
 
@@ -214,10 +283,10 @@ body.wcon-lock {
     white-space: pre-wrap;
 }
 
-.wcon-info .wcon-text { color: #cbd6e2; }
-.wcon-warn .wcon-text { color: #f0c674; }
+.wcon-info .wcon-text  { color: #cbd6e2; }
+.wcon-warn .wcon-text  { color: #f0c674; }
 .wcon-error .wcon-text { color: #ff8d85; }
-.wcon-other .wcon-text { color: #9fb0c0; }
+.wcon-other .wcon-text { color: var(--waise-text-dim, #9fb0c0); }
 
 .wcon-output mark {
     padding: 0 1px;
@@ -228,7 +297,7 @@ body.wcon-lock {
 
 .wcon-empty {
     padding: 18px 0;
-    color: #64748b;
+    color: var(--waise-text-dim, #64748b);
     text-align: center;
 }
 
@@ -237,14 +306,15 @@ body.wcon-lock {
     align-items: center;
     gap: 10px;
     padding: 10px 16px;
-    border-top: 1px solid rgba(255, 255, 255, 0.09);
-    background: #151d26;
+    border-top: 1px solid var(--waise-border, rgba(255, 255, 255, 0.09));
+    background: var(--waise-glass-solid, #151d26);
 }
 
 .wcon-counter {
     flex: 0 0 auto;
-    color: #64748b;
+    color: var(--waise-text-dim, #64748b);
     font-size: 12px;
+    font-variant-numeric: tabular-nums;
     white-space: nowrap;
 }
 
@@ -257,15 +327,18 @@ body.wcon-lock {
 .wcon-input {
     width: 100%;
     padding: 8px 10px;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 6px;
-    background: #0b1016;
+    border: 1px solid var(--waise-border, rgba(255, 255, 255, 0.14));
+    border-radius: var(--waise-radius-xs, 6px);
+    background: var(--waise-bg-0, #0b1016);
     color: inherit;
     font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    transition: border-color var(--waise-transition, 150ms ease),
+                box-shadow var(--waise-transition, 150ms ease);
 }
 
 .wcon-input:focus {
-    border-color: #4a90d9;
+    border-color: var(--waise-accent, #6f5cff);
+    box-shadow: 0 0 0 3px rgba(111, 92, 255, .24);
     outline: none;
 }
 
@@ -279,9 +352,9 @@ body.wcon-lock {
     flex-direction: column;
     max-height: 190px;
     overflow: auto;
-    border: 1px solid rgba(255, 255, 255, 0.14);
-    border-radius: 6px;
-    background: #151d26;
+    border: 1px solid var(--waise-border-strong, rgba(255, 255, 255, 0.14));
+    border-radius: var(--waise-radius-sm, 6px);
+    background: var(--waise-glass-solid, #151d26);
     box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
 }
 
@@ -301,7 +374,8 @@ body.wcon-lock {
 
 .wcon-suggest-item:hover,
 .wcon-suggest-item:focus-visible {
-    background: rgba(74, 144, 217, 0.22);
+    background: color-mix(in srgb, var(--waise-accent, #6f5cff) 22%, transparent);
+    color: var(--waise-text, #e6edf3);
     outline: none;
 }
 
@@ -341,7 +415,15 @@ body.wcon-lock {
 @media (prefers-reduced-motion: reduce) {
     .wcon-fab,
     .wcon-chip,
-    .wcon-btn {
+    .wcon-btn,
+    .wcon-close,
+    .wcon-search,
+    .wcon-input {
         transition: none;
+    }
+
+    .wcon-fab:hover,
+    .wcon-fab:focus-visible {
+        transform: none;
     }
 }

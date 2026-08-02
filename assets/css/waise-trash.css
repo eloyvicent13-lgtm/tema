@@ -1,5 +1,11 @@
 /* -------------------------------------------------------------------------
    Waise Theme - estilos de la papelera de reciclaje (waise-trash.js).
+
+   v1.5.x: colores unificados con los tokens de waise.css (:root). Antes este
+   archivo traia su propio panel (#171a24), su propio texto (#e6e8f0) y su
+   propio gris apagado (#8f96ad), distintos de los del resto del tema. Cada
+   var() conserva su hex anterior como respaldo, asi que sin waise.css el
+   resultado es identico al de antes.
    ------------------------------------------------------------------------- */
 
 .waise-trash-fab {
@@ -8,16 +14,20 @@
     bottom: 20px;
     z-index: 900;
     padding: 10px 18px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    border: 1px solid var(--waise-border-strong, rgba(255, 255, 255, 0.16));
     border-radius: 999px;
-    background: var(--waise-accent, #6f5cff);
+    background: linear-gradient(135deg,
+                    var(--waise-accent, #6f5cff) 0%,
+                    color-mix(in srgb, var(--waise-accent, #6f5cff) 55%, var(--waise-accent-2, #17c9c9)) 100%);
     color: #fff;
     font: inherit;
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-    transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    box-shadow: var(--waise-shadow, 0 6px 20px rgba(0, 0, 0, 0.35));
+    transition: transform var(--waise-transition, 150ms ease),
+                box-shadow var(--waise-transition, 150ms ease),
+                filter var(--waise-transition, 150ms ease);
 }
 
 .waise-trash-fab:hover,
@@ -45,22 +55,46 @@
     align-items: center;
     justify-content: center;
     padding: 20px;
-    background: rgba(6, 8, 16, 0.72);
+    background: radial-gradient(120% 90% at 50% 0%,
+                    color-mix(in srgb, var(--waise-accent, #6f5cff) 14%, transparent) 0%,
+                    rgba(6, 8, 16, 0.78) 55%,
+                    rgba(6, 8, 16, 0.86) 100%);
     backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
 
 .waise-trash__box {
+    position: relative;
     display: flex;
     flex-direction: column;
     width: 100%;
     max-width: 640px;
     max-height: 80vh;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: 14px;
-    background: #171a24;
-    color: #e6e8f0;
-    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    border: 1px solid var(--waise-border-strong, rgba(255, 255, 255, 0.12));
+    border-radius: var(--waise-radius, 14px);
+    background: var(--waise-glass-solid, #171a24);
+    color: var(--waise-text, #e6e8f0);
+    box-shadow: var(--waise-shadow-lg, 0 24px 60px rgba(0, 0, 0, 0.55)),
+                var(--waise-sheen, inset 0 1px 0 rgba(255, 255, 255, 0.07));
+    backdrop-filter: blur(var(--waise-blur, 14px));
+    -webkit-backdrop-filter: blur(var(--waise-blur, 14px));
     overflow: hidden;
+}
+
+/* Linea de acento superior, igual que en la consola y el centro de ops. */
+.waise-trash__box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    z-index: 2;
+    background: linear-gradient(90deg,
+                    transparent 0%,
+                    var(--waise-accent, #6f5cff) 25%,
+                    var(--waise-accent-2, #17c9c9) 75%,
+                    transparent 100%);
 }
 
 .waise-trash__head {
@@ -69,7 +103,7 @@
     justify-content: space-between;
     gap: 12px;
     padding: 16px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--waise-border, rgba(255, 255, 255, 0.08));
 }
 
 .waise-trash__title {
@@ -81,17 +115,25 @@
 .waise-trash__close {
     border: none;
     background: none;
-    color: #9aa0b5;
+    color: var(--waise-text-dim, #9aa0b5);
     font-size: 1.5rem;
     line-height: 1;
     padding: 0 4px;
+    border-radius: var(--waise-radius-xs, 6px);
     cursor: pointer;
+    transition: color var(--waise-transition, 150ms ease),
+                background-color var(--waise-transition, 150ms ease);
 }
 
 .waise-trash__close:hover,
 .waise-trash__close:focus-visible {
+    background: var(--waise-glass-3, rgba(255, 255, 255, 0.08));
     color: #fff;
     outline: none;
+}
+
+.waise-trash__close:focus-visible {
+    box-shadow: 0 0 0 2px var(--waise-accent, #6f5cff);
 }
 
 .waise-trash__list {
@@ -107,7 +149,15 @@
     justify-content: space-between;
     gap: 12px;
     padding: 10px 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    border-bottom: 1px solid var(--waise-border, rgba(255, 255, 255, 0.06));
+    border-radius: var(--waise-radius-xs, 6px);
+    transition: background-color var(--waise-transition, 150ms ease);
+}
+
+/* Realce de fila: en listas largas ayuda a no equivocarse de entrada antes
+   de pulsar "Eliminar definitivamente". */
+.waise-trash__row:hover {
+    background: var(--waise-glass-2, rgba(255, 255, 255, 0.03));
 }
 
 .waise-trash__row:last-child {
@@ -131,7 +181,7 @@
 
 .waise-trash__meta {
     font-size: 0.75rem;
-    color: #8f96ad;
+    color: var(--waise-text-dim, #8f96ad);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -145,18 +195,25 @@
 
 .waise-trash__btn {
     padding: 6px 12px;
-    border: 1px solid rgba(255, 255, 255, 0.16);
-    border-radius: 8px;
+    border: 1px solid var(--waise-border-strong, rgba(255, 255, 255, 0.16));
+    border-radius: var(--waise-radius-sm, 8px);
     background: transparent;
-    color: #e6e8f0;
+    color: var(--waise-text, #e6e8f0);
     font: inherit;
     font-size: 0.78rem;
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition: background-color var(--waise-transition, 150ms ease),
+                border-color var(--waise-transition, 150ms ease),
+                color var(--waise-transition, 150ms ease);
 }
 
 .waise-trash__btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, 0.08);
+    background: var(--waise-glass-3, rgba(255, 255, 255, 0.08));
+}
+
+.waise-trash__btn:focus-visible {
+    outline: 2px solid var(--waise-accent, #6f5cff);
+    outline-offset: 2px;
 }
 
 .waise-trash__btn:disabled {
@@ -172,19 +229,20 @@
 .waise-trash__btn--purge:hover:not(:disabled) {
     border-color: #ff6b6b;
     color: #ff6b6b;
+    background: rgba(255, 107, 107, 0.1);
 }
 
 .waise-trash__empty {
     margin: 24px 0;
     text-align: center;
-    color: #8f96ad;
+    color: var(--waise-text-dim, #8f96ad);
     font-size: 0.88rem;
 }
 
 .waise-trash__foot {
     padding: 12px 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
-    color: #8f96ad;
+    border-top: 1px solid var(--waise-border, rgba(255, 255, 255, 0.08));
+    color: var(--waise-text-dim, #8f96ad);
     font-size: 0.75rem;
 }
 
@@ -202,5 +260,19 @@
         right: 12px;
         bottom: 12px;
         padding: 9px 14px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .waise-trash-fab,
+    .waise-trash__btn,
+    .waise-trash__row,
+    .waise-trash__close {
+        transition: none;
+    }
+
+    .waise-trash-fab:hover,
+    .waise-trash-fab:focus-visible {
+        transform: none;
     }
 }

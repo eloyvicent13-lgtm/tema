@@ -6,6 +6,13 @@
    IMPORTANTE: aqui se usan px y NO rem a proposito. El panel de
    administracion (AdminLTE) reduce el font-size base del <html>, y con rem
    toda la interfaz del editor salia ilegible de pequena.
+
+   v1.5.x: los colores pasan a los tokens de waise.css (:root). Antes este
+   archivo traia cinco hex propios (#10131f, #171b2b, #0b0e1a, #e8eaf6,
+   #9aa3c7) que no coincidian con los de ningun otro panel, asi que el editor
+   se veia de un gris distinto al resto del tema. Cada var() conserva su hex
+   original como respaldo: si waise.css no ha cargado, el resultado es el
+   mismo que antes.
    ========================================================================== */
 
 /* --- Marca (cliente) ---------------------------------------------------- */
@@ -38,7 +45,7 @@
     max-width: min(320px, 60vw);
     font-size: 11px;
     line-height: 1.4;
-    color: var(--waise-muted, #9aa3c7);
+    color: var(--waise-text-dim, #9aa3c7);
     opacity: .7;
     pointer-events: none;
     text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
@@ -54,7 +61,7 @@
     transform: translateX(-50%);
     z-index: 99997;
     padding: 6px 16px;
-    border-radius: 0 0 8px 8px;
+    border-radius: 0 0 var(--waise-radius-sm, 8px) var(--waise-radius-sm, 8px);
     background: #b45309;
     color: #fff7ed;
     font-size: 12px;
@@ -85,7 +92,7 @@
     z-index: 99999;
     max-width: 380px;
     padding: 12px 16px;
-    border-radius: 8px;
+    border-radius: var(--waise-radius-sm, 8px);
     background: #7f1d1d;
     color: #fee2e2;
     font-size: 13px;
@@ -103,8 +110,8 @@ body.waise-ed-open { overflow: hidden; }
     z-index: 99998;
     display: none;
     flex-direction: column;
-    background: #10131f;
-    color: #e8eaf6;
+    background: var(--waise-bg-1, #10131f);
+    color: var(--waise-text, #e8eaf6);
     /* Base propia: no heredamos el font-size reducido del admin. */
     font-size: 16px;
     line-height: 1.45;
@@ -125,8 +132,9 @@ body.waise-ed-open { overflow: hidden; }
     gap: 10px;
     flex-wrap: wrap;
     padding: 12px 16px;
-    background: #171b2b;
-    border-bottom: 1px solid rgba(255, 255, 255, .09);
+    background: var(--waise-glass-solid, #171b2b);
+    border-bottom: 1px solid var(--waise-border, rgba(255, 255, 255, .09));
+    box-shadow: var(--waise-sheen, inset 0 1px 0 rgba(255, 255, 255, .07));
     flex: 0 0 auto;
 }
 
@@ -148,24 +156,29 @@ body.waise-ed-open { overflow: hidden; }
 }
 
 .waise-ed__notice--show { opacity: 1; }
-.waise-ed__notice--ok    { color: #4ade80; }
-.waise-ed__notice--error { color: #fca5a5; }
+.waise-ed__notice--ok    { color: #6ee7a8; }
+.waise-ed__notice--error { color: #ff8a8a; }
 
 .waise-ed__btn {
     padding: 9px 16px;
-    border-radius: 8px;
-    border: 1px solid rgba(255, 255, 255, .14);
-    background: rgba(255, 255, 255, .06);
-    color: #e8eaf6;
+    border-radius: var(--waise-radius-sm, 8px);
+    border: 1px solid var(--waise-border-strong, rgba(255, 255, 255, .14));
+    background: var(--waise-glass-3, rgba(255, 255, 255, .06));
+    color: var(--waise-text, #e8eaf6);
     font-size: 14px;
     font-weight: 600;
     font-family: inherit;
     line-height: 1.2;
     cursor: pointer;
-    transition: background-color .15s ease, opacity .15s ease;
+    transition: background-color var(--waise-transition, 150ms ease),
+                border-color var(--waise-transition, 150ms ease),
+                opacity var(--waise-transition, 150ms ease);
 }
 
-.waise-ed__btn:hover:not(:disabled) { background: rgba(255, 255, 255, .13); }
+.waise-ed__btn:hover:not(:disabled) {
+    background: var(--waise-glass-2, rgba(255, 255, 255, .13));
+    border-color: var(--waise-border-strong, rgba(255, 255, 255, .18));
+}
 
 .waise-ed__btn:focus-visible {
     outline: 2px solid var(--waise-accent, #6f5cff);
@@ -178,12 +191,17 @@ body.waise-ed-open { overflow: hidden; }
 }
 
 .waise-ed__btn--primary {
-    background: #6f5cff;
+    background: linear-gradient(135deg,
+                    var(--waise-accent, #6f5cff) 0%,
+                    color-mix(in srgb, var(--waise-accent, #6f5cff) 60%, var(--waise-accent-2, #17c9c9)) 100%);
     border-color: transparent;
     color: #fff;
+    box-shadow: 0 6px 18px -8px var(--waise-accent, #6f5cff);
 }
 
 .waise-ed__btn--primary:hover:not(:disabled) { filter: brightness(1.12); }
+
+.waise-ed__btn--primary:disabled { box-shadow: none; }
 
 .waise-ed__close {
     font-size: 20px;
@@ -202,7 +220,7 @@ body.waise-ed-open { overflow: hidden; }
     display: flex;
     flex-direction: column;
     min-height: 0;
-    border-right: 1px solid rgba(255, 255, 255, .09);
+    border-right: 1px solid var(--waise-border, rgba(255, 255, 255, .09));
 }
 
 /* --- Pestanas ------------------------------------------------------------ */
@@ -212,7 +230,7 @@ body.waise-ed-open { overflow: hidden; }
     display: flex;
     gap: 4px;
     padding: 10px 12px 0;
-    border-bottom: 1px solid rgba(255, 255, 255, .09);
+    border-bottom: 1px solid var(--waise-border, rgba(255, 255, 255, .09));
 }
 
 .waise-ed__tab {
@@ -220,22 +238,24 @@ body.waise-ed-open { overflow: hidden; }
     border: 0;
     border-bottom: 2px solid transparent;
     background: transparent;
-    color: #9aa3c7;
+    color: var(--waise-text-dim, #9aa3c7);
     font-size: 14px;
     font-weight: 600;
     font-family: inherit;
     cursor: pointer;
+    transition: color var(--waise-transition, 150ms ease),
+                border-color var(--waise-transition, 150ms ease);
 }
 
-.waise-ed__tab:hover { color: #e8eaf6; }
+.waise-ed__tab:hover { color: var(--waise-text, #e8eaf6); }
 
 .waise-ed__tab[aria-selected="true"] {
-    color: #e8eaf6;
-    border-bottom-color: #6f5cff;
+    color: var(--waise-text, #e8eaf6);
+    border-bottom-color: var(--waise-accent, #6f5cff);
 }
 
 .waise-ed__tab:focus-visible {
-    outline: 2px solid #6f5cff;
+    outline: 2px solid var(--waise-accent, #6f5cff);
     outline-offset: -2px;
 }
 
@@ -267,7 +287,7 @@ body.waise-ed-open { overflow: hidden; }
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: .05em;
-    color: #9aa3c7;
+    color: var(--waise-text-dim, #9aa3c7);
 }
 
 .waise-ed__control {
@@ -281,12 +301,14 @@ body.waise-ed-open { overflow: hidden; }
     min-width: 0;
     height: 36px;
     padding: 0 10px;
-    border-radius: 7px;
-    border: 1px solid rgba(255, 255, 255, .14);
+    border-radius: var(--waise-radius-xs, 7px);
+    border: 1px solid var(--waise-border, rgba(255, 255, 255, .14));
     background: rgba(0, 0, 0, .28);
-    color: #e8eaf6;
+    color: var(--waise-text, #e8eaf6);
     font-size: 14px;
     font-family: inherit;
+    transition: border-color var(--waise-transition, 150ms ease),
+                box-shadow var(--waise-transition, 150ms ease);
 }
 
 .waise-ed__input[type="text"] { flex: 1 1 auto; }
@@ -298,10 +320,16 @@ body.waise-ed-open { overflow: hidden; }
     text-transform: lowercase;
 }
 
+.waise-ed__input[type="text"]:hover,
+.waise-ed__hex:hover {
+    border-color: var(--waise-border-strong, rgba(255, 255, 255, .18));
+}
+
 .waise-ed__input[type="text"]:focus,
 .waise-ed__hex:focus {
     outline: none;
-    border-color: #6f5cff;
+    border-color: var(--waise-accent, #6f5cff);
+    box-shadow: 0 0 0 3px rgba(111, 92, 255, .24);
 }
 
 .waise-ed__input[type="color"] {
@@ -309,8 +337,8 @@ body.waise-ed-open { overflow: hidden; }
     width: 48px;
     height: 36px;
     padding: 0;
-    border: 1px solid rgba(255, 255, 255, .14);
-    border-radius: 7px;
+    border: 1px solid var(--waise-border, rgba(255, 255, 255, .14));
+    border-radius: var(--waise-radius-xs, 7px);
     background: transparent;
     cursor: pointer;
 }
@@ -319,7 +347,7 @@ body.waise-ed-open { overflow: hidden; }
     flex: 1 1 auto;
     min-width: 0;
     height: 24px;
-    accent-color: #6f5cff;
+    accent-color: var(--waise-accent, #6f5cff);
     cursor: pointer;
 }
 
@@ -327,7 +355,7 @@ body.waise-ed-open { overflow: hidden; }
     flex: 0 0 auto;
     width: 20px;
     height: 20px;
-    accent-color: #6f5cff;
+    accent-color: var(--waise-accent, #6f5cff);
     cursor: pointer;
 }
 
@@ -338,9 +366,17 @@ body.waise-ed-open { overflow: hidden; }
     gap: 10px;
     flex-wrap: wrap;
     padding: 12px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, .04);
+    border-radius: var(--waise-radius-sm, 10px);
+    background: var(--waise-glass-2, rgba(255, 255, 255, .04));
+    border: 1px solid var(--waise-border, rgba(255, 255, 255, .09));
     cursor: pointer;
+    transition: background-color var(--waise-transition, 150ms ease),
+                border-color var(--waise-transition, 150ms ease);
+}
+
+.waise-ed__field--toggle:hover {
+    background: var(--waise-glass-3, rgba(255, 255, 255, .07));
+    border-color: var(--waise-border-strong, rgba(255, 255, 255, .18));
 }
 
 .waise-ed__field--toggle .waise-ed__control { order: -1; }
@@ -349,7 +385,7 @@ body.waise-ed-open { overflow: hidden; }
     text-transform: none;
     letter-spacing: 0;
     font-size: 14px;
-    color: #e8eaf6;
+    color: var(--waise-text, #e8eaf6);
 }
 
 .waise-ed__field--toggle .waise-ed__hint { flex: 1 0 100%; }
@@ -359,13 +395,15 @@ body.waise-ed-open { overflow: hidden; }
     text-align: right;
     font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
     font-size: 13px;
-    color: #9aa3c7;
+    font-variant-numeric: tabular-nums;
+    color: var(--waise-text-dim, #9aa3c7);
 }
 
 .waise-ed__hint {
     font-size: 12px;
     line-height: 1.45;
-    color: #8089ad;
+    color: var(--waise-text-dim, #8089ad);
+    opacity: .85;
 }
 
 /* --- Panel de previsualizacion ------------------------------------------- */
@@ -379,7 +417,13 @@ body.waise-ed-open { overflow: hidden; }
     min-height: 0;
     overflow-y: auto;
     padding: 32px;
-    background: #0b0e1a;
+    /* Halo de acento: la vista previa deja de ser un rectangulo plano y
+       muestra el color activo aunque no haya nada seleccionado. */
+    background:
+        radial-gradient(90% 70% at 50% 0%,
+            color-mix(in srgb, var(--waise-accent, #6f5cff) 12%, transparent) 0%,
+            transparent 70%),
+        var(--waise-bg-0, #0b0e1a);
     text-align: center;
 }
 
@@ -393,7 +437,7 @@ body.waise-ed-open { overflow: hidden; }
     margin: 0 auto;
     font-size: 14px;
     line-height: 1.6;
-    color: #9aa3c7;
+    color: var(--waise-text-dim, #9aa3c7);
 }
 
 .waise-ed__preview-actions {
@@ -405,7 +449,7 @@ body.waise-ed-open { overflow: hidden; }
 
 .waise-ed__preview-state {
     font-size: 12px;
-    color: #8089ad;
+    color: var(--waise-text-dim, #8089ad);
     min-height: 18px;
 }
 
@@ -413,7 +457,7 @@ body.waise-ed-open { overflow: hidden; }
     max-width: 460px;
     margin: 0 auto;
     padding: 10px 14px;
-    border-radius: 8px;
+    border-radius: var(--waise-radius-sm, 8px);
     border: 1px solid rgba(180, 83, 9, .5);
     background: rgba(180, 83, 9, .16);
     color: #fdba74;
@@ -429,7 +473,7 @@ body.waise-ed-open { overflow: hidden; }
 
     .waise-ed__panel {
         border-right: 0;
-        border-bottom: 1px solid rgba(255, 255, 255, .09);
+        border-bottom: 1px solid var(--waise-border, rgba(255, 255, 255, .09));
     }
 
     .waise-ed__preview { padding: 20px; }
@@ -444,7 +488,9 @@ body.waise-ed-open { overflow: hidden; }
 
 @media (prefers-reduced-motion: reduce) {
     .waise-ed__notice,
-    .waise-ed__btn {
+    .waise-ed__btn,
+    .waise-ed__tab,
+    .waise-ed__field--toggle {
         transition: none;
     }
 }

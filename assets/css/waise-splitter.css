@@ -1,7 +1,12 @@
 /* ==========================================================================
    Waise Theme - assets/css/waise-splitter.css
-   Panel del Server Splitter. Usa las variables del tema (waise-config.css)
-   con respaldos por si el editor todavia no ha generado ese archivo.
+   Panel del Server Splitter.
+
+   Usa los tokens reales de waise.css (:root). La version anterior pedia
+   --waise-surface, --waise-muted y --waise-accent2, que NO existen: el modal
+   se pintaba siempre con los respaldos y no seguia la paleta del tema.
+   Los nombres correctos son --waise-glass-*, --waise-text-dim y
+   --waise-accent-2. Se mantienen respaldos por si waise.css no ha cargado.
    ========================================================================== */
 
 .waise-split {
@@ -12,10 +17,13 @@
     align-items: center;
     justify-content: center;
     padding: 24px;
-    background: rgba(4, 6, 16, .72);
-    backdrop-filter: blur(6px);
-    -webkit-backdrop-filter: blur(6px);
-    animation: waise-split-in .16s ease-out;
+    background: radial-gradient(120% 90% at 50% 0%,
+                    rgba(111, 92, 255, .16) 0%,
+                    rgba(4, 6, 16, .78) 55%,
+                    rgba(4, 6, 16, .86) 100%);
+    backdrop-filter: blur(var(--waise-blur, 14px)) saturate(1.2);
+    -webkit-backdrop-filter: blur(var(--waise-blur, 14px)) saturate(1.2);
+    animation: waise-split-in .18s ease-out;
 }
 
 @keyframes waise-split-in {
@@ -23,39 +31,73 @@
     to   { opacity: 1; }
 }
 
+@keyframes waise-split-rise {
+    from { opacity: 0; transform: translateY(12px) scale(.985); }
+    to   { opacity: 1; transform: none; }
+}
+
 .waise-split__box {
-    width: min(520px, 100%);
+    position: relative;
+    width: min(540px, 100%);
     max-height: min(86vh, 720px);
     overflow-y: auto;
+    overscroll-behavior: contain;
     display: flex;
     flex-direction: column;
-    background: var(--waise-surface, #181c2e);
-    color: var(--waise-text, #e8eaf6);
-    border: 1px solid rgba(255, 255, 255, .1);
-    border-radius: var(--waise-radius, 14px);
-    box-shadow: 0 24px 64px rgba(0, 0, 0, .55);
+    background: var(--waise-glass-solid, rgba(12, 14, 25, .93));
+    color: var(--waise-text, #eef0fb);
+    border: 1px solid var(--waise-border-strong, rgba(255, 255, 255, .18));
+    border-radius: var(--waise-radius-lg, 18px);
+    box-shadow: var(--waise-shadow-lg, 0 2px 6px rgba(0, 0, 0, .45), 0 30px 70px -30px rgba(0, 0, 0, .95)),
+                var(--waise-sheen, inset 0 1px 0 rgba(255, 255, 255, .07));
+    animation: waise-split-rise .22s cubic-bezier(.2, .8, .3, 1);
+}
+
+/* Linea de acento superior: ancla el modal al lenguaje del tema. */
+.waise-split__box::before {
+    content: '';
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    display: block;
+    height: 2px;
+    margin: -1px -1px 0;
+    background: linear-gradient(90deg,
+                    transparent 0%,
+                    var(--waise-accent, #6f5cff) 25%,
+                    var(--waise-accent-2, #17c9c9) 75%,
+                    transparent 100%);
+    border-radius: var(--waise-radius-lg, 18px) var(--waise-radius-lg, 18px) 0 0;
 }
 
 .waise-split__box--loading {
     width: auto;
-    min-width: 220px;
-    padding: 28px 32px;
+    min-width: 240px;
+    padding: 0 0 28px;
     text-align: center;
 }
 
+.waise-split__box--loading .waise-split__status {
+    padding: 28px 32px 0;
+}
+
 .waise-split__header {
+    position: sticky;
+    top: 2px;
+    z-index: 1;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 18px 20px;
-    border-bottom: 1px solid rgba(255, 255, 255, .08);
+    padding: 18px 22px;
+    background: var(--waise-glass-solid, rgba(12, 14, 25, .93));
+    border-bottom: 1px solid var(--waise-border, rgba(255, 255, 255, .09));
 }
 
 .waise-split__title {
     margin: 0;
     font-size: 1.05rem;
-    font-weight: 600;
+    font-weight: 650;
     letter-spacing: .2px;
 }
 
@@ -68,72 +110,121 @@
     justify-content: center;
     font-size: 1.35rem;
     line-height: 1;
-    color: var(--waise-muted, #9aa3c7);
+    color: var(--waise-text-dim, #a8aed0);
     background: transparent;
     border: 0;
-    border-radius: 8px;
+    border-radius: var(--waise-radius-xs, 6px);
     cursor: pointer;
-    transition: background-color .15s ease, color .15s ease;
+    transition: background-color var(--waise-transition, 180ms ease),
+                color var(--waise-transition, 180ms ease);
 }
 
 .waise-split__close:hover,
 .waise-split__close:focus-visible {
-    background: rgba(255, 255, 255, .08);
-    color: var(--waise-text, #e8eaf6);
+    background: var(--waise-glass-3, rgba(44, 49, 76, .46));
+    color: var(--waise-text, #eef0fb);
     outline: none;
 }
 
+.waise-split__close:focus-visible {
+    box-shadow: 0 0 0 2px var(--waise-accent, #6f5cff);
+}
+
 .waise-split__body {
-    padding: 18px 20px;
+    padding: 20px 22px 4px;
 }
 
 .waise-split__intro {
-    margin: 0 0 8px;
+    margin: 0 0 10px;
     font-size: .88rem;
-    line-height: 1.5;
-    color: var(--waise-muted, #9aa3c7);
+    line-height: 1.55;
+    color: var(--waise-text-dim, #a8aed0);
 }
 
+/* Contador como pastilla: deja de parecer texto suelto bajo el parrafo. */
 .waise-split__counter {
-    margin: 0 0 18px;
-    font-size: .8rem;
-    color: var(--waise-muted, #9aa3c7);
-    opacity: .85;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0 0 20px;
+    padding: 4px 10px;
+    font-size: .75rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: .2px;
+    color: var(--waise-text-dim, #a8aed0);
+    background: var(--waise-glass-2, rgba(29, 33, 54, .56));
+    border: 1px solid var(--waise-border, rgba(255, 255, 255, .09));
+    border-radius: 999px;
 }
 
 .waise-split__field {
     display: block;
-    margin-bottom: 18px;
+    margin-bottom: 20px;
 }
 
 .waise-split__label {
     display: block;
-    margin-bottom: 6px;
+    margin-bottom: 7px;
     font-size: .82rem;
     font-weight: 600;
-    color: var(--waise-text, #e8eaf6);
+    color: var(--waise-text, #eef0fb);
 }
 
 .waise-split__input {
     width: 100%;
-    padding: 9px 12px;
+    padding: 10px 13px;
     font: inherit;
     font-size: .9rem;
-    color: var(--waise-text, #e8eaf6);
-    background: rgba(0, 0, 0, .28);
-    border: 1px solid rgba(255, 255, 255, .12);
-    border-radius: 9px;
-    transition: border-color .15s ease, box-shadow .15s ease;
+    color: var(--waise-text, #eef0fb);
+    background: rgba(0, 0, 0, .3);
+    border: 1px solid var(--waise-border, rgba(255, 255, 255, .09));
+    border-radius: var(--waise-radius-sm, 10px);
+    transition: border-color var(--waise-transition, 180ms ease),
+                box-shadow var(--waise-transition, 180ms ease),
+                background-color var(--waise-transition, 180ms ease);
+}
+
+.waise-split__input::placeholder {
+    color: var(--waise-text-dim, #a8aed0);
+    opacity: .6;
+}
+
+.waise-split__input:hover {
+    border-color: var(--waise-border-strong, rgba(255, 255, 255, .18));
 }
 
 .waise-split__input:focus {
     outline: none;
+    background: rgba(0, 0, 0, .38);
     border-color: var(--waise-accent, #6f5cff);
-    box-shadow: 0 0 0 3px rgba(111, 92, 255, .22);
+    box-shadow: 0 0 0 3px rgba(111, 92, 255, .24);
 }
 
+/* --- Filas de reparto -----------------------------------------------------
+   Cada fila es una tarjeta: agrupa control + consecuencia ("lo que le queda
+   al original"), que antes se leian como dos textos sin relacion. */
+
 .waise-split__row {
-    margin-bottom: 18px;
+    margin-bottom: 12px;
+    padding: 13px 15px 15px;
+    background: var(--waise-glass-2, rgba(29, 33, 54, .56));
+    border: 1px solid var(--waise-border, rgba(255, 255, 255, .09));
+    border-radius: var(--waise-radius, 14px);
+    transition: border-color var(--waise-transition, 180ms ease),
+                background-color var(--waise-transition, 180ms ease);
+}
+
+.waise-split__row:hover,
+.waise-split__row:focus-within {
+    border-color: var(--waise-border-strong, rgba(255, 255, 255, .18));
+    background: var(--waise-glass-3, rgba(44, 49, 76, .46));
+}
+
+/* Una fila a 0 no aporta nada al hijo: se atenua para que la vista salte
+   directa a las que si reparten algo. */
+.waise-split__row.is-zero {
+    background: var(--waise-glass-1, rgba(19, 22, 37, .68));
 }
 
 .waise-split__rowhead {
@@ -141,7 +232,7 @@
     align-items: baseline;
     justify-content: space-between;
     gap: 12px;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 .waise-split__rowhead .waise-split__label {
@@ -149,84 +240,183 @@
 }
 
 .waise-split__value {
-    font-size: .9rem;
-    font-weight: 600;
+    font-size: .95rem;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
-    color: var(--waise-accent2, #17c9c9);
+    color: var(--waise-accent-2, #17c9c9);
+    transition: color var(--waise-transition, 180ms ease);
 }
 
 .waise-split__row.is-zero .waise-split__value {
-    color: var(--waise-muted, #9aa3c7);
+    color: var(--waise-text-dim, #a8aed0);
+    opacity: .7;
 }
 
+/* Slider con pista rellena. accent-color solo tiñe el thumb de forma fiable;
+   el relleno real se pinta con --waise-fill, que waise-splitter.js actualiza
+   en cada render (0-100). */
 .waise-split__range {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block;
     width: 100%;
     height: 22px;
     margin: 0;
     background: transparent;
-    accent-color: var(--waise-accent, #6f5cff);
     cursor: pointer;
 }
 
-.waise-split__range:focus-visible {
-    outline: 2px solid var(--waise-accent, #6f5cff);
-    outline-offset: 4px;
-    border-radius: 4px;
+.waise-split__range::-webkit-slider-runnable-track {
+    height: 6px;
+    border-radius: 999px;
+    background:
+        linear-gradient(90deg,
+            var(--waise-accent, #6f5cff) 0%,
+            var(--waise-accent-2, #17c9c9) var(--waise-fill, 0%),
+            rgba(255, 255, 255, .12) var(--waise-fill, 0%),
+            rgba(255, 255, 255, .12) 100%);
+}
+
+.waise-split__range::-moz-range-track {
+    height: 6px;
+    border-radius: 999px;
+    background:
+        linear-gradient(90deg,
+            var(--waise-accent, #6f5cff) 0%,
+            var(--waise-accent-2, #17c9c9) var(--waise-fill, 0%),
+            rgba(255, 255, 255, .12) var(--waise-fill, 0%),
+            rgba(255, 255, 255, .12) 100%);
+}
+
+.waise-split__range::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    margin-top: -5px;
+    border-radius: 50%;
+    background: #fff;
+    border: 0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .55);
+    transition: transform var(--waise-transition, 180ms ease),
+                box-shadow var(--waise-transition, 180ms ease);
+}
+
+.waise-split__range::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    border: 0;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .55);
+    transition: transform var(--waise-transition, 180ms ease),
+                box-shadow var(--waise-transition, 180ms ease);
+}
+
+.waise-split__range:hover::-webkit-slider-thumb,
+.waise-split__range:active::-webkit-slider-thumb {
+    transform: scale(1.15);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .55), 0 0 0 6px rgba(111, 92, 255, .2);
+}
+
+.waise-split__range:hover::-moz-range-thumb,
+.waise-split__range:active::-moz-range-thumb {
+    transform: scale(1.15);
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .55), 0 0 0 6px rgba(111, 92, 255, .2);
+}
+
+.waise-split__range:focus {
+    outline: none;
+}
+
+.waise-split__range:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .55), 0 0 0 4px var(--waise-accent, #6f5cff);
+}
+
+.waise-split__range:focus-visible::-moz-range-thumb {
+    box-shadow: 0 1px 4px rgba(0, 0, 0, .55), 0 0 0 4px var(--waise-accent, #6f5cff);
 }
 
 .waise-split__hint {
-    margin-top: 4px;
+    margin-top: 8px;
+    padding-top: 8px;
     font-size: .76rem;
-    color: var(--waise-muted, #9aa3c7);
+    color: var(--waise-text-dim, #a8aed0);
     font-variant-numeric: tabular-nums;
+    border-top: 1px dashed var(--waise-border, rgba(255, 255, 255, .09));
 }
 
 .waise-split__status {
-    margin: 4px 0 0;
+    margin: 12px 0 0;
     min-height: 1.2em;
     font-size: .83rem;
     line-height: 1.45;
-    color: var(--waise-muted, #9aa3c7);
+    color: var(--waise-text-dim, #a8aed0);
 }
 
 .waise-split__status.is-error,
-.waise-split__error {
+.waise-split__status.is-ok {
+    padding: 9px 12px;
+    border-radius: var(--waise-radius-sm, 10px);
+    border: 1px solid currentColor;
+}
+
+.waise-split__status.is-error {
     color: #ff8a8a;
+    background: rgba(255, 138, 138, .1);
 }
 
 .waise-split__status.is-ok {
     color: #6ee7a8;
+    background: rgba(110, 231, 168, .1);
 }
 
 .waise-split__error {
     margin: 0;
-    font-size: .88rem;
-    line-height: 1.5;
+    padding: 12px 14px;
+    font-size: .87rem;
+    line-height: 1.55;
+    color: #ff8a8a;
+    background: rgba(255, 138, 138, .1);
+    border: 1px solid rgba(255, 138, 138, .35);
+    border-radius: var(--waise-radius-sm, 10px);
 }
 
 .waise-split__footer {
+    position: sticky;
+    bottom: 0;
     display: flex;
     justify-content: flex-end;
     gap: 10px;
-    padding: 16px 20px;
-    border-top: 1px solid rgba(255, 255, 255, .08);
+    padding: 16px 22px;
+    background: var(--waise-glass-solid, rgba(12, 14, 25, .93));
+    border-top: 1px solid var(--waise-border, rgba(255, 255, 255, .09));
 }
 
 .waise-split__btn {
-    padding: 9px 18px;
+    padding: 10px 20px;
     font: inherit;
     font-size: .86rem;
-    font-weight: 600;
-    color: var(--waise-text, #e8eaf6);
-    background: rgba(255, 255, 255, .07);
-    border: 1px solid rgba(255, 255, 255, .12);
-    border-radius: 9px;
+    font-weight: 650;
+    color: var(--waise-text, #eef0fb);
+    background: var(--waise-glass-3, rgba(44, 49, 76, .46));
+    border: 1px solid var(--waise-border, rgba(255, 255, 255, .09));
+    border-radius: var(--waise-radius-sm, 10px);
     cursor: pointer;
-    transition: background-color .15s ease, transform .1s ease, opacity .15s ease;
+    transition: background-color var(--waise-transition, 180ms ease),
+                border-color var(--waise-transition, 180ms ease),
+                transform 100ms ease,
+                opacity var(--waise-transition, 180ms ease);
 }
 
 .waise-split__btn:hover:not(:disabled) {
-    background: rgba(255, 255, 255, .13);
+    background: var(--waise-glass-2, rgba(29, 33, 54, .56));
+    border-color: var(--waise-border-strong, rgba(255, 255, 255, .18));
+}
+
+.waise-split__btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(111, 92, 255, .35);
 }
 
 .waise-split__btn:active:not(:disabled) {
@@ -234,31 +424,54 @@
 }
 
 .waise-split__btn:disabled {
-    opacity: .55;
+    opacity: .5;
     cursor: not-allowed;
 }
 
 .waise-split__btn--primary {
     color: #fff;
-    background: var(--waise-accent, #6f5cff);
+    background: linear-gradient(135deg,
+                    var(--waise-accent, #6f5cff) 0%,
+                    color-mix(in srgb, var(--waise-accent, #6f5cff) 60%, var(--waise-accent-2, #17c9c9)) 100%);
     border-color: transparent;
+    box-shadow: 0 6px 18px -8px var(--waise-accent, #6f5cff);
 }
 
 .waise-split__btn--primary:hover:not(:disabled) {
-    background: color-mix(in srgb, var(--waise-accent, #6f5cff) 82%, #fff);
+    filter: brightness(1.12);
+}
+
+.waise-split__btn--primary:disabled {
+    box-shadow: none;
 }
 
 @media (max-width: 640px) {
     .waise-split {
-        padding: 12px;
+        padding: 0;
+        align-items: flex-end;
     }
 
     .waise-split__box {
+        width: 100%;
         max-height: 92vh;
+        border-radius: var(--waise-radius-lg, 18px) var(--waise-radius-lg, 18px) 0 0;
+        border-bottom: 0;
+    }
+
+    .waise-split__header,
+    .waise-split__footer {
+        padding-left: 16px;
+        padding-right: 16px;
+    }
+
+    .waise-split__body {
+        padding-left: 16px;
+        padding-right: 16px;
     }
 
     .waise-split__footer {
         flex-direction: column-reverse;
+        padding-bottom: max(16px, env(safe-area-inset-bottom));
     }
 
     .waise-split__btn {
@@ -267,11 +480,14 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .waise-split {
+    .waise-split,
+    .waise-split__box {
         animation: none;
     }
 
-    .waise-split__btn:active:not(:disabled) {
+    .waise-split__btn:active:not(:disabled),
+    .waise-split__range:hover::-webkit-slider-thumb,
+    .waise-split__range:hover::-moz-range-thumb {
         transform: none;
     }
 }

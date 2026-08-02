@@ -93,6 +93,16 @@
        un cambio de paleta se propague a TODO el tema en vez de a la mitad. */
     --waise-glass-bg:     rgba(255, 255, 255, 0.05);
     --waise-glass-border: var(--waise-border);
+
+    /* Alias de compatibilidad: waise-properties.css, waise-mods.css y
+       waise-ai.css piden estos nombres, que nunca se definieron. Caian a sus
+       respaldos y cada archivo traia uno distinto (#111827 vs #181c2e), asi
+       que cada panel salia de un gris diferente. Definirlos aqui los alinea
+       sin tocar esos archivos; la migracion a los nombres reales es la fase 2. */
+    --waise-surface:   var(--waise-glass-solid);
+    --waise-surface-2: var(--waise-bg-1);
+    --waise-muted:     var(--waise-text-dim);
+    --waise-accent2:   var(--waise-accent-2);
     --waise-glass-blur:   var(--waise-blur);
     --waise-accent-dim:   rgba(111, 92, 255, 0.28);
     --waise-text-muted:   rgba(168, 174, 208, 0.68);
