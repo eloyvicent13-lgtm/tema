@@ -28,6 +28,8 @@
 
     var MOD_LOADERS = ['fabric', 'forge', 'neoforge', 'quilt'];
     var PLUGIN_LOADERS = ['paper', 'spigot', 'bukkit', 'purpur', 'folia'];
+    /* Los modpacks de Modrinth se publican para los mismos loaders que los mods. */
+    var MODPACK_LOADERS = ['fabric', 'forge', 'neoforge', 'quilt'];
 
     var LOADER_LABEL = {
         fabric: 'Fabric',
@@ -41,13 +43,25 @@
         folia: 'Folia'
     };
 
-    /* Icono de la entrada lateral. Trazo con currentColor para que herede el
-       color de la nav igual que los SVG nativos del panel. */
-    var NAV_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+    /* Iconos de las entradas laterales. Trazo con currentColor para que hereden
+       el color de la nav igual que los SVG nativos del panel. */
+    var ICON_MODS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
         'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
         '<path d="M21 16V8l-9-5-9 5v8l9 5 9-5Z"/>' +
         '<path d="M3.3 7.5 12 12.5l8.7-5"/>' +
         '<path d="M12 21.5v-9"/></svg>';
+
+    var ICON_MODPACKS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+        '<rect x="2" y="7" width="20" height="14" rx="2"/>' +
+        '<path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>' +
+        '<path d="M12 12v5"/><path d="M9.5 14.5h5"/></svg>';
+
+    var ICON_PLUGINS = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" ' +
+        'stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M12 2 2 7l10 5 10-5-10-5Z"/>' +
+        '<path d="M2 12l10 5 10-5"/>' +
+        '<path d="M2 17l10 5 10-5"/></svg>';
 
     /* Orden intencionado: 'neoforge' antes que 'forge', y 'purpur'/'folia'
        antes que 'paper', porque el nombre del jar de un fork casi siempre
@@ -81,7 +95,7 @@
     var state = {
         serverId: null,
         dir: null,          // '/mods' o '/plugins'
-        kind: 'mod',        // 'mod' o 'plugin'
+        kind: 'mod',        // 'mod', 'modpack' o 'plugin'
         loader: '',
         version: '',
         query: '',
@@ -161,15 +175,17 @@
         }
     }
 
-    function loadPrefs(serverId) {
+    /* La clave lleva el tipo: un servidor hibrido puede tener Fabric en /mods y
+       Paper en /plugins, y un loader no debe pisar al del otro instalador. */
+    function loadPrefs(serverId, kind) {
         var all = readStore(PREFS_KEY);
-        var mine = all[serverId];
+        var mine = all[serverId + ':' + kind];
         return mine && typeof mine === 'object' ? mine : {};
     }
 
-    function savePrefs(serverId) {
+    function savePrefs(serverId, kind) {
         var all = readStore(PREFS_KEY);
-        all[serverId] = { loader: state.loader, version: state.version };
+        all[serverId + ':' + kind] = { loader: state.loader, version: state.version };
         writeStore(PREFS_KEY, all);
     }
 
@@ -290,7 +306,7 @@
             for (var i = 0; i < items.length; i++) {
                 var item = items[i];
                 var name = item && (item.name || (item.attributes && item.attributes.name));
-                if (name && /\.jar$/i.test(name)) map[name.toLowerCase()] = true;
+                if (name && /\.(jar|mrpack)$/i.test(name)) map[name.toLowerCase()] = true;
             }
             state.installed = map;
         }, function () {
@@ -308,6 +324,26 @@
             notify('WaiseApi no expone pullFile; actualiza el tema.', 'err');
             return;
         }
+
+        /* Un .mrpack no es un jar que el servidor cargue: es un manifiesto que
+           hay que extraer y resolver mod a mod. Ese trabajo vive en
+           waise-modpacks.js, que reporta progreso sobre el propio boton. */
+        if (state.kind === 'modpack') {
+            if (!window.WaiseModpacks || typeof window.WaiseModpacks.install !== 'function') {
+                notify('El instalador de modpacks no esta cargado; actualiza el tema.', 'err');
+                return;
+            }
+            window.WaiseModpacks.install({
+                serverId: state.serverId,
+                projectId: projectId,
+                title: projectTitle,
+                loader: state.loader,
+                version: state.version,
+                button: button
+            });
+            return;
+        }
+
         button.disabled = true;
         button.textContent = 'Buscando version...';
 
@@ -442,7 +478,7 @@
         var used = { loader: '', version: '' };
         if (!found) return used;
 
-        var list = state.kind === 'plugin' ? PLUGIN_LOADERS : MOD_LOADERS;
+        var list = loadersForKind(state.kind);
         if (found.loader && list.indexOf(found.loader) !== -1) {
             used.loader = found.loader;
             if (!state.loader) state.loader = found.loader;
@@ -493,7 +529,7 @@
                     '<p class="wmods-meta">' +
                         '<span title="Descargas">&#8681; ' + fmtCount(hit.downloads) + '</span>' +
                         '<span title="Autor">' + esc(hit.author || 'Desconocido') + '</span>' +
-                        '<a class="wmods-link" href="https://modrinth.com/' + esc(state.kind) +
+                        '<a class="wmods-link" href="https://modrinth.com/' + esc(kindLabel()) +
                             '/' + esc(hit.slug) + '" target="_blank" rel="noopener noreferrer">Modrinth</a>' +
                     '</p>' +
                 '</div>' +
@@ -514,8 +550,26 @@
         }
     }
 
+    function loadersForKind(kind) {
+        if (kind === 'plugin') return PLUGIN_LOADERS;
+        if (kind === 'modpack') return MODPACK_LOADERS;
+        return MOD_LOADERS;
+    }
+
+    function kindLabel() {
+        if (state.kind === 'plugin') return 'plugin';
+        if (state.kind === 'modpack') return 'modpack';
+        return 'mod';
+    }
+
+    function panelTitle() {
+        if (state.kind === 'plugin') return 'Instalador de plugins';
+        if (state.kind === 'modpack') return 'Instalador de modpacks';
+        return 'Instalador de mods';
+    }
+
     function loaderOptions() {
-        var list = state.kind === 'plugin' ? PLUGIN_LOADERS : MOD_LOADERS;
+        var list = loadersForKind(state.kind);
         var html = '<option value="">Cualquier loader</option>';
         for (var i = 0; i < list.length; i++) {
             html += '<option value="' + list[i] + '"' +
@@ -553,24 +607,39 @@
         }, SEARCH_DEBOUNCE);
     }
 
-    function openPanel() {
+    function openPanel(kind) {
         var serverId = currentServerId();
         if (!serverId || !api()) {
-            notify('Abre un servidor de Minecraft para instalar mods', 'err');
+            notify('Abre un servidor de Minecraft para usar el instalador', 'err');
             return;
         }
-        if (!state.dir) {
+
+        /* El tipo llega del item de nav pulsado, no del estado anterior: asi
+           las tres entradas son independientes aunque compartan modulo. */
+        var want = kind === 'plugin' || kind === 'modpack' ? kind : 'mod';
+        var folders = detected[serverId];
+        if (!folders || typeof folders !== 'object') {
             notify('Este servidor no tiene carpeta /mods ni /plugins', 'err');
+            return;
+        }
+        if (want === 'plugin' && !folders.hasPlugins) {
+            notify('Este servidor no tiene carpeta /plugins', 'err');
+            return;
+        }
+        if (want !== 'plugin' && !folders.hasMods) {
+            notify('Este servidor no tiene carpeta /mods', 'err');
             return;
         }
         closePanel();
 
+        state.kind = want;
+        state.dir = want === 'plugin' ? '/plugins' : '/mods';
         state.serverId = serverId;
         /* Se limpia antes de leer las preferencias: el estado es de modulo y
            sin esto el loader del servidor anterior se arrastraba al siguiente. */
         state.loader = '';
         state.version = '';
-        var prefs = loadPrefs(serverId);
+        var prefs = loadPrefs(serverId, state.kind);
         if (prefs.loader) state.loader = prefs.loader;
         if (prefs.version) state.version = prefs.version;
         state.offset = 0;
@@ -581,9 +650,7 @@
         overlay.innerHTML =
             '<div class="wmods-panel" role="dialog" aria-modal="true" aria-label="Instalador de mods">' +
                 '<header class="wmods-head">' +
-                    '<h2 class="wmods-title">' +
-                        (state.kind === 'plugin' ? 'Instalador de plugins' : 'Instalador de mods') +
-                    '</h2>' +
+                    '<h2 class="wmods-title">' + esc(panelTitle()) + '</h2>' +
                     '<span class="wmods-target">' + esc(state.dir) + '</span>' +
                     '<button type="button" class="wmods-close" aria-label="Cerrar">&times;</button>' +
                 '</header>' +
@@ -627,14 +694,14 @@
         el.loaderBox.addEventListener('change', function () {
             state.loader = el.loaderBox.value;
             state.offset = 0;
-            savePrefs(state.serverId);
+            savePrefs(state.serverId, state.kind);
             search();
         });
 
         el.versionBox.addEventListener('change', function () {
             state.version = el.versionBox.value;
             state.offset = 0;
-            savePrefs(state.serverId);
+            savePrefs(state.serverId, state.kind);
             search();
         });
 
@@ -689,14 +756,23 @@
     /* La entrada vive en la columna lateral (waise.js). Aqui solo se declara
        cuando debe verse y con que rotulo: el pintado y el re-pintado tras cada
        re-montaje de React los hace WaiseNav. */
-    var navVisible = false;
-
-    function navLabel() {
-        return state.kind === 'plugin' ? 'Plugins' : 'Mods';
+    /* Cada entrada decide su visibilidad leyendo la deteccion cacheada, en vez
+       de un flag compartido: mods y plugins pueden coexistir en un hibrido. */
+    function folders() {
+        if (!enabled() || !isServerRoute()) return null;
+        var id = currentServerId();
+        var cached = id ? detected[id] : null;
+        return cached && typeof cached === 'object' ? cached : null;
     }
 
-    function navTitle() {
-        return state.kind === 'plugin' ? 'Instalar plugins' : 'Instalar mods';
+    function hasModsFolder() {
+        var f = folders();
+        return !!(f && f.hasMods);
+    }
+
+    function hasPluginsFolder() {
+        var f = folders();
+        return !!(f && f.hasPlugins);
     }
 
     function registerNav() {
@@ -708,30 +784,49 @@
         }
         window.WaiseNav.register({
             id: 'mods',
-            label: navLabel,
-            title: navTitle,
-            icon: NAV_ICON,
-            visible: function () { return navVisible; },
-            onClick: openPanel
+            label: 'Mods',
+            title: 'Instalar mods',
+            icon: ICON_MODS,
+            visible: hasModsFolder,
+            onClick: function () { openPanel('mod'); }
+        });
+        /* Los modpacks se instalan sobre /mods, asi que comparten condicion. */
+        window.WaiseNav.register({
+            id: 'modpacks',
+            label: 'Modpacks',
+            title: 'Instalar modpacks',
+            icon: ICON_MODPACKS,
+            visible: hasModsFolder,
+            onClick: function () { openPanel('modpack'); }
+        });
+        window.WaiseNav.register({
+            id: 'plugins',
+            label: 'Plugins',
+            title: 'Instalar plugins',
+            icon: ICON_PLUGINS,
+            visible: hasPluginsFolder,
+            onClick: function () { openPanel('plugin'); }
         });
     }
 
-    function setNavVisible(value) {
-        navVisible = !!value;
+    function refreshNav() {
         if (window.WaiseNav) window.WaiseNav.refresh();
     }
 
     /* La deteccion se cachea por servidor: sin esto se consultaria la raiz en
        cada navegacion y el panel devuelve 429 con facilidad. */
+    /* Se comprueban las dos carpetas siempre: cortar en la primera dejaba sin
+       entrada de plugins a los servidores que tienen /mods y /plugins. */
     function detect(serverId) {
         var client = api();
         detected[serverId] = 'pending';
-        return client.exists(serverId, '/mods').then(function (found) {
-            if (found && found.is_file === false) return { dir: '/mods', kind: 'mod' };
-            return client.exists(serverId, '/plugins').then(function (plug) {
-                if (plug && plug.is_file === false) return { dir: '/plugins', kind: 'plugin' };
-                return null;
-            });
+        return Promise.all([
+            client.exists(serverId, '/mods'),
+            client.exists(serverId, '/plugins')
+        ]).then(function (found) {
+            var hasMods = !!(found[0] && found[0].is_file === false);
+            var hasPlugins = !!(found[1] && found[1].is_file === false);
+            return (hasMods || hasPlugins) ? { hasMods: hasMods, hasPlugins: hasPlugins } : null;
         }).then(function (result) {
             detected[serverId] = result || false;
             return result;
@@ -742,23 +837,16 @@
     }
 
     function syncButton() {
-        if (!enabled() || !isServerRoute()) { setNavVisible(false); return; }
+        if (!enabled() || !isServerRoute()) { refreshNav(); return; }
         var serverId = currentServerId();
-        if (!serverId || !api()) { setNavVisible(false); return; }
+        if (!serverId || !api()) { refreshNav(); return; }
 
         var cached = detected[serverId];
         if (cached === 'pending') return;
-        if (cached === false) { setNavVisible(false); return; }
-        if (cached && typeof cached === 'object') {
-            state.serverId = serverId;
-            state.dir = cached.dir;
-            state.kind = cached.kind;
-            setNavVisible(true);
-            return;
-        }
+        if (cached !== undefined) { refreshNav(); return; }
 
-        setNavVisible(false);
-        detect(serverId).then(function () { syncButton(); });
+        refreshNav();
+        detect(serverId).then(function () { refreshNav(); });
     }
 
     function init() {
