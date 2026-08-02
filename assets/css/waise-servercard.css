@@ -1,17 +1,23 @@
 /* ---------------------------------------------------------------------------
-   Waise Theme - Tarjeta de servidor del dashboard (ServerRow)
+   Waise Theme - Interior de la tarjeta de servidor del dashboard
 
-   ALCANCE: este archivo NO define la caja de la tarjeta. El fondo, el borde,
-   el radio, el padding, el hover y la franja de estado los define el bloque
-   `html.waise-cards-ready .waise-server-card` de waise.css, que se aplica al
-   MISMO <a> (el JS le añade esa clase) y usa !important. Duplicarlos aquí
-   generaba un híbrido: cristal por fuera, maquetación plana por dentro.
+   ALCANCE: la CAJA (fondo cristal, borde, radio, padding, hover y la franja
+   .status-bar) la define `html.waise-cards-ready .waise-server-card` en
+   waise.css, con !important. Este archivo NO la toca.
 
-   Aquí solo vive lo que waise.css no toca: jerarquía tipográfica, el fondo del
-   egg, el badge de estado y la rejilla de métricas.
+   Aquí vive solo el interior: egg, título, IP y rejilla de métricas.
 
-   Los sufijos hash de styled-components cambian en cada build del panel, por
-   eso se usa [class*="ServerRow__..."] sobre el displayName, que es estable.
+   IMPORTANTE - por qué todo cuelga de .waise-card-* :
+   los selectores [class*="ServerRow__..."] que había antes dependían de los
+   displayName de styled-components, que SOLO existen si el panel se compiló
+   con babel-plugin-styled-components. En un build de producción las clases son
+   hashes tipo sc-bdVaJa y aquellos selectores no enganchaban con nada: el
+   cristal se veía (lo pone waise.css por la clase que inyecta el JS) pero el
+   interior quedaba plano. Ahora waise.js marca cada parte con clases propias.
+
+   El !important es obligatorio en título y fila de métricas: waise.css ya lo
+   usa sobre .text-lg y sobre `> *:last-child:not(:first-child)`, y !important
+   vence al orden de carga.
    --------------------------------------------------------------------------- */
 
 :root {
@@ -22,27 +28,20 @@
     --waise-status-idle: #ffb020;
 }
 
-/* Caja mínima: solo lo imprescindible para cuando el JS todavía no ha marcado
-   la tarjeta (html.waise-cards-ready ausente) o falla. Sin fondo ni borde
-   propios, para no competir con el cristal. */
-a[class*="ServerRow__ServerCard"] {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    gap: 0.85rem;
+/* Contexto de apilamiento propio para que el egg (z-index negativo) quede por
+   debajo del contenido pero por encima del fondo de la tarjeta. */
+html.waise-cards-ready .waise-server-card {
     isolation: isolate;
     overflow: hidden;
-    text-decoration: none;
     color: var(--waise-card-text);
+    text-decoration: none;
 }
 
 /* --- Fondo del egg ------------------------------------------------------- */
 
-/* Se atenúa y se difumina hacia la izquierda para que el texto siempre gane.
-   z-index negativo dentro del contexto de apilamiento propio de la tarjeta. */
-a[class*="ServerRow__ServerCard"] [class*="ServerRow__EggBackground"] {
-    position: absolute;
-    inset: 0;
+html.waise-cards-ready .waise-server-card .waise-card-egg {
+    position: absolute !important;
+    inset: 0 !important;
     z-index: -1;
     opacity: 0.14;
     background-size: cover;
@@ -55,142 +54,76 @@ a[class*="ServerRow__ServerCard"] [class*="ServerRow__EggBackground"] {
     pointer-events: none;
 }
 
-a[class*="ServerRow__ServerCard"]:hover [class*="ServerRow__EggBackground"] {
+html.waise-cards-ready .waise-server-card:hover .waise-card-egg {
     opacity: 0.24;
-}
-
-/* --- Indicador de estado ------------------------------------------------- */
-
-/* Right = 1.4rem: deja aire respecto a la franja vertical de 4px que waise.css
-   ancla en el borde derecho (.status-bar). */
-a[class*="ServerRow__ServerCard"] .status-indicator {
-    position: absolute;
-    top: 0.95rem;
-    right: 1.4rem;
-    z-index: 3;
-}
-
-a[class*="ServerRow__ServerCard"] .status-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    padding: 0.22rem 0.6rem;
-    font-size: 0.68rem;
-    font-weight: 600;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--waise-card-muted);
-    background: rgba(255, 255, 255, 0.06);
-    border: 1px solid rgba(255, 255, 255, 0.09);
-    border-radius: 999px;
-    white-space: nowrap;
-    -webkit-backdrop-filter: blur(6px);
-            backdrop-filter: blur(6px);
-}
-
-a[class*="ServerRow__ServerCard"] .status-dot {
-    width: 7px;
-    height: 7px;
-    border-radius: 50%;
-    background: var(--waise-status-offline);
-    box-shadow: 0 0 0 0 rgba(255, 92, 108, 0.6);
-    flex: 0 0 auto;
-}
-
-/* Online / running: verde con pulso. */
-a[class*="ServerRow__ServerCard"] .status-badge:has(span:is(.online, .running)) .status-dot,
-a[class*="ServerRow__ServerCard"] .status-badge.online .status-dot,
-a[class*="ServerRow__ServerCard"] .status-badge.running .status-dot {
-    background: var(--waise-status-online);
-    animation: waise-status-pulse 2s ease-out infinite;
-}
-
-a[class*="ServerRow__ServerCard"] .status-badge:is(.starting, .stopping) .status-dot {
-    background: var(--waise-status-idle);
-    animation: waise-status-pulse 1.2s ease-out infinite;
-}
-
-@keyframes waise-status-pulse {
-    0%   { box-shadow: 0 0 0 0 rgba(47, 212, 123, 0.55); }
-    70%  { box-shadow: 0 0 0 6px rgba(47, 212, 123, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(47, 212, 123, 0); }
 }
 
 /* --- Título e IP --------------------------------------------------------- */
 
-a[class*="ServerRow__ServerCard"] [class*="ServerRow__ServerTitle"] {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
+/* padding-right: deja hueco a la franja de estado de 4px anclada al borde. */
+html.waise-cards-ready .waise-server-card .waise-card-title {
+    display: block;
     min-width: 0;
-    padding-right: 7rem; /* hueco para el badge de estado */
-    font-size: 1.02rem;
-    font-weight: 600;
-    line-height: 1.25;
+    padding-right: 1.2rem;
+    font-size: 1.02rem !important;
+    font-weight: 600 !important;
+    line-height: 1.25 !important;
     letter-spacing: -0.01em;
-    color: var(--waise-card-text);
+    color: var(--waise-card-text) !important;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-a[class*="ServerRow__ServerCard"] [class*="ServerRow__ServerTitle"] .icon,
-a[class*="ServerRow__ServerCard"] [class*="ServerRow__ServerTitle"] svg {
-    flex: 0 0 auto;
-    width: 0.95rem;
-    height: 0.95rem;
-    color: var(--waise-accent, #6f5cff);
-}
-
-a[class*="ServerRow__ServerCard"] [class*="ServerRow__ServerInfo"] {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
+html.waise-cards-ready .waise-server-card .waise-card-meta {
+    display: block;
+    margin-top: 0.25rem;
     font-size: 0.76rem;
-    color: var(--waise-card-muted);
+    color: var(--waise-card-muted) !important;
     font-variant-numeric: tabular-nums;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-a[class*="ServerRow__ServerCard"] [class*="ServerRow__ServerInfo"] svg {
-    opacity: 0.75;
-}
+/* --- Métricas ------------------------------------------------------------ */
 
-/* --- Estadísticas -------------------------------------------------------- */
-
-/* margin-top: auto ancla la fila al pie aunque el título ocupe una sola línea,
-   así todas las tarjetas de la rejilla alinean sus métricas a la misma altura. */
-a[class*="ServerRow__ServerCard"] [class*="ServerRow__StatRow"] {
-    display: grid;
+/* Rejilla de 3 columnas en lugar del flex de waise.css: alinea las métricas de
+   todas las tarjetas a la misma altura aunque el título ocupe una línea. */
+html.waise-cards-ready .waise-server-card .waise-card-stats {
+    display: grid !important;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.55rem;
+    gap: 0.55rem !important;
     width: 100%;
-    margin-top: auto;
-    padding-top: 0.9rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    margin-top: auto !important;
+    padding-top: 0.9rem !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+    font-variant-numeric: tabular-nums;
 }
 
-a[class*="ServerRow__ServerCard"] [class*="ServerRow__StatBox"] {
-    display: flex;
+html.waise-cards-ready .waise-server-card .waise-card-stat {
+    display: flex !important;
     align-items: center;
     gap: 0.45rem;
     flex-wrap: wrap;
     min-width: 0;
+    margin: 0 !important;
     padding: 0.5rem 0.65rem;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--waise-card-text);
     transition: background-color 0.22s ease, border-color 0.22s ease;
 }
 
-a[class*="ServerRow__ServerCard"]:hover [class*="ServerRow__StatBox"] {
+html.waise-cards-ready .waise-server-card:hover .waise-card-stat {
     background: rgba(255, 255, 255, 0.07);
     border-color: rgba(255, 255, 255, 0.1);
 }
 
-a[class*="ServerRow__ServerCard"] [class*="ServerRow__Icon"] {
+html.waise-cards-ready .waise-server-card .waise-card-stat svg {
     flex: 0 0 auto;
     width: 0.82rem;
     height: 0.82rem;
@@ -198,64 +131,31 @@ a[class*="ServerRow__ServerCard"] [class*="ServerRow__Icon"] {
     opacity: 0.9;
 }
 
-a[class*="ServerRow__ServerCard"] [class*="ServerRow__ResourceValue"] {
-    font-size: 0.82rem;
-    font-weight: 600;
-    color: var(--waise-card-text);
-    font-variant-numeric: tabular-nums;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-a[class*="ServerRow__ServerCard"] [class*="ServerRow__SmallText"] {
-    width: 100%;
-    font-size: 0.66rem;
-    color: var(--waise-card-muted);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 /* --- Responsive ---------------------------------------------------------- */
 
 @media (max-width: 768px) {
-    a[class*="ServerRow__ServerCard"] [class*="ServerRow__StatRow"] {
+    html.waise-cards-ready .waise-server-card .waise-card-stats {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 640px) {
-    a[class*="ServerRow__ServerCard"] {
-        gap: 0.7rem;
+    html.waise-cards-ready .waise-server-card .waise-card-title {
+        font-size: 0.95rem !important;
     }
 
-    a[class*="ServerRow__ServerCard"] [class*="ServerRow__ServerTitle"] {
-        font-size: 0.95rem;
-        padding-right: 6rem;
-    }
-
-    a[class*="ServerRow__ServerCard"] [class*="ServerRow__StatRow"] {
+    html.waise-cards-ready .waise-server-card .waise-card-stats {
         grid-template-columns: 1fr;
     }
 
-    a[class*="ServerRow__ServerCard"] [class*="ServerRow__StatBox"] {
+    html.waise-cards-ready .waise-server-card .waise-card-stat {
         flex-wrap: nowrap;
-    }
-
-    a[class*="ServerRow__ServerCard"] [class*="ServerRow__SmallText"] {
-        width: auto;
-        margin-left: auto;
     }
 }
 
 @media (prefers-reduced-motion: reduce) {
-    a[class*="ServerRow__ServerCard"] [class*="ServerRow__EggBackground"],
-    a[class*="ServerRow__ServerCard"] [class*="ServerRow__StatBox"] {
+    html.waise-cards-ready .waise-server-card .waise-card-egg,
+    html.waise-cards-ready .waise-server-card .waise-card-stat {
         transition: none;
-    }
-
-    a[class*="ServerRow__ServerCard"] .status-dot {
-        animation: none;
     }
 }

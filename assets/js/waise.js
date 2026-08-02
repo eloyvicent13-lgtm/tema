@@ -656,6 +656,52 @@
         return rows[0].parentElement;
     }
 
+    /* Marca las partes internas de una tarjeta con clases propias y estables.
+       No se usan los sufijos de styled-components (ServerRow__...): solo
+       existen si el panel se compiló con babel-plugin-styled-components; en un
+       build de producción quedan como sc-XXXX y no hay nada a lo que enganchar.
+       Aquí se identifica cada parte por estructura y contenido. */
+    var IP_RE = /(\d{1,3}\.){3}\d{1,3}(:\d{2,5})?|:\d{2,5}\b/;
+
+    function markCardParts(row) {
+        /* Fondo del egg: el panel lo pinta con background-image en línea. */
+        var egg = row.querySelector('[style*="background-image"]');
+        if (egg) egg.classList.add('waise-card-egg');
+
+        /* Título: el panel usa .text-lg; si no está, el primer bloque con texto
+           que no sea la fila de métricas. */
+        var title = row.querySelector('.text-lg');
+        if (!title) {
+            title = Array.prototype.filter.call(row.children, function (c) {
+                return (c.textContent || '').trim().length > 0;
+            })[0] || null;
+        }
+        if (title) title.classList.add('waise-card-title');
+
+        /* IP / descripción: primer descendiente cuyo texto parezca una
+           dirección y que no contenga al título. Se descarta la fila de
+           métricas: un valor como "12:34" dispararía la regex por error. */
+        var statsRow = row.children.length > 1 ? row.children[row.children.length - 1] : null;
+        var meta = Array.prototype.slice.call(row.querySelectorAll('p, span, div'))
+            .filter(function (el) {
+                if (el === title || (title && el.contains(title))) return false;
+                if (statsRow && (el === statsRow || statsRow.contains(el))) return false;
+                if (el.children.length > 1) return false;
+                return IP_RE.test((el.textContent || '').trim());
+            })[0];
+        if (meta) meta.classList.add('waise-card-meta');
+
+        /* Fila de métricas: último hijo directo, salvo que sea también el
+           primero (tarjeta de un solo bloque). Sus hijos son las cajas. */
+        var last = row.children[row.children.length - 1];
+        if (last && row.children.length > 1) {
+            last.classList.add('waise-card-stats');
+            Array.prototype.forEach.call(last.children, function (box) {
+                box.classList.add('waise-card-stat');
+            });
+        }
+    }
+
     function setupServerCards() {
         /* Solo actuar en el listado raíz, nunca dentro de un servidor */
         if (currentServerId()) return false;
@@ -686,6 +732,7 @@
 
         visibleRows.forEach(function (row) {
             row.classList.add('waise-server-card');
+            markCardParts(row);
 
             /* Envoltorios intermedios entre el contenedor y la tarjeta: se
                disuelven con display:contents para que la tarjeta sea el item
@@ -771,6 +818,10 @@
         function onNavigate() {
             cardsDone = false;
             HTML.classList.remove('waise-cards-ready');
+            document.querySelectorAll('.waise-card-egg, .waise-card-title, .waise-card-meta, .waise-card-stats, .waise-card-stat')
+                .forEach(function (el) {
+                    el.classList.remove('waise-card-egg', 'waise-card-title', 'waise-card-meta', 'waise-card-stats', 'waise-card-stat');
+                });
             document.querySelectorAll('.waise-server-grid, .waise-server-card, .waise-card-host, .waise-grid-full')
                 .forEach(function (el) {
                     el.classList.remove('waise-server-grid', 'waise-server-card', 'waise-card-host', 'waise-grid-full');
