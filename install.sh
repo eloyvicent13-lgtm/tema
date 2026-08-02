@@ -116,8 +116,11 @@ cp -f "${SCRIPT_DIR}/assets/js/waise-mods.js"        "${PUBLIC_DIR}/js/waise-mod
 cp -f "${SCRIPT_DIR}/assets/css/waise-editor.css"   "${PUBLIC_DIR}/css/waise-editor.css"
 cp -f "${SCRIPT_DIR}/assets/js/waise-editor.js"     "${PUBLIC_DIR}/js/waise-editor.js"
 cp -f "${SCRIPT_DIR}/assets/js/waise-brand.js"      "${PUBLIC_DIR}/js/waise-brand.js"
+cp -f "${SCRIPT_DIR}/assets/css/waise-ai.css"       "${PUBLIC_DIR}/css/waise-ai.css"
+cp -f "${SCRIPT_DIR}/assets/js/waise-ai.js"         "${PUBLIC_DIR}/js/waise-ai.js"
 mkdir -p "${PUBLIC_DIR}/api"
 cp -f "${SCRIPT_DIR}/assets/php/theme.php"          "${PUBLIC_DIR}/api/theme.php"
+cp -f "${SCRIPT_DIR}/assets/php/ai.php"             "${PUBLIC_DIR}/api/ai.php"
 
 cat > "${PUBLIC_DIR}/css/waise-overrides.css" <<EOF
 /* -------------------------------------------------------------------------
@@ -155,6 +158,22 @@ chmod 640 "$TOKEN_FILE"
 if [[ -z "$WAISE_TOKEN" ]]; then
     waise_die "No se pudo generar el token del Theme Editor."
 fi
+
+# --- 2c. Asistente IA: API key --------------------------------------------
+# La key NUNCA va en public/ ni en el repositorio: solo la lee api/ai.php.
+# Si el archivo esta vacio, el chat responde 503 y el resto del tema funciona.
+AI_KEY_FILE="${STORAGE_DIR}/ai.key"
+if [[ ! -f "$AI_KEY_FILE" ]]; then
+    : > "$AI_KEY_FILE"
+    waise_warn "Asistente IA sin configurar: escribe tu API key en ${AI_KEY_FILE}"
+elif [[ -s "$AI_KEY_FILE" ]]; then
+    waise_log "API key del asistente IA conservada."
+else
+    waise_warn "Asistente IA sin configurar: ${AI_KEY_FILE} esta vacio."
+fi
+chmod 640 "$AI_KEY_FILE"
+mkdir -p "${STORAGE_DIR}/ai-rate"
+chmod 750 "${STORAGE_DIR}/ai-rate"
 
 # Genera theme.json (si falta) y los assets estaticos waise-config.css/js.
 if command -v php >/dev/null 2>&1; then
@@ -199,6 +218,7 @@ EOF
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-console.css?v=${ASSET_VER}">
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-ops.css?v=${ASSET_VER}">
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-mods.css?v=${ASSET_VER}">
+        <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-ai.css?v=${ASSET_VER}">
 EOF
     fi
     if [[ -n "$js" ]]; then
@@ -216,6 +236,7 @@ EOF
         <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-ops.js?v=${ASSET_VER}" defer></script>
         <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-modpacks.js?v=${ASSET_VER}" defer></script>
         <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-mods.js?v=${ASSET_VER}" defer></script>
+        <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-ai.js?v=${ASSET_VER}" defer></script>
 EOF
     else
         # El token solo se expone en la vista de administracion, que el panel
