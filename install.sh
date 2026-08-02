@@ -118,6 +118,7 @@ cp -f "${SCRIPT_DIR}/assets/js/waise-editor.js"     "${PUBLIC_DIR}/js/waise-edit
 cp -f "${SCRIPT_DIR}/assets/js/waise-brand.js"      "${PUBLIC_DIR}/js/waise-brand.js"
 cp -f "${SCRIPT_DIR}/assets/css/waise-ai.css"       "${PUBLIC_DIR}/css/waise-ai.css"
 cp -f "${SCRIPT_DIR}/assets/js/waise-ai.js"         "${PUBLIC_DIR}/js/waise-ai.js"
+cp -f "${SCRIPT_DIR}/assets/css/waise-servercard.css" "${PUBLIC_DIR}/css/waise-servercard.css"
 cp -f "${SCRIPT_DIR}/assets/css/waise-splitter.css" "${PUBLIC_DIR}/css/waise-splitter.css"
 cp -f "${SCRIPT_DIR}/assets/js/waise-splitter.js"   "${PUBLIC_DIR}/js/waise-splitter.js"
 mkdir -p "${PUBLIC_DIR}/api"
@@ -250,6 +251,7 @@ EOF
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-ops.css?v=${ASSET_VER}">
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-mods.css?v=${ASSET_VER}">
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-ai.css?v=${ASSET_VER}">
+        <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-servercard.css?v=${ASSET_VER}">
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-splitter.css?v=${ASSET_VER}">
 EOF
     fi

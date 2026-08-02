@@ -39,6 +39,11 @@ Comandos:
                        Rama alternativa: WAISE_REPO_BRANCH=dev sudo -E waise upgrade
   uninstall [--restore-backup] [--purge] [-y]
                        Elimina el tema y devuelve el panel a su estado original.
+  newpanel [--path DIR] [--version X.Y.Z] [--latest] [--dry-run] [-y]
+                       Restaura los archivos originales de Pterodactyl (vistas,
+                       public/ y resources/scripts) desde la release oficial,
+                       borrando el rastro de cualquier tema de terceros.
+                       No toca .env, storage/, database/ ni la base de datos.
   status               Muestra si el tema está activo y dónde.
   version              Muestra la versión instalada.
   help                 Muestra esta ayuda.
@@ -47,6 +52,7 @@ Ejemplos:
   sudo waise install --accent "#ff5c8a"
   sudo waise upgrade
   sudo waise uninstall --purge
+  sudo waise newpanel --dry-run
 EOF
 }
 
@@ -65,6 +71,11 @@ case "$cmd" in
         ;;
     uninstall|remove|delete)
         exec bash "${SHARE}/uninstall.sh" "$@"
+        ;;
+    newpanel|restore-panel)
+        # shellcheck source=../lib/newpanel.sh
+        source "${SHARE}/lib/newpanel.sh"
+        waise_newpanel "$@"
         ;;
     status)
         waise_status "${1:-}"
