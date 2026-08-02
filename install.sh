@@ -118,9 +118,12 @@ cp -f "${SCRIPT_DIR}/assets/js/waise-editor.js"     "${PUBLIC_DIR}/js/waise-edit
 cp -f "${SCRIPT_DIR}/assets/js/waise-brand.js"      "${PUBLIC_DIR}/js/waise-brand.js"
 cp -f "${SCRIPT_DIR}/assets/css/waise-ai.css"       "${PUBLIC_DIR}/css/waise-ai.css"
 cp -f "${SCRIPT_DIR}/assets/js/waise-ai.js"         "${PUBLIC_DIR}/js/waise-ai.js"
+cp -f "${SCRIPT_DIR}/assets/css/waise-splitter.css" "${PUBLIC_DIR}/css/waise-splitter.css"
+cp -f "${SCRIPT_DIR}/assets/js/waise-splitter.js"   "${PUBLIC_DIR}/js/waise-splitter.js"
 mkdir -p "${PUBLIC_DIR}/api"
 cp -f "${SCRIPT_DIR}/assets/php/theme.php"          "${PUBLIC_DIR}/api/theme.php"
 cp -f "${SCRIPT_DIR}/assets/php/ai.php"             "${PUBLIC_DIR}/api/ai.php"
+cp -f "${SCRIPT_DIR}/assets/php/splitter.php"       "${PUBLIC_DIR}/api/splitter.php"
 # Diagnostico TEMPORAL de la sesion del proxy IA. Borrar de public/ y de aqui
 # en cuanto se cierre el 401: expone driver de sesion y nombres de cookies.
 cp -f "${SCRIPT_DIR}/assets/php/ai-diag.php"        "${PUBLIC_DIR}/api/ai-diag.php"
@@ -247,6 +250,7 @@ EOF
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-ops.css?v=${ASSET_VER}">
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-mods.css?v=${ASSET_VER}">
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-ai.css?v=${ASSET_VER}">
+        <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-splitter.css?v=${ASSET_VER}">
 EOF
     fi
     if [[ -n "$js" ]]; then
@@ -265,6 +269,7 @@ EOF
         <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-modpacks.js?v=${ASSET_VER}" defer></script>
         <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-mods.js?v=${ASSET_VER}" defer></script>
         <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-ai.js?v=${ASSET_VER}" defer></script>
+        <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-splitter.js?v=${ASSET_VER}" defer></script>
 EOF
     else
         # El token solo se expone en la vista de administracion, que el panel
