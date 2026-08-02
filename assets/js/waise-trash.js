@@ -136,6 +136,28 @@
         return !!(headers['X-Waise-Client'] || headers['x-waise-client']);
     }
 
+    /* Decide si un POST a /files/delete debe desviarse a la papelera y, en su
+       caso, lo hace. Resuelve true solo si TODO se movio. */
+    function handleDelete(serverId, payload) {
+        if (!payload || !payload.files || !payload.files.length) {
+            return Promise.resolve(false);
+        }
+        /* Borrar desde dentro de la papelera debe borrar de verdad. */
+        var root = payload.root || '/';
+        if (api().joinPath(root).indexOf(TRASH_DIR) === 0) return Promise.resolve(false);
+
+        return moveToTrash(serverId, root, payload.files).then(function (ok) {
+            if (!ok) return false;
+            var n = payload.files.length;
+            notify(
+                n === 1 ? 'Movido a la papelera' : n + ' elementos movidos a la papelera',
+                'ok'
+            );
+            window.dispatchEvent(new CustomEvent('waise:trash-changed'));
+            return true;
+        });
+    }
+
     function installInterceptor() {
         var original = window.fetch;
         if (typeof original !== 'function') return;
@@ -155,25 +177,63 @@
             if (!serverId) return passthrough();
 
             var payload = readBody(init);
-            if (!payload || !payload.files || !payload.files.length) return passthrough();
+            if (!payload) return passthrough();
 
-            /* Borrar la papelera desde el propio gestor debe borrar de verdad;
-               si no, seria imposible vaciarla a mano. */
-            var root = payload.root || '/';
-            if (api().joinPath(root).indexOf(TRASH_DIR) === 0) return passthrough();
-
-            return moveToTrash(serverId, root, payload.files).then(function (ok) {
+            return handleDelete(serverId, payload).then(function (ok) {
                 if (!ok) return passthrough();
-                var n = payload.files.length;
-                notify(
-                    n === 1 ? 'Movido a la papelera' : n + ' elementos movidos a la papelera',
-                    'ok'
-                );
-                window.dispatchEvent(new CustomEvent('waise:trash-changed'));
                 /* El panel espera 204 del endpoint de borrado; devolverlo hace
                    que refresque la lista como si el borrado hubiera ocurrido. */
                 return new Response(null, { status: 204, statusText: 'No Content' });
             });
+        };
+    }
+
+    /* El gestor de archivos del panel usa axios, que en el navegador va sobre
+       XMLHttpRequest: envolver solo fetch dejaria pasar todos los borrados.
+       Aqui no se falsifica la respuesta (reimplementar readyState, eventos y
+       responseText de XHR es fragil); se RETRASA el envio real hasta que el
+       movimiento acabe. Si se movio, los archivos ya no estan en su ruta y el
+       delete del panel queda en no-op; si fallo, el borrado original ocurre
+       igual que sin el tema. */
+    function installXhrInterceptor() {
+        var XHR = window.XMLHttpRequest;
+        if (typeof XHR !== 'function' || !XHR.prototype) return;
+
+        var open = XHR.prototype.open;
+        var send = XHR.prototype.send;
+        var setHeader = XHR.prototype.setRequestHeader;
+
+        XHR.prototype.open = function (method, url) {
+            this.__waiseMethod = String(method || 'GET').toUpperCase();
+            this.__waiseUrl = url;
+            this.__waiseOwn = false;
+            return open.apply(this, arguments);
+        };
+
+        XHR.prototype.setRequestHeader = function (name, value) {
+            if (String(name).toLowerCase() === 'x-waise-client') this.__waiseOwn = true;
+            return setHeader.apply(this, arguments);
+        };
+
+        XHR.prototype.send = function (body) {
+            var self = this;
+            var args = arguments;
+
+            function passthrough() {
+                return send.apply(self, args);
+            }
+
+            if (!enabled() || self.__waiseOwn) return passthrough();
+            if (self.__waiseMethod !== 'POST') return passthrough();
+
+            var serverId = parseTarget(self.__waiseUrl);
+            if (!serverId) return passthrough();
+
+            var payload = readBody({ body: body });
+            if (!payload) return passthrough();
+
+            handleDelete(serverId, payload).then(passthrough, passthrough);
+            return undefined;
         };
     }
 
@@ -199,6 +259,19 @@
     }
 
     function loadEntries(serverId) {
+        var A = api();
+        /* Wings NO devuelve 404 al listar un directorio inexistente: revienta
+           con un 500 generico ("error while communicating with the machine").
+           Por eso se comprueba la existencia mirando el directorio padre, que
+           siempre existe, en vez de tragarse los 500 (que tambien tapan
+           errores reales de permisos o del daemon). */
+        return A.exists(serverId, TRASH_DIR).then(function (found) {
+            if (!found || found.is_file === true) return [];
+            return listEntries(serverId);
+        });
+    }
+
+    function listEntries(serverId) {
         return api().listFiles(serverId, TRASH_DIR).then(function (files) {
             var out = [];
             files.forEach(function (f) {
@@ -210,10 +283,6 @@
             });
             out.sort(function (a, b) { return b.deletedAt - a.deletedAt; });
             return out;
-        }, function (err) {
-            /* La carpeta no existe todavia: papelera vacia, no es un error. */
-            if (err.status === 404) return [];
-            throw err;
         });
     }
 
@@ -413,6 +482,7 @@
         }
 
         installInterceptor();
+        installXhrInterceptor();
         syncButton();
 
         window.addEventListener('popstate', syncButton);

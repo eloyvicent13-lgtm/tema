@@ -104,6 +104,12 @@ cp -f "${SCRIPT_DIR}/assets/js/waise-api.js"        "${PUBLIC_DIR}/js/waise-api.
 cp -f "${SCRIPT_DIR}/assets/css/waise-trash.css"    "${PUBLIC_DIR}/css/waise-trash.css"
 cp -f "${SCRIPT_DIR}/assets/js/waise-trash.js"      "${PUBLIC_DIR}/js/waise-trash.js"
 cp -f "${SCRIPT_DIR}/assets/js/waise-features.js"   "${PUBLIC_DIR}/js/waise-features.js"
+cp -f "${SCRIPT_DIR}/assets/css/waise-properties.css" "${PUBLIC_DIR}/css/waise-properties.css"
+cp -f "${SCRIPT_DIR}/assets/js/waise-properties.js"   "${PUBLIC_DIR}/js/waise-properties.js"
+cp -f "${SCRIPT_DIR}/assets/css/waise-console.css"    "${PUBLIC_DIR}/css/waise-console.css"
+cp -f "${SCRIPT_DIR}/assets/js/waise-console.js"      "${PUBLIC_DIR}/js/waise-console.js"
+cp -f "${SCRIPT_DIR}/assets/css/waise-ops.css"       "${PUBLIC_DIR}/css/waise-ops.css"
+cp -f "${SCRIPT_DIR}/assets/js/waise-ops.js"         "${PUBLIC_DIR}/js/waise-ops.js"
 cp -f "${SCRIPT_DIR}/assets/css/waise-editor.css"   "${PUBLIC_DIR}/css/waise-editor.css"
 cp -f "${SCRIPT_DIR}/assets/js/waise-editor.js"     "${PUBLIC_DIR}/js/waise-editor.js"
 cp -f "${SCRIPT_DIR}/assets/js/waise-brand.js"      "${PUBLIC_DIR}/js/waise-brand.js"
@@ -186,6 +192,9 @@ EOF
         cat <<EOF
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-features.css?v=${ASSET_VER}">
         <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-trash.css?v=${ASSET_VER}">
+        <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-properties.css?v=${ASSET_VER}">
+        <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-console.css?v=${ASSET_VER}">
+        <link rel="stylesheet" href="/${WAISE_PUBLIC_SUBDIR}/css/waise-ops.css?v=${ASSET_VER}">
 EOF
     fi
     if [[ -n "$js" ]]; then
@@ -198,6 +207,9 @@ EOF
         <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-api.js?v=${ASSET_VER}" defer></script>
         <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-features.js?v=${ASSET_VER}" defer></script>
         <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-trash.js?v=${ASSET_VER}" defer></script>
+        <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-properties.js?v=${ASSET_VER}" defer></script>
+        <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-console.js?v=${ASSET_VER}" defer></script>
+        <script src="/${WAISE_PUBLIC_SUBDIR}/js/waise-ops.js?v=${ASSET_VER}" defer></script>
 EOF
     else
         # El token solo se expone en la vista de administracion, que el panel

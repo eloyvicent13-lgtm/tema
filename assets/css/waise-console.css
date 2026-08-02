@@ -1,0 +1,346 @@
+/* ---------------------------------------------------------------------------
+   Waise Theme - assets/css/waise-console.css
+   Estilos de la consola avanzada (waise-console.js).
+   --------------------------------------------------------------------------- */
+
+/* Pila de FAB en right:20px -> papelera (20px), features (72px),
+   propiedades (76px, alto ~40px => llega a ~116px). Este va encima de todos. */
+.wcon-fab {
+    position: fixed;
+    right: 20px;
+    bottom: 132px;
+    z-index: 9000;
+    width: 52px;
+    height: 52px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 50%;
+    background: #1f2933;
+    color: #e6edf3;
+    font: 600 15px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    cursor: pointer;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+    transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.wcon-fab:hover,
+.wcon-fab:focus-visible {
+    background: #2b3947;
+    transform: translateY(-2px);
+    outline: none;
+}
+
+.wcon-fab:active {
+    transform: translateY(0);
+}
+
+body.wcon-lock {
+    overflow: hidden;
+}
+
+.wcon-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 9500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(3, 7, 12, 0.72);
+}
+
+.wcon-overlay[hidden] {
+    display: none;
+}
+
+.wcon-panel {
+    display: flex;
+    flex-direction: column;
+    width: min(1100px, 100%);
+    height: min(760px, 100%);
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    background: #10161d;
+    color: #d7e0ea;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+}
+
+.wcon-head {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+    background: #151d26;
+}
+
+.wcon-title {
+    flex: 1 1 auto;
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.wcon-status {
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.wcon-status-ok {
+    background: rgba(46, 160, 87, 0.22);
+    color: #7ee2a8;
+}
+
+.wcon-status-warn {
+    background: rgba(210, 153, 34, 0.22);
+    color: #f0c674;
+}
+
+.wcon-status-error {
+    background: rgba(218, 54, 51, 0.22);
+    color: #ff8d85;
+}
+
+.wcon-close {
+    flex: 0 0 auto;
+    width: 30px;
+    height: 30px;
+    border: 0;
+    border-radius: 6px;
+    background: transparent;
+    color: #9fb0c0;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.wcon-close:hover,
+.wcon-close:focus-visible {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    outline: none;
+}
+
+.wcon-tools {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.wcon-search {
+    flex: 1 1 220px;
+    min-width: 0;
+    padding: 7px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 6px;
+    background: #0b1016;
+    color: inherit;
+    font-size: 13px;
+}
+
+.wcon-search:focus {
+    border-color: #4a90d9;
+    outline: none;
+}
+
+.wcon-chips {
+    display: flex;
+    gap: 6px;
+}
+
+.wcon-chip,
+.wcon-btn {
+    padding: 6px 11px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 6px;
+    background: transparent;
+    color: #9fb0c0;
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.12s ease, color 0.12s ease;
+}
+
+.wcon-chip:hover,
+.wcon-btn:hover,
+.wcon-chip:focus-visible,
+.wcon-btn:focus-visible {
+    background: rgba(255, 255, 255, 0.09);
+    color: #e6edf3;
+    outline: none;
+}
+
+.wcon-chip.is-on,
+.wcon-btn.is-on {
+    border-color: rgba(74, 144, 217, 0.6);
+    background: rgba(74, 144, 217, 0.18);
+    color: #cfe3fa;
+}
+
+.wcon-output {
+    flex: 1 1 auto;
+    overflow: auto;
+    padding: 10px 14px;
+    background: #0b1016;
+    font: 12.5px/1.55 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    overflow-wrap: anywhere;
+}
+
+.wcon-output:focus-visible {
+    outline: 1px solid rgba(74, 144, 217, 0.5);
+    outline-offset: -1px;
+}
+
+.wcon-line {
+    display: flex;
+    gap: 10px;
+    padding: 1px 0;
+}
+
+.wcon-time {
+    flex: 0 0 auto;
+    color: #5b6b7c;
+    user-select: none;
+}
+
+.wcon-text {
+    flex: 1 1 auto;
+    white-space: pre-wrap;
+}
+
+.wcon-info .wcon-text { color: #cbd6e2; }
+.wcon-warn .wcon-text { color: #f0c674; }
+.wcon-error .wcon-text { color: #ff8d85; }
+.wcon-other .wcon-text { color: #9fb0c0; }
+
+.wcon-output mark {
+    padding: 0 1px;
+    border-radius: 2px;
+    background: #d9a441;
+    color: #10161d;
+}
+
+.wcon-empty {
+    padding: 18px 0;
+    color: #64748b;
+    text-align: center;
+}
+
+.wcon-foot {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+    background: #151d26;
+}
+
+.wcon-counter {
+    flex: 0 0 auto;
+    color: #64748b;
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.wcon-input-wrap {
+    position: relative;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.wcon-input {
+    width: 100%;
+    padding: 8px 10px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 6px;
+    background: #0b1016;
+    color: inherit;
+    font: 13px/1.4 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+}
+
+.wcon-input:focus {
+    border-color: #4a90d9;
+    outline: none;
+}
+
+.wcon-suggest {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 6px);
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    max-height: 190px;
+    overflow: auto;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 6px;
+    background: #151d26;
+    box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.wcon-suggest[hidden] {
+    display: none;
+}
+
+.wcon-suggest-item {
+    padding: 7px 10px;
+    border: 0;
+    background: transparent;
+    color: #cbd6e2;
+    font: 12.5px/1.3 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    text-align: left;
+    cursor: pointer;
+}
+
+.wcon-suggest-item:hover,
+.wcon-suggest-item:focus-visible {
+    background: rgba(74, 144, 217, 0.22);
+    outline: none;
+}
+
+@media (max-width: 640px) {
+    .wcon-overlay {
+        padding: 0;
+    }
+
+    .wcon-panel {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        border-radius: 0;
+    }
+
+    .wcon-tools {
+        gap: 6px;
+    }
+
+    .wcon-chips {
+        order: 3;
+        width: 100%;
+    }
+
+    .wcon-counter {
+        display: none;
+    }
+
+    .wcon-fab {
+        right: 14px;
+        bottom: 124px;
+        width: 46px;
+        height: 46px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .wcon-fab,
+    .wcon-chip,
+    .wcon-btn {
+        transition: none;
+    }
+}

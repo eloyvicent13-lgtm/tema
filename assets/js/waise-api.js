@@ -182,6 +182,15 @@
         return request('POST', '/servers/' + enc(id) + '/command', { json: { command: cmd } });
     }
 
+    /* Credenciales del websocket de Wings: { token, socket }. El token caduca
+       (~10 min) y Wings avisa con un evento 'token expiring', asi que quien
+       abra el socket debe poder volver a pedirlas. */
+    function websocketDetails(id) {
+        return request('GET', '/servers/' + enc(id) + '/websocket').then(function (data) {
+            return data ? data.data : null;
+        });
+    }
+
     /* --- Archivos --------------------------------------------------------- */
 
     function listFiles(id, dir) {
@@ -382,6 +391,7 @@
         resources: resources,
         power: power,
         command: command,
+        websocketDetails: websocketDetails,
         listFiles: listFiles,
         readFile: readFile,
         writeFile: writeFile,
