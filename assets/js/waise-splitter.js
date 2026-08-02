@@ -112,6 +112,9 @@
             hint.textContent = 'Al original le quedan ' +
                 (unit === '%' ? (max + min - v) + ' %' : fmtMiB(max + min - v));
             row.classList.toggle('is-zero', v === 0);
+            /* El CSS pinta la parte rellena de la pista con este porcentaje:
+               ::-webkit-slider-runnable-track no puede calcularlo solo. */
+            range.style.setProperty('--waise-fill', (max > 0 ? (v / max) * 100 : 0) + '%');
         }
 
         range.addEventListener('input', render);
@@ -205,8 +208,14 @@
         footer.appendChild(submit);
         box.appendChild(footer);
 
+        /* Tras un split correcto el boton se reutiliza como "Abrir servidor
+           nuevo" (submit.onclick), pero ESTE listener sigue enganchado y busy
+           ya vale false: el mismo click reenviaba el POST y creaba un segundo
+           servidor. El flag lo cierra de forma definitiva. */
+        var done = false;
+
         submit.addEventListener('click', function () {
-            if (busy) return;
+            if (busy || done) return;
 
             var payload = {
                 action: 'split',
@@ -242,6 +251,7 @@
 
             api(payload).then(function (res) {
                 busy = false;
+                done = true;
                 status.className = 'waise-split__status is-ok';
                 status.textContent = 'Listo. "' + res.child.name + '" se esta instalando.';
                 submit.textContent = 'Abrir servidor nuevo';
